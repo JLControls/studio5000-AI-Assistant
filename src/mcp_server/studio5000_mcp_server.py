@@ -12,6 +12,8 @@ import json
 import os
 import re
 import sys
+import threading
+import importlib.util
 from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
@@ -21,6 +23,30 @@ from dataclasses import dataclass
 
 # Import our modules
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+# Handle relative import for cache_manager (works both as script and module)
+try:
+    from .cache_manager import shared_cache_manager
+except ImportError:
+    # Fallback for when run as script
+    cache_manager_path = os.path.join(os.path.dirname(__file__), 'cache_manager.py')
+    if os.path.exists(cache_manager_path):
+        spec = importlib.util.spec_from_file_location("cache_manager", cache_manager_path)
+        cache_manager_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cache_manager_module)
+        shared_cache_manager = cache_manager_module.shared_cache_manager
+    else:
+        # Create a minimal fallback cache manager
+        class MockCacheManager:
+            def get_cache_statistics(self):
+                return {'overall': {'total_requests': 0, 'total_hits': 0, 'overall_hit_rate': 0}}
+            def get_cache_lock(self, name):
+                import threading
+                return threading.Lock()
+            def is_cache_valid(self, files, max_age_days=30):
+                return False
+        shared_cache_manager = MockCacheManager()
+
 from code_generator.l5x_generator import L5XGenerator, L5XProject, Program, Routine, LadderRung, create_motor_control_example
 from ai_assistant.code_assistant import CodeAssistant
 from ai_assistant.mcp_integration import create_mcp_integrated_assistant
@@ -243,7 +269,7 @@ class Studio5000Parser:
         return instructions
 
 class Studio5000MCPServer:
-    """MCP Server for Studio 5000 documentation"""
+    """MCP Server for Studio 5000 documentation with optimized lazy loading"""
     
     def __init__(self, doc_root: str):
         self.doc_root = doc_root
@@ -251,179 +277,214 @@ class Studio5000MCPServer:
         self.server = MCPServer("studio5000-ai-assistant", "2.0.0")
         self.instructions = {}
         
-        # Initialize new components
+        # Initialize basic components immediately (lightweight)
         self.l5x_generator = L5XGenerator()
         self.code_assistant = CodeAssistant(mcp_server=self)
         self.enhanced_assistant = create_mcp_integrated_assistant(self)
         self.studio5000_sdk = studio5000_sdk
         
-        # Initialize SDK documentation system
-        self.sdk_integration = SDKMCPIntegration()
-        self.sdk_tools = SDKMCPTools(self.sdk_integration)
+        # Shared sentence transformer model for all vector databases
+        self._shared_model = None
+        self._model_lock = threading.Lock()
         
-        # Initialize instruction documentation vector database
-        self.instruction_integration = InstructionMCPIntegration()
-        self.instruction_tools = InstructionMCPTools(self.instruction_integration)
+        # Lazy initialization flags and cached integrations
+        self._sdk_integration = None
+        self._sdk_tools = None
+        self._instruction_integration = None
+        self._instruction_tools = None
+        self._l5x_integration = None
+        self._l5x_tools = None
+        self._pdf_integration = None
+        self._pdf_tools = None
+        self._tag_integration = None
+        self._tag_tools = None
         
-        # Initialize L5X analyzer system for production-scale L5X files
-        self.l5x_integration = L5XSDKMCPIntegration()
-        self.l5x_tools = L5XMCPTools
+        # Initialization locks for thread safety
+        self._init_locks = {
+            'sdk': threading.Lock(),
+            'instruction': threading.Lock(), 
+            'l5x': threading.Lock(),
+            'pdf': threading.Lock(),
+            'tag': threading.Lock()
+        }
         
-        # Initialize PDF drawings analyzer system
-        self.pdf_integration = PDFMCPIntegration()
-        self.pdf_tools = PDFMCPTools
+        # Fast basic initialization only - vector DBs loaded on demand
+        self._initialize_basic()
+    
+    def _initialize_basic(self):
+        """Fast basic initialization - only load instruction index, no vector DBs"""
+        import sys
+        print("Starting fast initialization...", file=sys.stderr)
+        self.instructions = self.parser.build_instruction_index()
+        print(f"✅ Basic initialization complete. {len(self.instructions)} instructions loaded.", file=sys.stderr)
+        print("📚 Vector databases will load automatically when needed for semantic search.", file=sys.stderr)
         
-        # Initialize tag analyzer system for Studio 5000 tag CSV files
-        self.tag_integration = TagMCPIntegration()
-        self.tag_tools = TagMCPTools
-        
-        # Initialize and index the documentation
-        self._initialize()
+        # Register all tools (lightweight operation)
+        self._register_tools()
+        print("🔧 MCP tools registered successfully", file=sys.stderr)
+    
+    def _get_shared_model(self):
+        """Get shared sentence transformer model, initializing if needed"""
+        if self._shared_model is None:
+            with self._model_lock:
+                if self._shared_model is None:  # Double-check pattern
+                    try:
+                        import sys
+                        print("🔄 Loading shared sentence transformer model...", file=sys.stderr)
+                        from sentence_transformers import SentenceTransformer
+                        self._shared_model = SentenceTransformer('all-MiniLM-L6-v2')
+                        print("✅ Shared model loaded successfully", file=sys.stderr)
+                    except Exception as e:
+                        print(f"❌ Failed to load shared model: {e}", file=sys.stderr)
+                        self._shared_model = None
+        return self._shared_model
+    
+    @property
+    def sdk_integration(self):
+        """Lazy-loaded SDK integration"""
+        if self._sdk_integration is None:
+            with self._init_locks['sdk']:
+                if self._sdk_integration is None:
+                    print("🔄 Initializing SDK documentation system...", file=sys.stderr)
+                    self._sdk_integration = SDKMCPIntegration()
+                    # Inject shared model and cache manager
+                    if hasattr(self._sdk_integration, 'vector_db'):
+                        if hasattr(self._sdk_integration.vector_db, 'model'):
+                            self._sdk_integration.vector_db.model = self._get_shared_model()
+                        # Inject shared cache manager for optimized caching
+                        self._sdk_integration.vector_db.cache_manager = shared_cache_manager
+                    print("✅ SDK system ready", file=sys.stderr)
+        return self._sdk_integration
+    
+    @property 
+    def sdk_tools(self):
+        """Lazy-loaded SDK tools"""
+        if self._sdk_tools is None:
+            self._sdk_tools = SDKMCPTools(self.sdk_integration)
+        return self._sdk_tools
+    
+    @property
+    def instruction_integration(self):
+        """Lazy-loaded instruction integration"""
+        if self._instruction_integration is None:
+            with self._init_locks['instruction']:
+                if self._instruction_integration is None:
+                    print("🔄 Initializing instruction documentation system...", file=sys.stderr)
+                    self._instruction_integration = InstructionMCPIntegration()
+                    # Inject shared model and cache manager
+                    if hasattr(self._instruction_integration, 'vector_db'):
+                        if hasattr(self._instruction_integration.vector_db, 'model'):
+                            self._instruction_integration.vector_db.model = self._get_shared_model()
+                        # Inject shared cache manager for optimized caching
+                        self._instruction_integration.vector_db.cache_manager = shared_cache_manager
+                    print("✅ Instruction system ready", file=sys.stderr)
+        return self._instruction_integration
+    
+    @property
+    def instruction_tools(self):
+        """Lazy-loaded instruction tools"""
+        if self._instruction_tools is None:
+            self._instruction_tools = InstructionMCPTools(self.instruction_integration)
+        return self._instruction_tools
+    
+    @property
+    def l5x_integration(self):
+        """Lazy-loaded L5X integration"""
+        if self._l5x_integration is None:
+            with self._init_locks['l5x']:
+                if self._l5x_integration is None:
+                    print("🔄 Initializing L5X analyzer system...", file=sys.stderr)
+                    self._l5x_integration = L5XSDKMCPIntegration()
+                    # Inject shared model and cache manager
+                    if hasattr(self._l5x_integration, 'vector_db'):
+                        if hasattr(self._l5x_integration.vector_db, 'model'):
+                            self._l5x_integration.vector_db.model = self._get_shared_model()
+                        # Inject shared cache manager for optimized caching
+                        self._l5x_integration.vector_db.cache_manager = shared_cache_manager
+                    print("✅ L5X system ready", file=sys.stderr)
+        return self._l5x_integration
+    
+    @property
+    def l5x_tools(self):
+        """Lazy-loaded L5X tools"""
+        if self._l5x_tools is None:
+            self._l5x_tools = L5XMCPTools
+        return self._l5x_tools
+    
+    @property
+    def pdf_integration(self):
+        """Lazy-loaded PDF integration"""
+        if self._pdf_integration is None:
+            with self._init_locks['pdf']:
+                if self._pdf_integration is None:
+                    print("🔄 Initializing PDF drawings analyzer system...", file=sys.stderr)
+                    self._pdf_integration = PDFMCPIntegration()
+                    # Inject shared model and cache manager
+                    if hasattr(self._pdf_integration, 'vector_db'):
+                        if hasattr(self._pdf_integration.vector_db, 'model'):
+                            self._pdf_integration.vector_db.model = self._get_shared_model()
+                        # Inject shared cache manager for optimized caching
+                        self._pdf_integration.vector_db.cache_manager = shared_cache_manager
+                    print("✅ PDF system ready", file=sys.stderr)
+        return self._pdf_integration
+    
+    @property
+    def pdf_tools(self):
+        """Lazy-loaded PDF tools"""
+        if self._pdf_tools is None:
+            self._pdf_tools = PDFMCPTools
+        return self._pdf_tools
+    
+    @property
+    def tag_integration(self):
+        """Lazy-loaded tag integration"""
+        if self._tag_integration is None:
+            with self._init_locks['tag']:
+                if self._tag_integration is None:
+                    print("🔄 Initializing tag analyzer system...", file=sys.stderr)
+                    self._tag_integration = TagMCPIntegration()
+                    # Inject shared model and cache manager
+                    if hasattr(self._tag_integration, 'vector_db'):
+                        if hasattr(self._tag_integration.vector_db, 'model'):
+                            self._tag_integration.vector_db.model = self._get_shared_model()
+                        # Inject shared cache manager for optimized caching
+                        self._tag_integration.vector_db.cache_manager = shared_cache_manager
+                    print("✅ Tag system ready", file=sys.stderr)
+        return self._tag_integration
+    
+    @property
+    def tag_tools(self):
+        """Lazy-loaded tag tools"""
+        if self._tag_tools is None:
+            self._tag_tools = TagMCPTools
+        return self._tag_tools
     
     async def _ensure_instruction_db_ready(self):
         """Ensure the instruction vector database is fully initialized"""
-        # Database is now initialized synchronously in __init__, so this is a no-op
-        pass
+        # Trigger lazy loading by accessing the property
+        _ = self.instruction_integration
+        
+        # Initialize with instructions if not already done
+        if hasattr(self.instruction_integration, 'initialize'):
+            try:
+                await self.instruction_integration.initialize(self.instructions, force_rebuild=False)
+            except Exception as e:
+                print(f"Warning: Could not initialize instruction vector DB: {e}", file=sys.stderr)
     
     async def _ensure_sdk_db_ready(self):
         """Ensure the SDK vector database is fully initialized"""
-        # Database is now initialized synchronously in __init__, so this is a no-op
-        pass
-    
-    def _initialize(self):
-        """Initialize the server with documentation index"""
-        # Don't print to stdout - it breaks JSON-RPC protocol
-        # Use stderr for debug messages
-        import sys
-        print("Indexing Studio 5000 documentation...", file=sys.stderr)
-        self.instructions = self.parser.build_instruction_index()
-        print(f"Indexed {len(self.instructions)} instructions", file=sys.stderr)
+        # Trigger lazy loading by accessing the property  
+        _ = self.sdk_integration
         
-        # Initialize instruction vector database - use blocking approach for immediate initialization
-        print("Building instruction vector database...", file=sys.stderr)
-        self._instruction_db_init_task = None
-        try:
-            import asyncio
-            import threading
-            
-            # Use a thread to run the async initialization synchronously
-            def run_async_init():
-                """Run async initialization in a new event loop in a thread"""
-                new_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(new_loop)
-                try:
-                    # Use cached data when available to speed up initialization
-                    new_loop.run_until_complete(
-                        self.instruction_integration.initialize(self.instructions, force_rebuild=False)
-                    )
-                finally:
-                    new_loop.close()
-            
-            print("Initializing instruction vector database (blocking)...", file=sys.stderr)
-            # Run in a thread and wait for completion - NO TIMEOUT, let it finish properly
-            init_thread = threading.Thread(target=run_async_init)
-            init_thread.start()
-            init_thread.join()  # Wait indefinitely for completion
-            
-            print("✅ Instruction vector database initialized successfully!", file=sys.stderr)
-                
-        except Exception as e:
-            print(f"❌ Failed to initialize instruction vector database: {e}", file=sys.stderr)
-            import traceback
-            traceback.print_exc(file=sys.stderr)
-            print("Falling back to basic text search", file=sys.stderr)
-            # Continue without vector database - fallbacks will handle this
+        # Initialize if not already done
+        if hasattr(self.sdk_integration, 'initialize'):
+            try:
+                await self.sdk_integration.initialize(force_rebuild=False)
+            except Exception as e:
+                print(f"Warning: Could not initialize SDK vector DB: {e}", file=sys.stderr)
         
-        # CRITICAL FIX: Initialize SDK documentation vector database - use blocking approach
-        print("Building SDK documentation vector database...", file=sys.stderr)
-        self._sdk_db_init_task = None
-        try:
-            import asyncio
-            import threading
-            
-            # Use a thread to run the async initialization synchronously
-            def run_async_sdk_init():
-                """Run async SDK initialization in a new event loop in a thread"""
-                new_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(new_loop)
-                try:
-                    # Use cached data when available to speed up initialization
-                    new_loop.run_until_complete(
-                        self.sdk_integration.initialize(force_rebuild=False)
-                    )
-                finally:
-                    new_loop.close()
-            
-            print("Initializing SDK vector database (blocking)...", file=sys.stderr)
-            # Run in a thread and wait for completion - NO TIMEOUT, let it finish properly
-            sdk_init_thread = threading.Thread(target=run_async_sdk_init)
-            sdk_init_thread.start()
-            sdk_init_thread.join()  # Wait indefinitely for completion
-            
-            print("✅ SDK vector database initialized successfully!", file=sys.stderr)
-                
-        except Exception as e:
-            print(f"❌ Failed to initialize SDK vector database: {e}", file=sys.stderr)
-            import traceback
-            traceback.print_exc(file=sys.stderr)
-            print("Falling back to basic SDK search", file=sys.stderr)
-            # Continue without vector database - fallbacks will handle this
-        
-        # Initialize L5X analyzer system - lightweight initialization
-        print("Initializing L5X analyzer system...", file=sys.stderr)
-        try:
-            # Use threading for async initialization like the others
-            def run_async_l5x_init():
-                """Run async L5X initialization in a new event loop in a thread"""
-                new_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(new_loop)
-                try:
-                    new_loop.run_until_complete(
-                        self.l5x_integration.initialize(force_rebuild=False)
-                    )
-                finally:
-                    new_loop.close()
-            
-            l5x_init_thread = threading.Thread(target=run_async_l5x_init)
-            l5x_init_thread.start()
-            l5x_init_thread.join()  # Wait for completion
-            
-            print("✅ L5X analyzer system initialized successfully!", file=sys.stderr)
-            
-        except Exception as e:
-            print(f"❌ Failed to initialize L5X analyzer: {e}", file=sys.stderr)
-            import traceback
-            traceback.print_exc(file=sys.stderr)
-            print("L5X analyzer features may be limited", file=sys.stderr)
-        
-        # Initialize Tag analyzer system - lightweight initialization
-        print("Initializing Tag analyzer system...", file=sys.stderr)
-        try:
-            # Use threading for async initialization like the others
-            def run_async_tag_init():
-                """Run async Tag initialization in a new event loop in a thread"""
-                new_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(new_loop)
-                try:
-                    new_loop.run_until_complete(
-                        self.tag_integration.initialize(force_rebuild=False)
-                    )
-                finally:
-                    new_loop.close()
-            
-            tag_init_thread = threading.Thread(target=run_async_tag_init)
-            tag_init_thread.start()
-            tag_init_thread.join()  # Wait for completion
-            
-            print("✅ Tag analyzer system initialized successfully!", file=sys.stderr)
-            
-        except Exception as e:
-            print(f"❌ Failed to initialize Tag analyzer: {e}", file=sys.stderr)
-            import traceback
-            traceback.print_exc(file=sys.stderr)
-            print("Tag analyzer features may be limited", file=sys.stderr)
-        
-        # Register tools
+    def _register_tools(self):
+        """Register all MCP tools - lightweight, no vector DB initialization"""
         self.server.add_tool(
             "search_instructions",
             "Search for PLC instructions by name, category, or description",
@@ -555,7 +616,7 @@ class Studio5000MCPServer:
         
         self.server.add_tool(
             "smart_insert_logic",
-            "Intelligently insert new ladder logic at optimal location using SDK",
+            "Directly insert new ladder logic into L5X file at optimal location",
             self.smart_insert_logic
         )
         
@@ -679,6 +740,13 @@ class Studio5000MCPServer:
             "get_sensor_tags",
             "Get all sensor tags",
             self.get_sensor_tags
+        )
+        
+        # Performance monitoring tools
+        self.server.add_tool(
+            "get_cache_performance",
+            "Get vector database cache performance statistics",
+            self.get_cache_performance
         )
     
     async def search_instructions(self, query: str, category: Optional[str] = None) -> List[Dict]:
@@ -1215,12 +1283,12 @@ class Studio5000MCPServer:
             new_logic_description, target_routine, target_file
         )
     
-    async def smart_insert_logic(self, acd_path: str, routine_name: str, 
+    async def smart_insert_logic(self, l5x_file_path: str, routine_name: str, 
                                logic_description: str, program_name: str = "MainProgram",
                                insertion_mode: str = "optimal") -> Dict[str, Any]:
-        """Intelligently insert new ladder logic at optimal location"""
+        """Directly insert new ladder logic into L5X file at optimal location"""
         return await self.l5x_integration.smart_insert_logic(
-            acd_path, routine_name, logic_description, program_name, insertion_mode
+            l5x_file_path, routine_name, logic_description, program_name, insertion_mode
         )
     
     async def extract_routine_content(self, acd_path: str, routine_name: str,
@@ -1320,6 +1388,46 @@ class Studio5000MCPServer:
     async def get_sensor_tags(self) -> Dict[str, Any]:
         """Get all sensor tags"""
         return await self.tag_integration.get_sensor_tags()
+    
+    async def get_cache_performance(self) -> Dict[str, Any]:
+        """Get vector database cache performance statistics"""
+        try:
+            stats = shared_cache_manager.get_cache_statistics()
+            
+            # Add some additional system info
+            stats['system_info'] = {
+                'instruction_count': len(self.instructions),
+                'loaded_systems': []
+            }
+            
+            # Check which systems are loaded
+            if self._sdk_integration is not None:
+                stats['system_info']['loaded_systems'].append('SDK Documentation')
+            if self._instruction_integration is not None:
+                stats['system_info']['loaded_systems'].append('Instruction Documentation') 
+            if self._l5x_integration is not None:
+                stats['system_info']['loaded_systems'].append('L5X Analyzer')
+            if self._pdf_integration is not None:
+                stats['system_info']['loaded_systems'].append('PDF Drawings')
+            if self._tag_integration is not None:
+                stats['system_info']['loaded_systems'].append('Tag Analyzer')
+            
+            return {
+                'success': True,
+                'cache_statistics': stats,
+                'performance_tips': [
+                    'Cache hit rates above 80% indicate good performance',
+                    'Vector databases load automatically when first accessed',
+                    'Shared model reduces memory usage across all vector databases',
+                    'Cache files are valid for 30 days by default'
+                ]
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f"Failed to get cache statistics: {str(e)}"
+            }
 
 # JSON-RPC 2.0 MCP Protocol Implementation
 async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Optional[Dict]:
@@ -1501,13 +1609,13 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                 required = ['new_logic_description', 'target_routine']
             elif name == 'smart_insert_logic':
                 properties = {
-                    'acd_path': {'type': 'string', 'description': 'Path to ACD/L5K file'},
+                    'l5x_file_path': {'type': 'string', 'description': 'Path to L5X file to modify'},
                     'routine_name': {'type': 'string', 'description': 'Target routine name'},
                     'logic_description': {'type': 'string', 'description': 'Natural language description of logic to generate and insert'},
                     'program_name': {'type': 'string', 'description': 'Parent program name (default: MainProgram)'},
                     'insertion_mode': {'type': 'string', 'description': 'Insertion mode: optimal or end (default: optimal)'}
                 }
-                required = ['acd_path', 'routine_name', 'logic_description']
+                required = ['l5x_file_path', 'routine_name', 'logic_description']
             elif name == 'extract_routine_content':
                 properties = {
                     'acd_path': {'type': 'string', 'description': 'Path to ACD/L5K file'},

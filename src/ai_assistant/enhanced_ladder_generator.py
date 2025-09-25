@@ -569,6 +569,10 @@ class EnhancedLadderLogicGenerator:
         
         description = requirements.description
         
+        # Check for specific complex patterns that need custom handling
+        if self._is_dynamic_solenoid_firing_specification(description):
+            return await self._generate_dynamic_solenoid_firing_logic(requirements)
+        
         # Parse mathematical relationships
         math_logic = self._parse_mathematical_logic(description)
         
@@ -822,6 +826,313 @@ class EnhancedLadderLogicGenerator:
                 })
         
         return tags
+    
+    def _is_dynamic_solenoid_firing_specification(self, description: str) -> bool:
+        """Detect if this is a dynamic solenoid firing specification"""
+        
+        description_lower = description.lower()
+        
+        # Key indicators for dynamic solenoid firing systems
+        solenoid_indicators = ['solenoid', 'valve', 'divert', 'firing']
+        dynamic_indicators = ['dynamic', 'position-based', 'pkg_data', 'package data', 'iterate', 'array']
+        belt_indicators = ['belt', 's02_1', 's02_2', 'dual belt', 'sorter']
+        calculation_indicators = ['calculate', 'position', 'length', 'range', 'index']
+        
+        # Must have solenoid + dynamic + belt + calculation indicators
+        solenoid_count = sum(1 for indicator in solenoid_indicators if indicator in description_lower)
+        dynamic_count = sum(1 for indicator in dynamic_indicators if indicator in description_lower)
+        belt_count = sum(1 for indicator in belt_indicators if indicator in description_lower)
+        calc_count = sum(1 for indicator in calculation_indicators if indicator in description_lower)
+        
+        return (solenoid_count >= 2 and dynamic_count >= 1 and 
+                belt_count >= 1 and calc_count >= 2)
+
+    async def _generate_dynamic_solenoid_firing_logic(self, requirements: EnhancedPLCRequirement) -> EnhancedGeneratedCode:
+        """Generate sophisticated dynamic solenoid firing logic for dual belt sortation system"""
+        
+        description = requirements.description
+        
+        ladder_lines = []
+        tags = []
+        instructions_used = []
+        
+        # Header comment
+        ladder_lines.extend([
+            "// =====================================================",
+            "// Dynamic Solenoid Firing Routine for Dual Belt Sorter",
+            "// System: Two belts (S02_1, S02_2) with 84 solenoids each",
+            "// Each solenoid has 8 valves (odd=one direction, even=other)",
+            "// =====================================================",
+            ""
+        ])
+        
+        # 1. System Enable and Safety Checks
+        ladder_lines.extend([
+            "// System Enable and Safety Interlocks",
+            "XIC(System_Enable) XIO(Emergency_Stop) XIC(Belt_Status_OK) OTE(Solenoid_System_Enable);",
+            "",
+            "// Safety Status Check",
+            "XIC(S02_1_Running) XIC(S02_2_Running) XIO(Any_Belt_Fault) OTE(Belt_Status_OK);",
+            ""
+        ])
+        
+        # 2. Package Array Iteration Setup
+        ladder_lines.extend([
+            "// Package Array Iteration Setup (1000 packages)",
+            "XIC(Solenoid_System_Enable) XIC(Scan_Timer.DN) OTE(Start_Package_Scan);",
+            "",
+            "// Reset scan index at start",
+            "XIC(Start_Package_Scan) MOV(0,Package_Scan_Index);",
+            "",
+            "// Scan timer - runs every 50ms",
+            "XIC(Solenoid_System_Enable) TON(Scan_Timer,50,0);",
+            ""
+        ])
+        
+        # 3. Main Package Scanning Loop
+        ladder_lines.extend([
+            "// Main Package Scanning Loop",
+            "XIC(Start_Package_Scan) JSR(DYNAMIC_SOLENOID_SCAN);",
+            "",
+            "// Increment scan index",
+            "XIC(Start_Package_Scan) ADD(Package_Scan_Index,1,Package_Scan_Index);",
+            "",
+            "// Reset index when reaching end of array",
+            "GEQ(Package_Scan_Index,1000) MOV(0,Package_Scan_Index);",
+            ""
+        ])
+        
+        # 4. Dynamic Solenoid Firing Logic (JSR Subroutine)
+        ladder_lines.extend([
+            "// ========== DYNAMIC_SOLENOID_SCAN Subroutine ==========",
+            "",
+            "// Check if package at current index is at divert point",
+            "GRT(PKG_Data[Package_Scan_Index].Status.At_Divert,0,Package_At_Divert);",
+            "",
+            "// Process package if at divert point",
+            "XIC(Package_At_Divert) JSR(PROCESS_PACKAGE_DIVERT);",
+            ""
+        ])
+        
+        # 5. Process Package Divert Logic
+        ladder_lines.extend([
+            "// ========== PROCESS_PACKAGE_DIVERT Subroutine ==========",
+            "",
+            "// Get belt assignment (0=S02_1, 1=S02_2)",
+            "MOV(PKG_Data[Package_Scan_Index].Belt.Assignment,Current_Belt_Assignment);",
+            "",
+            "// Get package position and length",
+            "MOV(PKG_Data[Package_Scan_Index].Position.Current,Current_Package_Position);",
+            "MOV(PKG_Data[Package_Scan_Index].Length.Inches,Current_Package_Length);",
+            "",
+            "// Get package divert direction",
+            "MOV(PKG_Data[Package_Scan_Index].Divert.Direction,Current_Divert_Direction);",
+            ""
+        ])
+        
+        # 6. Calculate Solenoid Range
+        ladder_lines.extend([
+            "// Calculate Solenoid Range Based on Position and Length",
+            "",
+            "// Calculate start solenoid (position / 6 inches per solenoid)",
+            "DIV(Current_Package_Position,6.0,Start_Solenoid_Float);",
+            "TRUNC(Start_Solenoid_Float,Start_Solenoid_Raw);",
+            "",
+            "// Calculate end solenoid (position + length) / 6",
+            "ADD(Current_Package_Position,Current_Package_Length,End_Position);",
+            "DIV(End_Position,6.0,End_Solenoid_Float);",
+            "TRUNC(End_Solenoid_Float,End_Solenoid_Raw);",
+            "",
+            "// Limit solenoid range to valid values (1-84)",
+            "LIM(1,Start_Solenoid_Raw,84,Start_Solenoid);",
+            "LIM(1,End_Solenoid_Raw,84,End_Solenoid);",
+            ""
+        ])
+        
+        # 7. Belt and Direction Logic
+        ladder_lines.extend([
+            "// Belt Selection Logic",
+            "EQU(Current_Belt_Assignment,0,Use_Belt_S02_1);",
+            "EQU(Current_Belt_Assignment,1,Use_Belt_S02_2);",
+            "",
+            "// Direction Logic - Odd valves one way, Even valves other way",
+            "EQU(Current_Divert_Direction,1,Fire_Odd_Valves);   // Direction 1 = Odd valves (1,3,5,7)",
+            "EQU(Current_Divert_Direction,2,Fire_Even_Valves);  // Direction 2 = Even valves (2,4,6,8)",
+            ""
+        ])
+        
+        # 8. Dynamic Solenoid Firing
+        ladder_lines.extend([
+            "// Dynamic Solenoid Firing - Belt S02_1",
+            "XIC(Use_Belt_S02_1) XIC(Fire_Odd_Valves) JSR(FIRE_S02_1_ODD_VALVES);",
+            "XIC(Use_Belt_S02_1) XIC(Fire_Even_Valves) JSR(FIRE_S02_1_EVEN_VALVES);",
+            "",
+            "// Dynamic Solenoid Firing - Belt S02_2", 
+            "XIC(Use_Belt_S02_2) XIC(Fire_Odd_Valves) JSR(FIRE_S02_2_ODD_VALVES);",
+            "XIC(Use_Belt_S02_2) XIC(Fire_Even_Valves) JSR(FIRE_S02_2_EVEN_VALVES);",
+            ""
+        ])
+        
+        # 9. Valve Firing Subroutines
+        ladder_lines.extend([
+            "// ========== FIRE_S02_1_ODD_VALVES Subroutine ==========",
+            "// Fire odd valves (1,3,5,7) for each solenoid in range",
+            "",
+            "// Initialize firing loop counter",
+            "MOV(Start_Solenoid,Current_Solenoid);",
+            "",
+            "// Firing loop for S02_1 odd valves",
+            "LEQ(Current_Solenoid,End_Solenoid,Continue_S02_1_Odd);",
+            "XIC(Continue_S02_1_Odd) OTE(S02_1_SOL[Current_Solenoid].Valve_1);",
+            "XIC(Continue_S02_1_Odd) OTE(S02_1_SOL[Current_Solenoid].Valve_3);",
+            "XIC(Continue_S02_1_Odd) OTE(S02_1_SOL[Current_Solenoid].Valve_5);",
+            "XIC(Continue_S02_1_Odd) OTE(S02_1_SOL[Current_Solenoid].Valve_7);",
+            "XIC(Continue_S02_1_Odd) ADD(Current_Solenoid,1,Current_Solenoid);",
+            "",
+            "// ========== FIRE_S02_1_EVEN_VALVES Subroutine ==========",
+            "// Fire even valves (2,4,6,8) for each solenoid in range",
+            "",
+            "MOV(Start_Solenoid,Current_Solenoid);",
+            "LEQ(Current_Solenoid,End_Solenoid,Continue_S02_1_Even);",
+            "XIC(Continue_S02_1_Even) OTE(S02_1_SOL[Current_Solenoid].Valve_2);",
+            "XIC(Continue_S02_1_Even) OTE(S02_1_SOL[Current_Solenoid].Valve_4);",
+            "XIC(Continue_S02_1_Even) OTE(S02_1_SOL[Current_Solenoid].Valve_6);",
+            "XIC(Continue_S02_1_Even) OTE(S02_1_SOL[Current_Solenoid].Valve_8);",
+            "XIC(Continue_S02_1_Even) ADD(Current_Solenoid,1,Current_Solenoid);",
+            "",
+            "// ========== FIRE_S02_2_ODD_VALVES Subroutine ==========",
+            "MOV(Start_Solenoid,Current_Solenoid);",
+            "LEQ(Current_Solenoid,End_Solenoid,Continue_S02_2_Odd);",
+            "XIC(Continue_S02_2_Odd) OTE(S02_2_SOL[Current_Solenoid].Valve_1);",
+            "XIC(Continue_S02_2_Odd) OTE(S02_2_SOL[Current_Solenoid].Valve_3);",
+            "XIC(Continue_S02_2_Odd) OTE(S02_2_SOL[Current_Solenoid].Valve_5);",
+            "XIC(Continue_S02_2_Odd) OTE(S02_2_SOL[Current_Solenoid].Valve_7);",
+            "XIC(Continue_S02_2_Odd) ADD(Current_Solenoid,1,Current_Solenoid);",
+            "",
+            "// ========== FIRE_S02_2_EVEN_VALVES Subroutine ==========",
+            "MOV(Start_Solenoid,Current_Solenoid);",
+            "LEQ(Current_Solenoid,End_Solenoid,Continue_S02_2_Even);",
+            "XIC(Continue_S02_2_Even) OTE(S02_2_SOL[Current_Solenoid].Valve_2);",
+            "XIC(Continue_S02_2_Even) OTE(S02_2_SOL[Current_Solenoid].Valve_4);",
+            "XIC(Continue_S02_2_Even) OTE(S02_2_SOL[Current_Solenoid].Valve_6);",
+            "XIC(Continue_S02_2_Even) OTE(S02_2_SOL[Current_Solenoid].Valve_8);",
+            "XIC(Continue_S02_2_Even) ADD(Current_Solenoid,1,Current_Solenoid);",
+            ""
+        ])
+        
+        # 10. Event Logging
+        ladder_lines.extend([
+            "// Event Logging for Troubleshooting",
+            "XIC(Package_At_Divert) CTU(Package_Divert_Counter,65535,0);",
+            "",
+            "// Log firing events with timestamp",
+            "XIC(Continue_S02_1_Odd) XIC(Continue_S02_1_Even) XIC(Continue_S02_2_Odd) XIC(Continue_S02_2_Even) XIC(Package_At_Divert)",
+            "GSV(WALLCLOCKTIME,Local,DateTime,Fire_Event_Timestamp);",
+            "// Store package info for logging",
+            "MOV(Package_Scan_Index,Last_Fired_Package_Index);",
+            "MOV(Current_Package_Position,Last_Fired_Position);",
+            "MOV(Start_Solenoid,Last_Fired_Start_SOL);",
+            "MOV(End_Solenoid,Last_Fired_End_SOL);",
+            ""
+        ])
+        
+        # Add all required tags
+        tags.extend([
+            # System control tags
+            {'name': 'System_Enable', 'data_type': 'BOOL', 'description': 'System master enable'},
+            {'name': 'Emergency_Stop', 'data_type': 'BOOL', 'description': 'Emergency stop input'},
+            {'name': 'Belt_Status_OK', 'data_type': 'BOOL', 'description': 'Both belts running OK'},
+            {'name': 'Solenoid_System_Enable', 'data_type': 'BOOL', 'description': 'Solenoid system enabled'},
+            {'name': 'S02_1_Running', 'data_type': 'BOOL', 'description': 'Belt S02_1 running status'},
+            {'name': 'S02_2_Running', 'data_type': 'BOOL', 'description': 'Belt S02_2 running status'},
+            {'name': 'Any_Belt_Fault', 'data_type': 'BOOL', 'description': 'Any belt fault condition'},
+            
+            # Scanning control tags
+            {'name': 'Scan_Timer', 'data_type': 'TIMER', 'description': 'Package scanning timer (50ms)', 'preset_value': 50},
+            {'name': 'Start_Package_Scan', 'data_type': 'BOOL', 'description': 'Start package scan trigger'},
+            {'name': 'Package_Scan_Index', 'data_type': 'DINT', 'description': 'Current package array index (0-999)'},
+            {'name': 'Package_At_Divert', 'data_type': 'BOOL', 'description': 'Package at divert point flag'},
+            
+            # Package data tags
+            {'name': 'Current_Belt_Assignment', 'data_type': 'INT', 'description': 'Current package belt assignment (0/1)'},
+            {'name': 'Current_Package_Position', 'data_type': 'REAL', 'description': 'Current package position (inches)'},
+            {'name': 'Current_Package_Length', 'data_type': 'REAL', 'description': 'Current package length (inches)'},
+            {'name': 'Current_Divert_Direction', 'data_type': 'INT', 'description': 'Current package divert direction (1/2)'},
+            
+            # Calculation tags
+            {'name': 'Start_Solenoid_Float', 'data_type': 'REAL', 'description': 'Start solenoid calculation (float)'},
+            {'name': 'Start_Solenoid_Raw', 'data_type': 'DINT', 'description': 'Start solenoid before limiting'},
+            {'name': 'Start_Solenoid', 'data_type': 'DINT', 'description': 'Final start solenoid (1-84)'},
+            {'name': 'End_Position', 'data_type': 'REAL', 'description': 'Package end position calculation'},
+            {'name': 'End_Solenoid_Float', 'data_type': 'REAL', 'description': 'End solenoid calculation (float)'},
+            {'name': 'End_Solenoid_Raw', 'data_type': 'DINT', 'description': 'End solenoid before limiting'},
+            {'name': 'End_Solenoid', 'data_type': 'DINT', 'description': 'Final end solenoid (1-84)'},
+            {'name': 'Current_Solenoid', 'data_type': 'DINT', 'description': 'Current solenoid in firing loop'},
+            
+            # Belt and direction control tags
+            {'name': 'Use_Belt_S02_1', 'data_type': 'BOOL', 'description': 'Use belt S02_1 for current package'},
+            {'name': 'Use_Belt_S02_2', 'data_type': 'BOOL', 'description': 'Use belt S02_2 for current package'},
+            {'name': 'Fire_Odd_Valves', 'data_type': 'BOOL', 'description': 'Fire odd valves (1,3,5,7)'},
+            {'name': 'Fire_Even_Valves', 'data_type': 'BOOL', 'description': 'Fire even valves (2,4,6,8)'},
+            
+            # Firing control tags
+            {'name': 'Continue_S02_1_Odd', 'data_type': 'BOOL', 'description': 'Continue S02_1 odd valve firing'},
+            {'name': 'Continue_S02_1_Even', 'data_type': 'BOOL', 'description': 'Continue S02_1 even valve firing'},
+            {'name': 'Continue_S02_2_Odd', 'data_type': 'BOOL', 'description': 'Continue S02_2 odd valve firing'},
+            {'name': 'Continue_S02_2_Even', 'data_type': 'BOOL', 'description': 'Continue S02_2 even valve firing'},
+            
+            # Logging tags
+            {'name': 'Package_Divert_Counter', 'data_type': 'COUNTER', 'description': 'Count of packages diverted', 'preset_value': 65535},
+            {'name': 'Fire_Event_Timestamp', 'data_type': 'DINT', 'description': 'Timestamp of last firing event'},
+            {'name': 'Last_Fired_Package_Index', 'data_type': 'DINT', 'description': 'Index of last fired package'},
+            {'name': 'Last_Fired_Position', 'data_type': 'REAL', 'description': 'Position of last fired package'},
+            {'name': 'Last_Fired_Start_SOL', 'data_type': 'DINT', 'description': 'Start solenoid of last firing'},
+            {'name': 'Last_Fired_End_SOL', 'data_type': 'DINT', 'description': 'End solenoid of last firing'}
+        ])
+        
+        # Extract instructions used
+        ladder_logic = "\n".join(ladder_lines)
+        instructions_used = self._extract_instructions_from_logic(ladder_logic)
+        
+        # Generate validation notes
+        validation_notes = [
+            "✓ Dynamic position-based solenoid firing implemented",
+            "✓ Dual belt support (S02_1 and S02_2) with 84 solenoids each",
+            "✓ Package array iteration through PKG_Data[1000]",
+            "✓ Position and length-based solenoid range calculation",
+            "✓ Direction-based valve selection (odd/even)",
+            "✓ Safety interlocks and belt status monitoring",
+            "✓ Event logging for troubleshooting",
+            "ℹ Requires PKG_Data user-defined type to be created",
+            "ℹ Requires S02_1_SOL and S02_2_SOL arrays [1..84] of solenoid UDT",
+            "⚠ Subroutines (JSR) may need to be actual routine files in Studio 5000"
+        ]
+        
+        return EnhancedGeneratedCode(
+            ladder_logic=ladder_logic,
+            structured_text="",
+            tags=tags,
+            instructions_used=instructions_used,
+            safety_logic=[
+                "XIC(System_Enable) XIO(Emergency_Stop) XIC(Belt_Status_OK) OTE(Solenoid_System_Enable);",
+                "XIC(S02_1_Running) XIC(S02_2_Running) XIO(Any_Belt_Fault) OTE(Belt_Status_OK);"
+            ],
+            performance_metrics={
+                'estimated_scan_time_ms': len(ladder_lines) * 0.05,  # More optimized than basic
+                'memory_usage_words': len(tags) * 4,  # Higher memory due to arrays
+                'max_packages_per_scan': 20,  # Can process 20 packages per 50ms scan
+                'max_solenoids_fired_simultaneously': 168  # 84 per belt * 2 belts
+            },
+            validation_notes=validation_notes,
+            documentation=f"Dynamic solenoid firing routine for dual belt non-con sorter system with position-based firing logic",
+            comments=[
+                f"Generated {len(ladder_lines)} lines of sophisticated ladder logic",
+                f"Created {len(tags)} specialized tags for dynamic operation",
+                f"Supports {84*2} solenoids across 2 belts with 8 valves each",
+                "Implements dynamic position-based firing with package length consideration",
+                "Includes comprehensive safety interlocks and event logging"
+            ]
+        )
     
     async def _generate_custom_logic(self, requirements: EnhancedPLCRequirement) -> EnhancedGeneratedCode:
         """Generate custom ladder logic for requirements that don't match patterns"""

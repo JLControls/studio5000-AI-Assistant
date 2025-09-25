@@ -297,49 +297,42 @@ class L5XSDKMCPIntegration:
                 'error': f'Failed to find insertion point: {str(e)}'
             }
     
-    async def smart_insert_logic(self, acd_path: str, routine_name: str, 
+    async def smart_insert_logic(self, l5x_file_path: str, routine_name: str, 
                                logic_description: str, program_name: str = "MainProgram",
                                insertion_mode: str = "optimal") -> Dict[str, Any]:
         """
-        Generate ladder logic and provide insertion recommendations (analysis only - no file modification)
+        Generate ladder logic and directly insert it into L5X file
         
         Args:
-            acd_path: Path to ACD/L5K file (for context only)
+            l5x_file_path: Path to L5X file to modify
             routine_name: Target routine name
             logic_description: Description of logic to generate
             program_name: Parent program name
             insertion_mode: 'optimal' or 'end'
             
         Returns:
-            Dictionary with logic generation and insertion recommendations
+            Dictionary with insertion results
         """
         try:
-            logger.info(f"Generating logic analysis for {routine_name}: {logic_description}")
+            logger.info(f"Directly inserting logic into L5X file: {l5x_file_path}")
             
-            # Find optimal insertion point if requested
-            insertion_point = 0
-            confidence = 0.0
+            # Verify L5X file exists
+            from pathlib import Path
+            import xml.etree.ElementTree as ET
+            import shutil
+            import time
             
-            if insertion_mode == "optimal":
-                try:
-                    insertion_point, confidence = self.vector_db.find_optimal_insertion_point(
-                        logic_description, routine_name
-                    )
-                except Exception as e:
-                    logger.warning(f"Could not find optimal insertion point: {e}")
-                    insertion_point = 1  # Default to first rung
-                    confidence = 0.0
-            else:
-                # Insert at end - get routine analysis to find last rung
-                try:
-                    routine_analysis = self.vector_db.get_routine_analysis(routine_name)
-                    if 'rung_range' in routine_analysis and routine_analysis['rung_range'][1] > 0:
-                        insertion_point = routine_analysis['rung_range'][1] + 1
-                    else:
-                        insertion_point = 1
-                except Exception as e:
-                    logger.warning(f"Could not analyze routine structure: {e}")
-                    insertion_point = 1
+            l5x_path = Path(l5x_file_path)
+            if not l5x_path.exists():
+                return {
+                    'success': False,
+                    'error': f'L5X file not found: {l5x_file_path}'
+                }
+            
+            # Create backup of original file
+            backup_path = l5x_path.with_suffix(f'.backup_{int(time.time())}.L5X')
+            shutil.copy2(l5x_path, backup_path)
+            logger.info(f"Created backup: {backup_path}")
             
             # Generate ladder logic using AI assistant
             code_assistant = self._get_code_assistant()
@@ -356,36 +349,116 @@ class L5XSDKMCPIntegration:
                     'error': 'Failed to generate ladder logic - check logic description'
                 }
             
-            # Create L5X fragment with new logic (for reference)
             logic_text = generated_logic['ladder_logic']
-            l5x_fragment = None
-            try:
-                l5x_fragment = self.sdk_analyzer.create_rung_l5x_fragment(
-                    logic_text, f"Generated: {logic_description}"
-                )
-            except Exception as e:
-                logger.warning(f"Could not create L5X fragment: {e}")
+            logger.info(f"Generated logic: {logic_text}")
             
-            # Return analysis results (no actual insertion performed)
+            # Parse L5X file and find target routine
+            tree = ET.parse(l5x_path)
+            root = tree.getroot()
+            
+            # Find the target routine
+            routine_xpath = f".//Program[@Name='{program_name}']//Routine[@Name='{routine_name}']"
+            routine_elem = root.find(routine_xpath)
+            
+            if routine_elem is None:
+                return {
+                    'success': False,
+                    'error': f'Routine {routine_name} not found in program {program_name}'
+                }
+            
+            # Find RLLContent section
+            rll_content = routine_elem.find('RLLContent')
+            if rll_content is None:
+                return {
+                    'success': False,
+                    'error': f'Routine {routine_name} is not a ladder logic routine (no RLLContent)'
+                }
+            
+            # Find insertion point
+            existing_rungs = rll_content.findall('Rung')
+            if insertion_mode == "optimal":
+                # Try to find optimal insertion point using vector database
+                try:
+                    insertion_point, confidence = self.vector_db.find_optimal_insertion_point(
+                        logic_description, routine_name
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not find optimal insertion point: {e}")
+                    insertion_point = len(existing_rungs)  # Insert at end
+                    confidence = 0.0
+            else:
+                # Insert at end
+                insertion_point = len(existing_rungs)
+                confidence = 1.0
+            
+            # Split generated logic into individual rungs
+            logic_lines = [line.strip() for line in logic_text.split('\n') if line.strip()]
+            rung_texts = []
+            current_rung = ""
+            
+            for line in logic_lines:
+                if line.startswith('//'):
+                    continue  # Skip comments for now
+                current_rung += line
+                if line.endswith(';'):
+                    rung_texts.append(current_rung.strip())
+                    current_rung = ""
+                else:
+                    current_rung += " "
+            
+            # Add any remaining logic as a rung
+            if current_rung.strip():
+                rung_texts.append(current_rung.strip())
+            
+            # Renumber existing rungs after insertion point
+            for rung in existing_rungs[insertion_point:]:
+                old_number = int(rung.get('Number', 0))
+                new_number = old_number + len(rung_texts)
+                rung.set('Number', str(new_number))
+            
+            # Create new rung elements and insert them
+            inserted_rungs = 0
+            for i, rung_text in enumerate(rung_texts):
+                new_rung = ET.Element('Rung')
+                new_rung.set('Number', str(insertion_point + i))
+                new_rung.set('Type', 'N')
+                
+                # Add comment
+                comment_elem = ET.SubElement(new_rung, 'Comment')
+                comment_elem.text = f"Generated: {logic_description}"
+                
+                # Add text content
+                text_elem = ET.SubElement(new_rung, 'Text')
+                text_elem.text = rung_text
+                
+                # Insert into RLLContent at correct position
+                rll_content.insert(insertion_point + i, new_rung)
+                inserted_rungs += 1
+            
+            # Save the modified L5X file
+            tree.write(l5x_path, encoding='UTF-8', xml_declaration=True)
+            
             return {
                 'success': True,
-                'insertion_analysis': {
-                    'recommended_position': insertion_point,
-                    'confidence_score': confidence,
-                    'insertion_mode': insertion_mode
+                'file_modified': str(l5x_path),
+                'backup_created': str(backup_path),
+                'insertion_details': {
+                    'position': insertion_point,
+                    'rungs_inserted': inserted_rungs,
+                    'insertion_mode': insertion_mode,
+                    'confidence_score': confidence
                 },
                 'generated_content': {
                     'logic_text': logic_text,
-                    'tags_referenced': generated_logic.get('tags', []),
-                    'l5x_fragment': l5x_fragment if l5x_fragment else 'Could not generate L5X format'
+                    'rung_count': len(rung_texts),
+                    'tags_referenced': generated_logic.get('tags', [])
                 },
                 'target_info': {
                     'routine_name': routine_name,
                     'program_name': program_name,
                     'description': logic_description
                 },
-                'message': f'✅ Logic generated successfully. Recommended insertion at rung {insertion_point} in {routine_name}',
-                'note': 'This is analysis only - no files were modified. Use Studio 5000 to manually insert the generated logic.'
+                'message': f'✅ Successfully inserted {inserted_rungs} rungs at position {insertion_point} in {routine_name}'
             }
                 
         except Exception as e:

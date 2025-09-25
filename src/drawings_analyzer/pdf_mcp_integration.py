@@ -54,10 +54,12 @@ class PDFMCPIntegration:
                         self.initialized = True
                         logger.info(f"PDF drawings database loaded from cache with {len(self.vector_db.chunks_data)} chunks")
                         return  # Cache loaded successfully, no need to reindex
+                    else:
+                        logger.info("Cache files exist but no chunks loaded - cache may be empty")
                 except Exception as e:
                     logger.info(f"No existing cache found or cache invalid: {e}")
             
-            # If no cache or force_rebuild, index new PDF file
+            # If no cache or force_rebuild, index new PDF file if provided
             if pdf_file_path and Path(pdf_file_path).exists():
                 logger.info(f"Indexing PDF file: {pdf_file_path}")
                 success = self.vector_db.index_pdf_file(pdf_file_path, force_rebuild=force_rebuild)
@@ -67,7 +69,12 @@ class PDFMCPIntegration:
                 else:
                     logger.warning("PDF indexing failed")
             else:
-                logger.warning("No PDF file provided and no cache available")
+                # Set initialized=True even without PDF file - tools can still be used to index later
+                self.initialized = True
+                if pdf_file_path:
+                    logger.warning(f"PDF file not found: {pdf_file_path}")
+                else:
+                    logger.info("No PDF file provided - PDF tools available for future indexing")
                     
         except Exception as e:
             logger.error(f"Failed to initialize PDF drawings database: {e}")
