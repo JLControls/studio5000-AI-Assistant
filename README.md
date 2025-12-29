@@ -1,5 +1,5 @@
 # NOTICE:
-Please note that this repo is strictly a prototype that will probably not be maintained as I do not have access to studio 5000 anymore and have attempted to do other things in my career. You are welcome to work on this if you like, just make a fork and do your own thing.
+Please note that this repo is strictly a prototype that will probably not be maintained. You are welcome to work on this if you like, just make a fork and do your own thing.
 
 # 🤖 Studio 5000 AI-Powered PLC Programming Assistant
 
