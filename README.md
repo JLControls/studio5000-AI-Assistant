@@ -1,3 +1,6 @@
+# NOTICE:
+Please note that this repo is strictly a prototype that will probably not be maintained as I do not have access to studio 5000 anymore and have attempted to do other things in my career. You are welcome to work on this if you like, just make a fork and do your own thing.
+
 # 🤖 Studio 5000 AI-Powered PLC Programming Assistant
 
 This revolutionary MCP (Model Context Protocol) server transforms PLC programming by providing AI-powered code generation, L5X routine creation, real .ACD file generation, and seamless Studio 5000 integration. Convert natural language specifications directly into working ladder logic and complete Studio 5000 projects!
