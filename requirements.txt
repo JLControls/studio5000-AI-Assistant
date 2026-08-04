@@ -7,6 +7,9 @@ asyncio>=3.4.3
 
 # XML processing (for L5X generation)
 xml-utils>=1.0.0
+# hutcheb/acd is loaded from ACD_TOOLS_SOURCE. The validated checkout is
+# F:\git\work\acd at base commit 019fb7872e090f71fc11313b5b98ed468a92cc75;
+# its Windows build hook currently prevents reliable pip installation.
 
 # Vector database and embeddings for SDK documentation search (FIXED VERSIONS)
 torch==2.2.2
@@ -19,5 +22,5 @@ PyMuPDF>=1.26.0
 pdfplumber>=0.11.0
 PyPDF2>=3.0.0
 
-# Note: Studio 5000 SDK requires Python 3.12 and is installed separately
-# The SDK is located at: C:\Users\Public\Documents\Studio 5000\Logix Designer SDK\python
+# Studio 5000 SDK integration is intentionally disabled. ACD analysis uses the
+# source checkout above and targets Studio 5000 v38 L5X semantics.

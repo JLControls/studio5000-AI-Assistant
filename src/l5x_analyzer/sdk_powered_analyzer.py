@@ -8,6 +8,7 @@ in production-scale ACD/L5K projects.
 
 import asyncio
 import os
+import sys
 import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -19,6 +20,14 @@ from .l5x_chunk import L5XChunk, L5XChunkType, L5XLocation, create_ladder_rung_c
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Add Studio 5000 SDK to path - configurable via environment variable
+_SDK_PATH = os.environ.get(
+    'STUDIO5000_SDK_PATH',
+    r"C:\Users\Public\Documents\Studio 5000\Logix Designer SDK\python"
+)
+if _SDK_PATH not in sys.path:
+    sys.path.append(_SDK_PATH)
 
 class SDKPoweredL5XAnalyzer:
     """
@@ -43,6 +52,9 @@ class SDKPoweredL5XAnalyzer:
         
     def _check_sdk_availability(self) -> bool:
         """Check if Studio 5000 SDK is available"""
+        if os.environ.get("STUDIO5000_SDK_ENABLED", "false").lower() not in {"1", "true", "yes"}:
+            logger.info("Studio 5000 SDK integration is disabled")
+            return False
         try:
             import logix_designer_sdk
             logger.info("Studio 5000 SDK is available")
@@ -53,22 +65,35 @@ class SDKPoweredL5XAnalyzer:
     
     async def open_project(self, project_path: str) -> bool:
         """
-        DISABLED: SDK project opening is too slow and unreliable
-        
+        Open an ACD/L5K project via the Logix Designer SDK
+
         Args:
             project_path: Path to ACD or L5K file
-            
+
         Returns:
-            False - SDK opening disabled
+            True if the project was opened successfully
         """
-        logger.warning("SDK project opening is DISABLED - too slow and unreliable")
-        logger.info(f"Skipping SDK open for: {project_path}")
-        
-        # Just mark as "opened" for compatibility but don't actually use SDK
-        self.project_path = project_path
-        self.is_project_open = False  # Keep as False since we're not really opening
-        
-        return False  # Always return False to indicate SDK not used
+        if not self.sdk_available:
+            logger.warning("Studio 5000 SDK not available - cannot open project")
+            return False
+
+        try:
+            from logix_designer_sdk import LogixProject
+
+            logger.info(f"Opening project via SDK: {project_path}")
+            self.sdk_project = await LogixProject.open_logix_project(project_path)
+            self.project_path = project_path
+            self.is_project_open = True
+
+            logger.info(f"Project opened successfully: {project_path}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to open project {project_path}: {e}")
+            self.sdk_project = None
+            self.project_path = project_path
+            self.is_project_open = False
+            return False
     
     def close_project(self):
         """Close the currently open project"""

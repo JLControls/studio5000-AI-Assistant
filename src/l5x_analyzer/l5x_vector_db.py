@@ -16,6 +16,7 @@ from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 import logging
 import time
+import tempfile
 
 from .l5x_chunk import L5XChunk, L5XChunkType, L5XLocation
 from .sdk_powered_analyzer import SDKPoweredL5XAnalyzer
@@ -142,7 +143,7 @@ class L5XVectorDatabase:
     async def index_acd_project(self, acd_path: str, routines_to_index: List[str] = None,
                               force_rebuild: bool = False) -> bool:
         """
-        Index ACD/L5K project by extracting routines via SDK
+        Index an ACD project by converting it offline and parsing the L5X
         
         Args:
             acd_path: Path to ACD or L5K file
@@ -160,37 +161,32 @@ class L5XVectorDatabase:
             return True
         
         try:
-            # Initialize SDK analyzer if needed
+            from .acd_offline_convert import convert_acd_to_l5x
+
+            # The analyzer's XML parser is retained, but SDK opening is disabled.
             if not self.sdk_analyzer:
                 self.sdk_analyzer = SDKPoweredL5XAnalyzer()
-            
-            # Open project
-            # SDK opening disabled - too slow and unreliable  
-            logger.warning("SDK project opening disabled")
-            if False:  # Always skip SDK opening
-                logger.error(f"Failed to open project: {acd_path}")
-                return False
-            
-            # Discover project structure
-            project_structure = await self.sdk_analyzer.discover_project_structure()
-            
-            # Determine which routines to index
-            if routines_to_index is None:
-                routines_to_index = [r['name'] for r in project_structure['routines']]
-            
-            logger.info(f"Indexing {len(routines_to_index)} routines from {project_name}")
-            
-            # Extract and parse each routine
-            all_chunks = []
-            for routine_info in project_structure['routines']:
-                routine_name = routine_info['name']
-                program_name = routine_info.get('program', 'MainProgram')
-                
-                if routine_name in routines_to_index:
-                    chunks = await self._extract_and_parse_routine(
-                        routine_name, program_name, acd_path
-                    )
-                    all_chunks.extend(chunks)
+
+            with tempfile.TemporaryDirectory(prefix="acd_index_") as temp_dir:
+                l5x_path = Path(temp_dir) / f"{project_name}.L5X"
+                conversion = convert_acd_to_l5x(acd_path, l5x_path, pretty=False)
+                if not conversion.get("success"):
+                    logger.error("Offline ACD conversion failed: %s", conversion)
+                    return False
+                all_chunks = self.sdk_analyzer.parse_routine_l5x(str(l5x_path))
+
+            if routines_to_index is not None:
+                allowed = set(routines_to_index)
+                all_chunks = [
+                    chunk for chunk in all_chunks
+                    if chunk.location.parent_routine in allowed or chunk.name in allowed
+                ]
+
+            routine_names = {
+                chunk.location.parent_routine
+                for chunk in all_chunks
+                if chunk.location.parent_routine
+            }
             
             # Build vector database from chunks
             self.build_vector_database(all_chunks, force_rebuild=True)
@@ -199,7 +195,7 @@ class L5XVectorDatabase:
             self.indexed_projects[project_name] = {
                 'path': acd_path,
                 'indexed_at': time.time(),
-                'routine_count': len(routines_to_index),
+                'routine_count': len(routine_names),
                 'chunk_count': len(all_chunks)
             }
             self._save_metadata()
@@ -210,9 +206,6 @@ class L5XVectorDatabase:
         except Exception as e:
             logger.error(f"Failed to index project {acd_path}: {e}")
             return False
-        finally:
-            if self.sdk_analyzer:
-                self.sdk_analyzer.close_project()
     
     async def _extract_and_parse_routine(self, routine_name: str, program_name: str, 
                                        acd_path: str) -> List[L5XChunk]:

@@ -50,8 +50,14 @@ except ImportError:
 from code_generator.l5x_generator import L5XGenerator, L5XProject, Program, Routine, LadderRung, create_motor_control_example
 from ai_assistant.code_assistant import CodeAssistant
 from ai_assistant.mcp_integration import create_mcp_integrated_assistant
-from sdk_interface.studio5000_sdk import studio5000_sdk
-from sdk_documentation.mcp_sdk_integration import SDKMCPIntegration, SDKMCPTools
+SDK_ENABLED = os.environ.get("STUDIO5000_SDK_ENABLED", "false").lower() in {"1", "true", "yes"}
+if SDK_ENABLED:
+    from sdk_interface.studio5000_sdk import studio5000_sdk
+    from sdk_documentation.mcp_sdk_integration import SDKMCPIntegration, SDKMCPTools
+else:
+    studio5000_sdk = None
+    SDKMCPIntegration = None
+    SDKMCPTools = None
 from documentation.instruction_mcp_integration import InstructionMCPIntegration, InstructionMCPTools
 from l5x_analyzer.l5x_mcp_integration import L5XSDKMCPIntegration, L5XMCPTools
 from drawings_analyzer.pdf_mcp_integration import PDFMCPIntegration, PDFMCPTools
@@ -250,23 +256,71 @@ class Studio5000Parser:
         
         return None
     
-    def build_instruction_index(self) -> Dict[str, Instruction]:
-        """Build a comprehensive index of all instructions"""
+    def build_instruction_index(self, force_rebuild: bool = False) -> Dict[str, Instruction]:
+        """Build a comprehensive index of all instructions with disk caching and parallel processing"""
+        import pickle
+        from concurrent.futures import ThreadPoolExecutor
+
+        cache_dir = Path.home() / ".cache" / "studio5000"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_file = cache_dir / "instruction_index_cache.pkl"
+
+        if not force_rebuild and cache_file.exists():
+            try:
+                with open(cache_file, 'rb') as f:
+                    self.instructions = pickle.load(f)
+                return self.instructions
+            except Exception as e:
+                import sys
+                print(f"Warning: Failed to load instruction cache: {e}", file=sys.stderr)
+
         instructions = {}
-        
+
         # Parse categories first
-        self.parse_main_index()
-        
-        # Find all HTML files that might be instructions
-        html_files = list(self.doc_root.glob("*.htm"))
-        
-        for html_file in html_files:
-            instruction = self.parse_instruction_file(html_file.name)
-            if instruction and instruction.name:
-                instructions[instruction.name.upper()] = instruction
+        try:
+            self.parse_main_index()
+        except Exception:
+            pass
+
+        # Collect target HTML file paths from main index links (17691.htm) if available
+        target_file_names = set()
+        index_file = self.doc_root / "17691.htm"
+        if index_file.exists():
+            try:
+                with open(index_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    soup = BeautifulSoup(f.read(), 'html.parser')
+                links = soup.find_all('a', href=re.compile(r'^\d+\.htm$'))
+                for link in links:
+                    target_file_names.add(link['href'])
+            except Exception:
+                pass
+
+        if target_file_names:
+            html_files = [self.doc_root / fname for fname in target_file_names if (self.doc_root / fname).exists()]
+        else:
+            html_files = list(self.doc_root.glob("*.htm"))
+
+        def parse_file(html_file):
+            return self.parse_instruction_file(html_file.name)
+
+        with ThreadPoolExecutor(max_workers=16) as executor:
+            results = executor.map(parse_file, html_files)
+            for instruction in results:
+                if instruction and instruction.name:
+                    instructions[instruction.name.upper()] = instruction
+
         
         self.instructions = instructions
+
+        try:
+            with open(cache_file, 'wb') as f:
+                pickle.dump(instructions, f)
+        except Exception as e:
+            import sys
+            print(f"Warning: Failed to save instruction cache: {e}", file=sys.stderr)
+
         return instructions
+
 
 class Studio5000MCPServer:
     """MCP Server for Studio 5000 documentation with optimized lazy loading"""
@@ -342,6 +396,8 @@ class Studio5000MCPServer:
     @property
     def sdk_integration(self):
         """Lazy-loaded SDK integration"""
+        if not SDK_ENABLED:
+            raise RuntimeError("Studio 5000 SDK integration is disabled")
         if self._sdk_integration is None:
             with self._init_locks['sdk']:
                 if self._sdk_integration is None:
@@ -359,6 +415,8 @@ class Studio5000MCPServer:
     @property 
     def sdk_tools(self):
         """Lazy-loaded SDK tools"""
+        if not SDK_ENABLED:
+            raise RuntimeError("Studio 5000 SDK integration is disabled")
         if self._sdk_tools is None:
             self._sdk_tools = SDKMCPTools(self.sdk_integration)
         return self._sdk_tools
@@ -540,54 +598,15 @@ class Studio5000MCPServer:
             self.validate_ladder_logic
         )
         
-        self.server.add_tool(
-            "create_acd_project",
-            "Create real Studio 5000 .ACD project file using official SDK",
-            self.create_acd_project
-        )
-        
-        # Add SDK documentation search tools
-        self.server.add_tool(
-            "search_sdk_documentation",
-            "Search Studio 5000 SDK documentation using natural language",
-            self.search_sdk_documentation
-        )
-        
-        self.server.add_tool(
-            "get_sdk_operation_info",
-            "Get detailed information about a specific SDK operation",
-            self.get_sdk_operation_info
-        )
-        
-        self.server.add_tool(
-            "list_sdk_categories", 
-            "List all SDK operation categories",
-            self.list_sdk_categories
-        )
-        
-        self.server.add_tool(
-            "get_sdk_operations_by_category",
-            "Get all SDK operations in a specific category",
-            self.get_sdk_operations_by_category
-        )
-        
-        self.server.add_tool(
-            "get_logix_project_methods",
-            "Get LogixProject methods, optionally filtered by category",
-            self.get_logix_project_methods
-        )
-        
-        self.server.add_tool(
-            "suggest_sdk_operations",
-            "Suggest relevant SDK operations based on context",
-            self.suggest_sdk_operations
-        )
-        
-        self.server.add_tool(
-            "get_sdk_statistics",
-            "Get SDK documentation statistics and overview",
-            self.get_sdk_statistics
-        )
+        if SDK_ENABLED:
+            self.server.add_tool("create_acd_project", "Create a Studio 5000 .ACD project using the SDK", self.create_acd_project)
+            self.server.add_tool("search_sdk_documentation", "Search Studio 5000 SDK documentation", self.search_sdk_documentation)
+            self.server.add_tool("get_sdk_operation_info", "Get details about an SDK operation", self.get_sdk_operation_info)
+            self.server.add_tool("list_sdk_categories", "List SDK operation categories", self.list_sdk_categories)
+            self.server.add_tool("get_sdk_operations_by_category", "List SDK operations in a category", self.get_sdk_operations_by_category)
+            self.server.add_tool("get_logix_project_methods", "Get LogixProject methods", self.get_logix_project_methods)
+            self.server.add_tool("suggest_sdk_operations", "Suggest relevant SDK operations", self.suggest_sdk_operations)
+            self.server.add_tool("get_sdk_statistics", "Get SDK documentation statistics", self.get_sdk_statistics)
         
         # Add L5X analyzer tools for production-scale L5X files
         self.server.add_tool(
@@ -600,6 +619,13 @@ class Studio5000MCPServer:
             "index_acd_project",
             "Index ACD/L5K project for semantic search of routines and components",
             self.index_acd_project
+        )
+
+        self.server.add_tool(
+            "convert_acd_to_l5x",
+            "Generate a v38 L5X from an ACD using the offline source parser. Preserves "
+            "rung and operand comments and can report semantic parity against a matching Studio export.",
+            self.convert_acd_to_l5x
         )
         
         self.server.add_tool(
@@ -1262,12 +1288,22 @@ class Studio5000MCPServer:
                 'message': 'Failed to index exported L5X files'
             }
 
-    async def index_acd_project(self, acd_path: str, routines_to_index: Optional[List[str]] = None, 
+    async def index_acd_project(self, acd_path: str, routines_to_index: Optional[List[str]] = None,
                                force_rebuild: bool = False) -> Dict[str, Any]:
         """Index ACD/L5K project for semantic search"""
         return await self.l5x_integration.index_acd_project(
             acd_path, routines_to_index, force_rebuild
         )
+
+    async def convert_acd_to_l5x(self, acd_path: str, output_path: Optional[str] = None,
+                                 reference_path: Optional[str] = None) -> Dict[str, Any]:
+        """Generate a fresh L5X export from an ACD file via offline acd-tools parsing"""
+        from l5x_analyzer.acd_offline_convert import convert_acd_to_l5x as _convert
+
+        source = Path(acd_path)
+        resolved_output = output_path or str(source.with_name(f"{source.stem}.Offline.L5X"))
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, _convert, acd_path, resolved_output, True, reference_path)
     
     async def search_l5x_content(self, query: str, file_filter: Optional[str] = None,
                                component_type: Optional[str] = None, limit: int = 20) -> Dict[str, Any]:
@@ -1592,6 +1628,13 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'force_rebuild': {'type': 'boolean', 'description': 'Force rebuild even if cached (default: false)'}
                 }
                 required = ['acd_path']
+            elif name == 'convert_acd_to_l5x':
+                properties = {
+                    'acd_path': {'type': 'string', 'description': 'Path to the ACD file to convert'},
+                    'output_path': {'type': 'string', 'description': 'Optional output path (default: <name>.Offline.L5X to preserve Studio exports)'},
+                    'reference_path': {'type': 'string', 'description': 'Optional matching Studio-exported L5X for semantic parity reporting'}
+                }
+                required = ['acd_path']
             elif name == 'search_l5x_content':
                 properties = {
                     'query': {'type': 'string', 'description': 'Natural language search query'},
@@ -1789,6 +1832,11 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
 
 async def main():
     """Main server entry point"""
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
     parser = argparse.ArgumentParser(description='Studio 5000 AI-Powered PLC Programming Assistant MCP Server')
     
     # Get default documentation path from environment variable or use fallback
@@ -1810,7 +1858,6 @@ async def main():
     try:
         mcp_server = Studio5000MCPServer(args.doc_root)
     except Exception as e:
-        import sys
         print(f"Error initializing server: {e}", file=sys.stderr)
         return 1
     
@@ -1880,7 +1927,6 @@ async def main():
     
     else:
         # Real MCP server mode - JSON-RPC 2.0 via stdin/stdout
-        import sys
         print("Studio 5000 MCP Server starting...", file=sys.stderr)
         print("Ready to handle MCP requests via stdin/stdout", file=sys.stderr)
         
