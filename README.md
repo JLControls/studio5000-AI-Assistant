@@ -175,8 +175,10 @@ python src/mcp_server/studio5000_mcp_server.py --test
    
    **Note**: Vector database components (torch, sentence-transformers, faiss-cpu) are included for semantic search capabilities. These enable advanced L5X analysis and instruction search features.
 
-#### Step 3.5: Install Studio 5000 SDK (CRITICAL for .ACD files!) 🚨
-**⚠️ TEAMMATES MUST DO THIS STEP** - Skip only if you don't need .ACD file creation
+#### Step 3.5: Install Studio 5000 SDK (Optional for .ACD creation) 🚨
+Offline ACD-to-L5X conversion is included in this repository through the
+vendored `src/acd` parser and does not require a separate `acd-tools` checkout.
+Install the official SDK only when you need SDK-backed `.ACD` project creation.
 
 1. **Find the SDK wheel file** in your Studio 5000 installation:
    ```bash
@@ -197,7 +199,8 @@ python src/mcp_server/studio5000_mcp_server.py --test
    pip install logix_designer_sdk-*-py3-none-any.whl
    ```
 
-**Without this step**: Documentation and L5X generation will work, but .ACD file creation will fail!
+**Without this step**: Documentation, L5X generation, and offline ACD-to-L5X
+conversion work; SDK-backed `.ACD` project creation is unavailable.
 
 #### Step 4: Test Your Installation ✅
 1. **Run the test command**:

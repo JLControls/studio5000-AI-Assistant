@@ -2,14 +2,21 @@
 beautifulsoup4>=4.12.0
 lxml>=4.9.0
 
-# Data handling and async support  
+# Data handling and async support
 asyncio>=3.4.3
+
+# Dependency-graph engine for iterative PLC comment analysis (comment_graph)
+networkx>=3.0
 
 # XML processing (for L5X generation)
 xml-utils>=1.0.0
-# hutcheb/acd is loaded from ACD_TOOLS_SOURCE. The validated checkout is
-# F:\git\work\acd at base commit 019fb7872e090f71fc11313b5b98ed468a92cc75;
-# its Windows build hook currently prevents reliable pip installation.
+
+# Vendored patched ACD parser/exporter runtime
+kaitaistruct>=0.11
+loguru>=0.7.3
+
+# Test tooling
+pytest>=8.0.0
 
 # Vector database and embeddings for SDK documentation search (FIXED VERSIONS)
 torch==2.2.2
@@ -23,4 +30,4 @@ pdfplumber>=0.11.0
 PyPDF2>=3.0.0
 
 # Studio 5000 SDK integration is intentionally disabled. ACD analysis uses the
-# source checkout above and targets Studio 5000 v38 L5X semantics.
+# vendored parser/exporter and targets Studio 5000 v38 L5X semantics.

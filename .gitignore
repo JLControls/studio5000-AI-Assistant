@@ -58,9 +58,10 @@ test_sdk_cache/
 # Test Files and Generated Projects
 *.ACD
 *.L5X
-*_test_*
-test_*.py
-debug_*.py
+# Scratch scripts at the repo root only — do NOT ignore the pytest suite under tests/.
+/test_*.py
+/debug_*.py
+/*_test_*
 
 # Studio 5000 specific
 *.L5K

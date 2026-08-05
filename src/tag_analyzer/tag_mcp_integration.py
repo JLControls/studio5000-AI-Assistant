@@ -16,6 +16,7 @@ from enum import Enum
 from .tag_vector_db import TagVectorDatabase, TagSearchResult
 from .csv_tag_parser import CSVTagParser
 from .tag_chunk import TagChunk, TagChunkType
+from .comment_pipeline import PLCCommentPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,10 @@ class TagMCPTools(Enum):
     GET_SAFETY_TAGS = "get_safety_tags"
     GET_MOTOR_TAGS = "get_motor_tags"
     GET_SENSOR_TAGS = "get_sensor_tags"
+    GET_UNCOMMENTED_TAGS = "get_uncommented_tags"
+    GET_TAG_REASONING_CONTEXT = "get_tag_reasoning_context"
+    GENERATE_COMMENT_DELIVERABLES = "generate_comment_deliverables"
+    MANAGE_COMMENT_MEMORY = "manage_comment_memory"
 
 class TagMCPIntegration:
     """
@@ -42,6 +47,7 @@ class TagMCPIntegration:
     def __init__(self, vector_db: TagVectorDatabase = None):
         self.vector_db = vector_db or TagVectorDatabase()
         self.parser = CSVTagParser()
+        self.comment_pipeline = PLCCommentPipeline()
         self.initialized = False
         
         # Index status
@@ -457,7 +463,98 @@ class TagMCPIntegration:
     async def get_sensor_tags(self) -> Dict[str, Any]:
         """Get all sensor tags"""
         return await self.search_tags("sensor photoeye proximity switch", chunk_type_filter="sensor_tag", limit=50)
-    
+
+    def _get_comment_pipeline(self) -> PLCCommentPipeline:
+        import importlib
+        from . import comment_pipeline
+        importlib.reload(comment_pipeline)
+        return comment_pipeline.PLCCommentPipeline()
+
+    async def get_uncommented_tags(self, file_path: str, scope_filter: Optional[str] = None) -> Dict[str, Any]:
+        """Scan L5X or ACD for tags missing comments or descriptions."""
+        try:
+            pipeline = self._get_comment_pipeline()
+            res = pipeline.get_uncommented_tags(file_path, scope_filter)
+            res["success"] = True
+            return res
+        except Exception as e:
+            logger.error(f"Error scanning uncommented tags: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def get_tag_reasoning_context(self, tag_name: str, file_path: str) -> Dict[str, Any]:
+        """Extract rich context, rungs, logic snippets, and adjacent tag comments for tag reasoning."""
+        try:
+            pipeline = self._get_comment_pipeline()
+            res = pipeline.get_tag_reasoning_context(tag_name, file_path)
+            res["success"] = True
+            return res
+        except Exception as e:
+            logger.error(f"Error getting tag reasoning context for {tag_name}: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def generate_comment_deliverables(
+        self, decisions: List[Dict[str, Any]], output_dir: str, project_name: str = "ModernTHAWROOM021722"
+    ) -> Dict[str, Any]:
+        """Generate Studio 5000 importable Comment_Delta.CSV and interactive comment_review_report.html."""
+        try:
+            pipeline = self._get_comment_pipeline()
+            res = pipeline.generate_deliverables(decisions, output_dir, project_name)
+            res["success"] = True
+            return res
+        except Exception as e:
+            logger.error(f"Error generating comment deliverables: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def manage_comment_memory(
+        self, file_path: str, memory_file_path: str, decisions_to_save: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
+        """Track granular routine/tag hashes to skip unchanged routines and incrementally save decisions."""
+        try:
+            pipeline = self._get_comment_pipeline()
+            res = pipeline.manage_incremental_memory(file_path, memory_file_path, decisions_to_save)
+            res["success"] = True
+            return res
+        except Exception as e:
+            logger.error(f"Error managing comment memory: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def analyze_comment_graph(
+        self,
+        file_path: str,
+        reference_path: Optional[str] = None,
+        generate_deliverables: bool = False,
+        output_dir: Optional[str] = None,
+        memory_file_path: Optional[str] = None,
+        user_seeds: Optional[List[Dict[str, Any]]] = None,
+        config: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Build a typed dependency graph, propagate comment facts to a fixed
+        point, and emit deliverables only from the converged state."""
+        try:
+            from comment_graph.config import AnalysisRequest
+            from comment_graph.orchestrator import analyze_comment_graph as run_analysis
+
+            request = AnalysisRequest.from_dict(
+                {
+                    "file_path": file_path,
+                    "reference_path": reference_path,
+                    "generate_deliverables": generate_deliverables,
+                    "output_dir": output_dir,
+                    "memory_file_path": memory_file_path,
+                    "user_seeds": user_seeds or [],
+                    "config": config,
+                }
+            )
+            # The orchestrator owns the full lifecycle, including rendering
+            # deliverables (via DeliverablesBridge -> PLCCommentPipeline, no reload).
+            result = await run_analysis(request)
+            res = result.to_dict()
+            res["success"] = True
+            return res
+        except Exception as e:
+            logger.error(f"Error analyzing comment graph for {file_path}: {e}")
+            return {"success": False, "error": str(e)}
+
     def get_available_tools(self) -> Dict[str, str]:
         """Get list of available MCP tools"""
         return {

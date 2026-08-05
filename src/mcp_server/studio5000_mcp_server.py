@@ -623,7 +623,7 @@ class Studio5000MCPServer:
 
         self.server.add_tool(
             "convert_acd_to_l5x",
-            "Generate a v38 L5X from an ACD using the offline source parser. Preserves "
+            "Generate a v38 L5X from an ACD using the offline vendored parser. Preserves "
             "rung and operand comments and can report semantic parity against a matching Studio export.",
             self.convert_acd_to_l5x
         )
@@ -768,6 +768,36 @@ class Studio5000MCPServer:
             self.get_sensor_tags
         )
         
+        self.server.add_tool(
+            "get_uncommented_tags",
+            "Scan L5X or ACD for tags missing comments or descriptions",
+            self.get_uncommented_tags
+        )
+        
+        self.server.add_tool(
+            "get_tag_reasoning_context",
+            "Extract rich ladder logic context, rungs, and adjacent tag descriptions for tag reasoning",
+            self.get_tag_reasoning_context
+        )
+        
+        self.server.add_tool(
+            "generate_comment_deliverables",
+            "Generate Studio 5000 importable Comment_Delta.CSV and interactive comment_review_report.html",
+            self.generate_comment_deliverables
+        )
+        
+        self.server.add_tool(
+            "manage_comment_memory",
+            "Track granular routine/tag hashes to skip unchanged routines and incrementally save decisions",
+            self.manage_comment_memory
+        )
+
+        self.server.add_tool(
+            "analyze_comment_graph",
+            "Build a typed dependency graph, propagate PLC comment facts to a deterministic fixed point (predecessor/successor invalidation, SCC/cycle handling), and emit deliverables only from the converged state",
+            self.analyze_comment_graph
+        )
+
         # Performance monitoring tools
         self.server.add_tool(
             "get_cache_performance",
@@ -1297,7 +1327,7 @@ class Studio5000MCPServer:
 
     async def convert_acd_to_l5x(self, acd_path: str, output_path: Optional[str] = None,
                                  reference_path: Optional[str] = None) -> Dict[str, Any]:
-        """Generate a fresh L5X export from an ACD file via offline acd-tools parsing"""
+        """Generate a fresh L5X export from an ACD file via the offline vendored parser."""
         from l5x_analyzer.acd_offline_convert import convert_acd_to_l5x as _convert
 
         source = Path(acd_path)
@@ -1424,7 +1454,43 @@ class Studio5000MCPServer:
     async def get_sensor_tags(self) -> Dict[str, Any]:
         """Get all sensor tags"""
         return await self.tag_integration.get_sensor_tags()
-    
+
+    async def get_uncommented_tags(self, file_path: str, scope_filter: Optional[str] = None) -> Dict[str, Any]:
+        """Scan L5X or ACD for tags missing comments or descriptions"""
+        return await self.tag_integration.get_uncommented_tags(file_path, scope_filter)
+
+    async def get_tag_reasoning_context(self, tag_name: str, file_path: str) -> Dict[str, Any]:
+        """Extract rich ladder logic context, rungs, and adjacent tag descriptions for tag reasoning"""
+        return await self.tag_integration.get_tag_reasoning_context(tag_name, file_path)
+
+    async def generate_comment_deliverables(
+        self, decisions: List[Dict[str, Any]], output_dir: str, project_name: str = "ModernTHAWROOM021722"
+    ) -> Dict[str, Any]:
+        """Generate Studio 5000 importable Comment_Delta.CSV and interactive comment_review_report.html"""
+        return await self.tag_integration.generate_comment_deliverables(decisions, output_dir, project_name)
+
+    async def manage_comment_memory(
+        self, file_path: str, memory_file_path: str, decisions_to_save: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
+        """Track granular routine/tag hashes to skip unchanged routines and incrementally save decisions"""
+        return await self.tag_integration.manage_comment_memory(file_path, memory_file_path, decisions_to_save)
+
+    async def analyze_comment_graph(
+        self,
+        file_path: str,
+        reference_path: Optional[str] = None,
+        generate_deliverables: bool = False,
+        output_dir: Optional[str] = None,
+        memory_file_path: Optional[str] = None,
+        user_seeds: Optional[List[Dict[str, Any]]] = None,
+        config: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Iterative PLC comment analysis over a typed dependency graph."""
+        return await self.tag_integration.analyze_comment_graph(
+            file_path, reference_path, generate_deliverables,
+            output_dir, memory_file_path, user_seeds, config,
+        )
+
     async def get_cache_performance(self) -> Dict[str, Any]:
         """Get vector database cache performance statistics"""
         try:
@@ -1771,7 +1837,44 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
             elif name in ['get_safety_tags', 'get_motor_tags', 'get_sensor_tags']:
                 properties = {}
                 required = []
-            
+            elif name == 'get_uncommented_tags':
+                properties = {
+                    'file_path': {'type': 'string', 'description': 'Path to ACD or L5X file'},
+                    'scope_filter': {'type': 'string', 'description': 'Optional scope filter (Controller or Program name)'}
+                }
+                required = ['file_path']
+            elif name == 'get_tag_reasoning_context':
+                properties = {
+                    'tag_name': {'type': 'string', 'description': 'Tag name to extract reasoning context for'},
+                    'file_path': {'type': 'string', 'description': 'Path to ACD or L5X file'}
+                }
+                required = ['tag_name', 'file_path']
+            elif name == 'generate_comment_deliverables':
+                properties = {
+                    'decisions': {'type': 'array', 'description': 'List of proposed comment decision dicts'},
+                    'output_dir': {'type': 'string', 'description': 'Output directory for CSV and HTML deliverables'},
+                    'project_name': {'type': 'string', 'description': 'Project name for report header'}
+                }
+                required = ['decisions', 'output_dir']
+            elif name == 'manage_comment_memory':
+                properties = {
+                    'file_path': {'type': 'string', 'description': 'Path to ACD or L5X file'},
+                    'memory_file_path': {'type': 'string', 'description': 'Path to memory JSON file'},
+                    'decisions_to_save': {'type': 'array', 'description': 'Optional decision dicts to save'}
+                }
+                required = ['file_path', 'memory_file_path']
+            elif name == 'analyze_comment_graph':
+                properties = {
+                    'file_path': {'type': 'string', 'description': 'Path to native L5X (authoritative) or ACD (converted offline) file'},
+                    'reference_path': {'type': 'string', 'description': 'Optional reference L5X for ACD conversion validation'},
+                    'generate_deliverables': {'type': 'boolean', 'description': 'Render Comment_Delta.CSV / HTML from the converged state'},
+                    'output_dir': {'type': 'string', 'description': 'Output directory for deliverables (required if generate_deliverables)'},
+                    'memory_file_path': {'type': 'string', 'description': 'Optional memory JSON path; record is extended with graph_digest and source_artifact_hash'},
+                    'user_seeds': {'type': 'array', 'description': 'Optional user decision seeds (UPPERCASE NAME/PROPOSED_DESCRIPTION dicts), tier-2 precedence'},
+                    'config': {'type': 'object', 'description': 'Optional AnalysisConfig overrides (max_passes, max_component_passes, max_workers, enable_instruction_doc, enable_vector_retrieval)'}
+                }
+                required = ['file_path']
+
             tools.append({
                 'name': name,
                 'description': tool['description'],
@@ -1916,6 +2019,23 @@ async def main():
                 print(f"  Project: {l5x_result['name']}")
         else:
             print(f"  Error: {l5x_result.get('error', 'Unknown error')}")
+
+        print(f"\n6. Testing iterative comment graph analysis (analyze_comment_graph):")
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        native_fixture = os.path.join(repo_root, 'tests', 'acd', 'ModernTHAWROOM021722.L5X')
+        if os.path.exists(native_fixture):
+            cg_result = await mcp_server.analyze_comment_graph(native_fixture)
+            if cg_result.get('success'):
+                print(f"  Convergence: {cg_result.get('convergence_status')}")
+                print(f"  Proposed decisions: {len(cg_result.get('decisions', []))}")
+                print(f"  Passes: {len(cg_result.get('pass_history', []))}")
+                print(f"  Warnings: {len(cg_result.get('warnings', []))}, "
+                      f"contradictions: {len(cg_result.get('contradictions', []))}, "
+                      f"assistance: {len(cg_result.get('assistance_requests', []))}")
+            else:
+                print(f"  Error: {cg_result.get('error', 'Unknown error')}")
+        else:
+            print(f"  Skipped (native fixture not found at {native_fixture})")
 
         print(f"\n🎉 AI-Powered Studio 5000 Assistant initialized successfully!")
         print(f"📊 Features ready:")

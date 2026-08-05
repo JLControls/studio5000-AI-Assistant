@@ -3,9 +3,7 @@
 
 from __future__ import annotations
 
-import os
 import shutil
-import sys
 import tempfile
 import weakref
 import xml.dom.minidom
@@ -15,19 +13,7 @@ from typing import Any, Dict
 from .l5x_semantic_validation import compare_l5x, inventory_l5x
 
 
-_ACD_SOURCE = Path(os.environ.get("ACD_TOOLS_SOURCE", r"F:\git\work\acd"))
 _PATCHED = False
-
-
-def _load_acd_source() -> None:
-    if not _ACD_SOURCE.is_dir():
-        raise ImportError(
-            f"acd source checkout not found: {_ACD_SOURCE}. "
-            "Set ACD_TOOLS_SOURCE to the hutcheb/acd checkout."
-        )
-    source = str(_ACD_SOURCE)
-    if source not in sys.path:
-        sys.path.insert(0, source)
 
 
 def _apply_runtime_compatibility() -> None:
@@ -36,7 +22,6 @@ def _apply_runtime_compatibility() -> None:
     if _PATCHED:
         return
 
-    _load_acd_source()
     import acd.l5x.export_l5x
 
     original_post_init = acd.l5x.export_l5x.ExportL5x.__post_init__
@@ -86,7 +71,7 @@ def convert_acd_to_l5x(
             "success": True,
             "output_path": str(output_path),
             "size_kb": round(output_path.stat().st_size / 1024, 1),
-            "acd_source": str(_ACD_SOURCE),
+            "acd_source": "vendored:src/acd",
             "inventory": {key: len(value) for key, value in inventory_l5x(output_path).items()},
             "note": (
                 "Offline v38 conversion; no Logix Designer SDK was initialized. "

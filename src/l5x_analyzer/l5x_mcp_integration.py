@@ -508,9 +508,27 @@ class L5XSDKMCPIntegration:
                         rung_chunks.append(result)
             
             if not routine_chunks and not rung_chunks:
+                # Auto-indexing fallback: if acd_path exists, attempt to index its directory
+                path_obj = Path(acd_path)
+                l5x_dir = path_obj.parent if path_obj.is_file() else path_obj
+                if l5x_dir.exists():
+                    logger.info(f"Routine {routine_name} not found in index. Auto-indexing L5X files from {l5x_dir}...")
+                    self.index_exported_l5x_files(str(l5x_dir))
+                    search_results = self.vector_db.search_l5x_content(
+                        routine_query, limit=50, 
+                        chunk_types=[L5XChunkType.ROUTINE, L5XChunkType.LADDER_RUNG]
+                    )
+                    for result in search_results:
+                        if (result.location.parent_routine == routine_name or result.name == routine_name):
+                            if result.chunk_type == L5XChunkType.ROUTINE:
+                                routine_chunks.append(result)
+                            elif result.chunk_type == L5XChunkType.LADDER_RUNG:
+                                rung_chunks.append(result)
+
+            if not routine_chunks and not rung_chunks:
                 return {
                     'success': False,
-                    'error': f'Routine {routine_name} not found in indexed content. Make sure L5X files are indexed first.'
+                    'error': f'Routine {routine_name} not found in indexed content after scanning {acd_path}.'
                 }
             
             # Sort rungs by rung number
