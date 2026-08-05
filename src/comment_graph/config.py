@@ -47,6 +47,8 @@ class AnalysisRequest:
     memory_file_path: Optional[str] = None
     user_seeds: List[Dict[str, Any]] = field(default_factory=list)
     config: AnalysisConfig = field(default_factory=AnalysisConfig)
+    edit_acd: bool = False
+    target_acd: Optional[str] = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "AnalysisRequest":
@@ -58,6 +60,8 @@ class AnalysisRequest:
             memory_file_path=data.get("memory_file_path"),
             user_seeds=list(data.get("user_seeds", [])),
             config=AnalysisConfig.from_dict(data.get("config")),
+            edit_acd=bool(data.get("edit_acd", False)),
+            target_acd=data.get("target_acd"),
         )
 
 

@@ -1,0 +1,2123 @@
+[
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "B3[0].0",
+    "PROPOSED_DESCRIPTION": "Glycol pump run request/seal – latched by glycol start command (N101[20].11) and sealed in; dropped by stop command (N101[20].12). Drives the glycol pump start/stop demand rungs.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Glycol_Pump R0 seal, R1/R2 demand"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "B3[0].1",
+    "PROPOSED_DESCRIPTION": "Glycol valve-off permissive – ON only when all six implemented Cell 1/Cell 2 glycol solenoid outputs (O:08.01–08.06) are de-energized; gates the glycol pump stop demand.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Glycol_Pump R3 rung comment"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Cell_1_Temperature_Control_4",
+    "PROPOSED_DESCRIPTION": "Cell 1 temperature-control subroutine – sequences Cell 1 glycol heating and ammonia cooling from product/room temperatures and setpoint deadbands.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "JSR in MainRoutine R2"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Cell_2_Temperature_Control_8",
+    "PROPOSED_DESCRIPTION": "Cell 2 temperature-control subroutine – sequences Cell 2 glycol heating and ammonia cooling from product/room temperatures and setpoint deadbands.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "JSR in MainRoutine R4"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:2:I.Ch02.Data",
+    "PROPOSED_DESCRIPTION": "Raw RTD/meat-probe analog input (5069 module :2 Ch02) – copied to scratch N18[11] and stored as thaw-room temperature N111[18] (engineering units).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:2:I.Ch03.Data",
+    "PROPOSED_DESCRIPTION": "Raw RTD/meat-probe analog input (5069 module :2 Ch03) – copied to scratch N18[12] and stored as thaw-room temperature N112[18] (engineering units).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:2:I.Ch04.Data",
+    "PROPOSED_DESCRIPTION": "Raw RTD/meat-probe analog input (5069 module :2 Ch04) – copied to scratch N18[13] and stored as thaw-room temperature N113[18] (engineering units).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:2:I.Ch05.Data",
+    "PROPOSED_DESCRIPTION": "Raw RTD/meat-probe analog input (5069 module :2 Ch05) – copied to scratch N18[14] and stored as thaw-room temperature N114[18] (engineering units).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:2:I.Ch06.Data",
+    "PROPOSED_DESCRIPTION": "Raw RTD/meat-probe analog input (5069 module :2 Ch06) – copied to scratch N18[15] and stored as thaw-room temperature N115[18] (engineering units).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:2:I.Ch07.Data",
+    "PROPOSED_DESCRIPTION": "Raw RTD/meat-probe analog input (5069 module :2 Ch07) – copied to scratch N18[16] and stored as thaw-room temperature N116[18] (engineering units).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:4:I.Ch02.Data",
+    "PROPOSED_DESCRIPTION": "Raw RTD/meat-probe analog input (5069 module :4 Ch02) – copied to scratch N18[27] and stored as thaw-room temperature N127[18] (engineering units).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:4:I.Ch03.Data",
+    "PROPOSED_DESCRIPTION": "Raw RTD/meat-probe analog input (5069 module :4 Ch03) – copied to scratch N18[28] and stored as thaw-room temperature N128[18] (engineering units).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:4:I.Ch04.Data",
+    "PROPOSED_DESCRIPTION": "Raw RTD/meat-probe analog input (5069 module :4 Ch04) – copied to scratch N18[29] and stored as thaw-room temperature N129[18] (engineering units).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:4:I.Ch05.Data",
+    "PROPOSED_DESCRIPTION": "Raw RTD/meat-probe analog input (5069 module :4 Ch05) – copied to scratch N18[30] and stored as thaw-room temperature N130[18] (engineering units).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:4:I.Ch06.Data",
+    "PROPOSED_DESCRIPTION": "Raw RTD/meat-probe analog input (5069 module :4 Ch06) – copied to scratch N18[31] and stored as thaw-room temperature N131[18] (engineering units).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:4:I.Ch07.Data",
+    "PROPOSED_DESCRIPTION": "Raw RTD/meat-probe analog input (5069 module :4 Ch07) – copied to scratch N18[32] and stored as thaw-room temperature N132[18] (engineering units).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:8:O.Pt00.Data",
+    "PROPOSED_DESCRIPTION": "Cell 1 glycol heating solenoid 1-A output (O:08.01) – admits warm glycol for Cell 1 heating when the heating branch is satisfied.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R7 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:8:O.Pt01.Data",
+    "PROPOSED_DESCRIPTION": "Cell 1 glycol heating solenoid 1-B output (O:08.02) – admits warm glycol for Cell 1 heating when the heating branch is satisfied.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R7 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:8:O.Pt02.Data",
+    "PROPOSED_DESCRIPTION": "Cell 1 glycol heating solenoid 1-C output (O:08.03) – admits warm glycol for Cell 1 heating when the heating branch is satisfied.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R7 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:8:O.Pt03.Data",
+    "PROPOSED_DESCRIPTION": "Cell 2 glycol heating solenoid 2-A output (O:08.04) – admits warm glycol for Cell 2 heating when the heating branch is satisfied.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R7 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:8:O.Pt04.Data",
+    "PROPOSED_DESCRIPTION": "Cell 2 glycol heating solenoid 2-B output (O:08.05) – admits warm glycol for Cell 2 heating when the heating branch is satisfied.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R7 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:8:O.Pt05.Data",
+    "PROPOSED_DESCRIPTION": "Cell 2 glycol heating solenoid 2-C output (O:08.06) – admits warm glycol for Cell 2 heating when the heating branch is satisfied.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R7 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:8:O.Pt06.Data",
+    "PROPOSED_DESCRIPTION": "Cell 1 ammonia cooling solenoid output (O:08.07 – Thawing Room 1 ammonia sol) – energized to cool Cell 1 when the cooling branch is satisfied.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R10 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:8:O.Pt07.Data",
+    "PROPOSED_DESCRIPTION": "Cell 2 ammonia cooling solenoid output (O:08.08 – Thawing Room 2 ammonia sol) – energized to cool Cell 2 when the cooling branch is satisfied.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R10 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:8:O.Pt08.Data",
+    "PROPOSED_DESCRIPTION": "Glycol pump No. 1 output (O:08.09) – energized together with pump No. 2 while the glycol pump run command (N101[20].13) is latched.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Glycol_Pump R4 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "ENETBRIDGE_5069:8:O.Pt09.Data",
+    "PROPOSED_DESCRIPTION": "Glycol pump No. 2 output (O:08.10) – energized together with pump No. 1 while the glycol pump run command (N101[20].13) is latched.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Glycol_Pump R4 rung comment"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan01_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 01 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan01_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 01 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan01_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan01_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 01 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan01_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan01_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 01 PowerFlex drive start command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan01_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 01 PowerFlex drive stop command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan01_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 01 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan02_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 02 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan02_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 02 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan02_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan02_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 02 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan02_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan02_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 02 PowerFlex drive start command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan02_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 02 PowerFlex drive stop command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan02_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 02 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan03_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 03 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan03_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 03 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan03_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan03_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 03 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan03_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan03_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 03 PowerFlex drive start command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan03_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 03 PowerFlex drive stop command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan03_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 03 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan04_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 04 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan04_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 04 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan04_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan04_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 04 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan04_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan04_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 04 PowerFlex drive start command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan04_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 04 PowerFlex drive stop command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan04_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 04 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan05_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 05 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan05_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 05 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan05_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan05_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 05 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan05_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan05_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 05 PowerFlex drive start command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan05_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 05 PowerFlex drive stop command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan05_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 05 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan06_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 06 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan06_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 06 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan06_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan06_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 06 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan06_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan06_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 06 PowerFlex drive start command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan06_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 06 PowerFlex drive stop command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan06_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 06 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan07_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 07 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan07_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 07 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan07_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan07_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 07 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan07_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan07_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 07 PowerFlex drive start command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan07_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 07 PowerFlex drive stop command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan07_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 07 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan08_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 08 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan08_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 08 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan08_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan08_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 08 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan08_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan08_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 08 PowerFlex drive start command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan08_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 08 PowerFlex drive stop command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan08_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 08 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan09_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 09 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan09_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 09 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan09_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan09_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 09 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan09_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan09_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 09 PowerFlex drive start command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan09_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 09 PowerFlex drive stop command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan09_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 09 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan10_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 10 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan10_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 10 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan10_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan10_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 10 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan10_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan10_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 10 PowerFlex drive start command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan10_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 10 PowerFlex drive stop command – energized with the Fan 01–10 group while the fan run enable (N104[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan10_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 10 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10_Control_11 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan11_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 11 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan11_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 11 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan11_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan11_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 11 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan11_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan11_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 11 PowerFlex drive start command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan11_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 11 PowerFlex drive stop command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan11_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 11 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan12_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 12 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan12_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 12 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan12_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan12_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 12 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan12_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan12_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 12 PowerFlex drive start command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan12_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 12 PowerFlex drive stop command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan12_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 12 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan13_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 13 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan13_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 13 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan13_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan13_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 13 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan13_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan13_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 13 PowerFlex drive start command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan13_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 13 PowerFlex drive stop command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan13_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 13 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan14_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 14 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan14_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 14 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan14_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan14_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 14 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan14_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan14_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 14 PowerFlex drive start command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan14_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 14 PowerFlex drive stop command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan14_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 14 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan15_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 15 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan15_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 15 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan15_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan15_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 15 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan15_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan15_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 15 PowerFlex drive start command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan15_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 15 PowerFlex drive stop command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan15_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 15 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan16_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 16 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan16_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 16 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan16_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan16_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 16 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan16_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan16_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 16 PowerFlex drive start command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan16_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 16 PowerFlex drive stop command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan16_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 16 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan17_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 17 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan17_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 17 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan17_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan17_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 17 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan17_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan17_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 17 PowerFlex drive start command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan17_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 17 PowerFlex drive stop command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan17_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 17 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan18_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 18 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan18_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 18 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan18_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan18_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 18 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan18_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan18_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 18 PowerFlex drive start command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan18_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 18 PowerFlex drive stop command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan18_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 18 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan19_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 19 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan19_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 19 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan19_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan19_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 19 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan19_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan19_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 19 PowerFlex drive start command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan19_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 19 PowerFlex drive stop command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan19_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 19 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan20_DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 20 PowerFlex drive status word – EtherNet/IP drive status feedback copied to this controller tag.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan20_EIP:I.DriveStatus",
+    "PROPOSED_DESCRIPTION": "Fan 20 PowerFlex drive status feedback (EtherNet/IP input) – copied to Fan20_DriveStatus.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 DRIVE FEEDBACK"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan20_EIP:I.OutputFreq",
+    "PROPOSED_DESCRIPTION": "Fan 20 PowerFlex drive output-frequency feedback (EtherNet/IP input) – copied to Fan20_SpeedFeedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan20_EIP:O.Start",
+    "PROPOSED_DESCRIPTION": "Fan 20 PowerFlex drive start command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is ON.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "Fan20_EIP:O.Stop",
+    "PROPOSED_DESCRIPTION": "Fan 20 PowerFlex drive stop command – energized with the Fan 11–20 group while the fan run enable (N101[20].1) is OFF.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 R0"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan20_SpeedFeedback",
+    "PROPOSED_DESCRIPTION": "Fan 20 speed feedback – drive output frequency copied from the PowerFlex EtherNet/IP input.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_11_20_Control_7 MOVE OutputFreq"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan_01_10_Control_11",
+    "PROPOSED_DESCRIPTION": "Fan 01–10 control subroutine – commands circulation-fan drives 01–10 and collects EtherNet/IP drive feedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "JSR in MainRoutine R5"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Fan_11_20_Control_7",
+    "PROPOSED_DESCRIPTION": "Fan 11–20 control subroutine – commands circulation-fan drives 11–20 and collects EtherNet/IP drive feedback.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "JSR in MainRoutine R3"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Glycol_Pump_Control_12",
+    "PROPOSED_DESCRIPTION": "Glycol pump control subroutine – coordinates glycol-pump demand, all-valves-off permissive, run command, and the two pump outputs.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "JSR in MainRoutine R6"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "M0_1[37].0",
+    "PROPOSED_DESCRIPTION": "Glycol pump start-demand status flag – set with the glycol pump start-demand rung (mirrors run-command latch N101[20].13).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Glycol_Pump R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "M0_1[37].1",
+    "PROPOSED_DESCRIPTION": "Glycol pump stop-demand status flag – set with the glycol pump stop-demand rung.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Glycol_Pump R2"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "M0_1[42].0",
+    "PROPOSED_DESCRIPTION": "Fan 01–10 group stop status flag – set with the Fan 01–10 stop commands while the fan run enable (N104[20].1) is OFF.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10 R0"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "M0_1[42].1",
+    "PROPOSED_DESCRIPTION": "Fan 01–10 group start status flag – set with the Fan 01–10 start commands while the fan run enable (N104[20].1) is ON.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Fan_01_10 R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[20].11",
+    "PROPOSED_DESCRIPTION": "Glycol pump start command – initiates the glycol pump run request (B3[0].0).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Glycol_Pump R0"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[20].12",
+    "PROPOSED_DESCRIPTION": "Glycol pump stop command – drops the glycol pump run request (B3[0].0).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Glycol_Pump R0"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[20].13",
+    "PROPOSED_DESCRIPTION": "Glycol pump run command – latched by the start-demand rung and unlatched by the stop-demand rung; energizes glycol pump outputs O:08.09/O:08.10.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Glycol_Pump R1/R2/R4"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[20].3",
+    "PROPOSED_DESCRIPTION": "Cell 1 cooling demand/enable bit – one of the parallel branches that commands the Cell 1 ammonia solenoid (with room-temperature cooling inhibit N101[4].1).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R10 branch"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[21].10",
+    "PROPOSED_DESCRIPTION": "Cell 1 operator cooling OFF command – unlatches the operator cooling command (N101[21].5).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R3 OTU"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[21].11",
+    "PROPOSED_DESCRIPTION": "Cell 1 start command – latches the Cell 1 run state (N101[20].1) ON.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R0 OTL"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[21].12",
+    "PROPOSED_DESCRIPTION": "Cell 1 stop command – unlatches the Cell 1 run state (N101[20].1) OFF.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R1 OTU"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[21].13",
+    "PROPOSED_DESCRIPTION": "Cell 1 operator heating ON command – latches the operator heating command (N101[21].15).",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R4 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[21].14",
+    "PROPOSED_DESCRIPTION": "Cell 1 operator heating OFF command – unlatches the operator heating command (N101[21].15).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R5 OTU"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[21].15",
+    "PROPOSED_DESCRIPTION": "Cell 1 operator heating command latch – when set, enables the Cell 1 glycol heating branch.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R4 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[21].5",
+    "PROPOSED_DESCRIPTION": "Cell 1 operator cooling command latch – when set, enables the Cell 1 ammonia cooling branch.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R2 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[21].9",
+    "PROPOSED_DESCRIPTION": "Cell 1 operator cooling ON command – latches the operator cooling command (N101[21].5).",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R2 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[4].0",
+    "PROPOSED_DESCRIPTION": "Cell 1 room-temperature heating-inhibit flag – set when room temperature (N101[18]) exceeds the room setpoint (N101[19]); blocks Cell 1 glycol heating.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R8 GT, R7 XIO"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[4].1",
+    "PROPOSED_DESCRIPTION": "Cell 1 room-temperature cooling-inhibit flag – set when room temperature (N101[18]) is below the room setpoint (N101[19]); blocks Cell 1 ammonia cooling.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R11 LT, R10 XIO"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[20].3",
+    "PROPOSED_DESCRIPTION": "Cell 2 cooling demand/enable bit – one of the parallel branches that commands the Cell 2 ammonia solenoid (with room-temperature cooling inhibit N104[4].1).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R10 branch"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[21].10",
+    "PROPOSED_DESCRIPTION": "Cell 2 operator cooling OFF command – unlatches the operator cooling command (N104[21].5).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R3 OTU"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[21].11",
+    "PROPOSED_DESCRIPTION": "Cell 2 start command – latches the Cell 2 run state (N104[20].1) ON.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R0 OTL"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[21].12",
+    "PROPOSED_DESCRIPTION": "Cell 2 stop command – unlatches the Cell 2 run state (N104[20].1) OFF.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R1 OTU"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[21].13",
+    "PROPOSED_DESCRIPTION": "Cell 2 operator heating ON command – latches the operator heating command (N104[21].15).",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R4 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[21].14",
+    "PROPOSED_DESCRIPTION": "Cell 2 operator heating OFF command – unlatches the operator heating command (N104[21].15).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R5 OTU"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[21].15",
+    "PROPOSED_DESCRIPTION": "Cell 2 operator heating command latch – when set, enables the Cell 2 glycol heating branch.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R4 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[21].5",
+    "PROPOSED_DESCRIPTION": "Cell 2 operator cooling command latch – when set, enables the Cell 2 ammonia cooling branch.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R2 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[21].9",
+    "PROPOSED_DESCRIPTION": "Cell 2 operator cooling ON command – latches the operator cooling command (N104[21].5).",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R2 rung comment"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[4].0",
+    "PROPOSED_DESCRIPTION": "Cell 2 room-temperature heating-inhibit flag – set when room/product temperature (N109[18]) exceeds the room setpoint (N104[19]); blocks Cell 2 glycol heating.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R8 GT, R7 XIO"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[4].1",
+    "PROPOSED_DESCRIPTION": "Cell 2 room-temperature cooling-inhibit flag – set when room/product temperature (N109[18]) is below the room setpoint (N104[19]); blocks Cell 2 ammonia cooling.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R11 LT, R10 XIO"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "",
+    "NAME": "Temperature_Input_Scaling_3",
+    "PROPOSED_DESCRIPTION": "Temperature input-scaling subroutine – scales the thaw-room RTD and meat-probe analog inputs into engineering-unit registers.",
+    "CONFIDENCE": "HIGH",
+    "STATUS": "inferred",
+    "RATIONALE": "JSR in MainRoutine R1"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[0]",
+    "PROPOSED_DESCRIPTION": "Cell 1 product low-temperature (heating) setpoint – glycol heating is enabled while product temperature (N104[18]) is below this value.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R7 LT(N104[18],N101[0])"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[19]",
+    "PROPOSED_DESCRIPTION": "Cell 1 room-temperature inhibit setpoint – compared against room temperature (N101[18]) to set the heating/cooling inhibit flags N101[4].0/.1.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R8/R11"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N101[2]",
+    "PROPOSED_DESCRIPTION": "Cell 1 product high-temperature (cooling) setpoint – ammonia cooling is enabled while product temperature (N104[18]) is at or above this value.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_1 R10 GE(N104[18],N101[2])"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[0]",
+    "PROPOSED_DESCRIPTION": "Cell 2 product low-temperature (heating) setpoint – glycol heating is enabled while product temperature (N109[18]) is below this value.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R7 LT(N109[18],N104[0])"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[19]",
+    "PROPOSED_DESCRIPTION": "Cell 2 room-temperature inhibit setpoint – compared against temperature (N109[18]) to set the heating/cooling inhibit flags N104[4].0/.1.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R8/R11"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N104[2]",
+    "PROPOSED_DESCRIPTION": "Cell 2 product high-temperature (cooling) setpoint – ammonia cooling is enabled while product temperature (N109[18]) is at or above this value.",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Cell_2 R10 GE(N109[18],N104[2])"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N111[18]",
+    "PROPOSED_DESCRIPTION": "Scaled thaw-room temperature (engineering units) derived from module :2 Ch02 analog input via scratch N18[11].",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N112[18]",
+    "PROPOSED_DESCRIPTION": "Scaled thaw-room temperature (engineering units) derived from module :2 Ch03 analog input via scratch N18[12].",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N113[18]",
+    "PROPOSED_DESCRIPTION": "Scaled thaw-room temperature (engineering units) derived from module :2 Ch04 analog input via scratch N18[13].",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N114[18]",
+    "PROPOSED_DESCRIPTION": "Scaled thaw-room temperature (engineering units) derived from module :2 Ch05 analog input via scratch N18[14].",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N115[18]",
+    "PROPOSED_DESCRIPTION": "Scaled thaw-room temperature (engineering units) derived from module :2 Ch06 analog input via scratch N18[15].",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N116[18]",
+    "PROPOSED_DESCRIPTION": "Scaled thaw-room temperature (engineering units) derived from module :2 Ch07 analog input via scratch N18[16].",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N127[18]",
+    "PROPOSED_DESCRIPTION": "Scaled thaw-room temperature (engineering units) derived from module :4 Ch02 analog input via scratch N18[27].",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N128[18]",
+    "PROPOSED_DESCRIPTION": "Scaled thaw-room temperature (engineering units) derived from module :4 Ch03 analog input via scratch N18[28].",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N129[18]",
+    "PROPOSED_DESCRIPTION": "Scaled thaw-room temperature (engineering units) derived from module :4 Ch04 analog input via scratch N18[29].",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N130[18]",
+    "PROPOSED_DESCRIPTION": "Scaled thaw-room temperature (engineering units) derived from module :4 Ch05 analog input via scratch N18[30].",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N131[18]",
+    "PROPOSED_DESCRIPTION": "Scaled thaw-room temperature (engineering units) derived from module :4 Ch06 analog input via scratch N18[31].",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N132[18]",
+    "PROPOSED_DESCRIPTION": "Scaled thaw-room temperature (engineering units) derived from module :4 Ch07 analog input via scratch N18[32].",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N18[11]",
+    "PROPOSED_DESCRIPTION": "Scratch register holding the raw module :2 Ch02 analog input during temperature scaling (source moved to N111[18]).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N18[12]",
+    "PROPOSED_DESCRIPTION": "Scratch register holding the raw module :2 Ch03 analog input during temperature scaling (source moved to N112[18]).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N18[13]",
+    "PROPOSED_DESCRIPTION": "Scratch register holding the raw module :2 Ch04 analog input during temperature scaling (source moved to N113[18]).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N18[14]",
+    "PROPOSED_DESCRIPTION": "Scratch register holding the raw module :2 Ch05 analog input during temperature scaling (source moved to N114[18]).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N18[15]",
+    "PROPOSED_DESCRIPTION": "Scratch register holding the raw module :2 Ch06 analog input during temperature scaling (source moved to N115[18]).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N18[16]",
+    "PROPOSED_DESCRIPTION": "Scratch register holding the raw module :2 Ch07 analog input during temperature scaling (source moved to N116[18]).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N18[27]",
+    "PROPOSED_DESCRIPTION": "Scratch register holding the raw module :4 Ch02 analog input during temperature scaling (source moved to N127[18]).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N18[28]",
+    "PROPOSED_DESCRIPTION": "Scratch register holding the raw module :4 Ch03 analog input during temperature scaling (source moved to N128[18]).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N18[29]",
+    "PROPOSED_DESCRIPTION": "Scratch register holding the raw module :4 Ch04 analog input during temperature scaling (source moved to N129[18]).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N18[30]",
+    "PROPOSED_DESCRIPTION": "Scratch register holding the raw module :4 Ch05 analog input during temperature scaling (source moved to N130[18]).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N18[31]",
+    "PROPOSED_DESCRIPTION": "Scratch register holding the raw module :4 Ch06 analog input during temperature scaling (source moved to N131[18]).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "COMMENT",
+    "SCOPE": "THAWROOM",
+    "NAME": "N18[32]",
+    "PROPOSED_DESCRIPTION": "Scratch register holding the raw module :4 Ch07 analog input during temperature scaling (source moved to N132[18]).",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "Temperature_Input_Scaling MOVE chain"
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:1:I.Ch00.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 1 RTD A Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/0"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:1:I.Ch01.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 1 RTD B Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/1"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:1:I.Ch02.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 1 RTD C Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/2"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:1:I.Ch03.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 1 Meat Probe A Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/3"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:1:I.Ch04.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 1 Meat Probe B Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/4"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:1:I.Ch05.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 2 RTD A Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/5"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:1:I.Ch06.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 2 RTD B Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/6"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:1:I.Ch07.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 2 RTD C Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/7"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:2:I.Ch00.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 2 Meat Probe A Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/8"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:2:I.Ch01.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 2 Meat Probe B Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/9"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:3:I.Ch00.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 3 RTD A Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/16"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:3:I.Ch01.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 3 RTD B Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/17"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:3:I.Ch02.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 3 RTD C Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/18"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:3:I.Ch03.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 3 Meat Probe A Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/19"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:3:I.Ch04.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 3 Meat Probe B Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/20"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:3:I.Ch05.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 4 RTD A Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/21"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:3:I.Ch06.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 4 RTD B Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/22"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:3:I.Ch07.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 4 RTD C Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/23"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:4:I.Ch00.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 4 Meat Probe A Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/24"
+    ]
+  },
+  {
+    "TYPE": "Tag",
+    "SCOPE": "Operand",
+    "NAME": "ENETBRIDGE_5069:4:I.Ch01.Data",
+    "PROPOSED_DESCRIPTION": "Thawing Room 4 Meat Probe B Scaled Input Temperature",
+    "CONFIDENCE": "MEDIUM",
+    "STATUS": "inferred",
+    "RATIONALE": "tier=3, pass=1",
+    "DEPENDENCY_IDS": [
+      "rung:MainProgram/Temperature_Input_Scaling_3/25"
+    ]
+  }
+]

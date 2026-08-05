@@ -770,31 +770,69 @@ class Studio5000MCPServer:
         
         self.server.add_tool(
             "get_uncommented_tags",
-            "Scan L5X or ACD for tags missing comments or descriptions",
+            "COMMENT PIPELINE (pre-check only): scan an L5X/ACD for tag-level items missing comments. "
+            "This does NOT cover operands/rung comments and is NOT the way to generate documentation. "
+            "To generate logic + tag comments for a program/ACD, start with analyze_comment_graph.",
             self.get_uncommented_tags
         )
-        
+
         self.server.add_tool(
             "get_tag_reasoning_context",
-            "Extract rich ladder logic context, rungs, and adjacent tag descriptions for tag reasoning",
+            "COMMENT PIPELINE step 2 (resolve one escalation): given a single operand/tag that "
+            "analyze_comment_graph returned in `assistance_requests`, return its rungs, cross-references, "
+            "and neighbouring tag descriptions so you can author an accurate comment FROM THE ACTUAL LOGIC "
+            "instead of guessing. Call once per assistance_request you are resolving.",
             self.get_tag_reasoning_context
         )
-        
+
         self.server.add_tool(
             "generate_comment_deliverables",
-            "Generate Studio 5000 importable Comment_Delta.CSV and interactive comment_review_report.html",
+            "COMMENT PIPELINE step 3 (final render): turn a COMPLETE decision list into all four Studio 5000 "
+            "deliverables in one folder — Comment_Delta.CSV (importable), comment_review_report.html, "
+            "decisions.json, and comment_memory.json. Pass EVERY decision: the evidence-backed ones from "
+            "analyze_comment_graph PLUS the one you authored for each assistance_request (do not drop any). "
+            "Decision dict = {TYPE: 'COMMENT' for an operand / 'Tag' for a tag description, SCOPE: <controller "
+            "name, e.g. THAWROOM>, NAME: <full operand path e.g. N101[20].1, or tag name>, "
+            "PROPOSED_DESCRIPTION: <text; prefix with 'Candidate: ' when confidence is low>, CONFIDENCE, "
+            "STATUS, RATIONALE}. Set edit_acd=True only when you also need an updated .ACD written. "
+            "Pass file_path so decisions.json/comment_memory.json are emitted.",
             self.generate_comment_deliverables
         )
-        
+
         self.server.add_tool(
             "manage_comment_memory",
-            "Track granular routine/tag hashes to skip unchanged routines and incrementally save decisions",
+            "COMMENT PIPELINE (optional): persist decisions + per-routine hashes so re-runs skip unchanged "
+            "routines. generate_comment_deliverables already writes comment_memory.json; use this only for "
+            "cross-run incremental tracking.",
             self.manage_comment_memory
         )
 
         self.server.add_tool(
+            "generate_program_comments",
+            "COMMENT PIPELINE — RECOMMENDED ONE-CALL ENTRY POINT to generate logic/tag comments for an entire "
+            "program or ACD. Runs the analysis AND pre-fetches routine-logic reasoning context for every "
+            "escalated operand/tag in a single pass, so you get a work packet back: `auto_decisions` "
+            "(evidence-backed, ready to pass through) and `to_resolve` (each escalation with its rungs + a "
+            "pre-filled `draft_decision` skeleton). Fill each draft_decision's PROPOSED_DESCRIPTION from the "
+            "rung_references (prefix 'Candidate: ' when low confidence; items with occurrence_count=0 have no "
+            "logic evidence), then call generate_comment_deliverables(decisions=auto_decisions+your_drafts, "
+            "output_dir=..., file_path=<acd>). Params: routine_filter (scope to one routine), offset/limit "
+            "(paginate to_resolve). Prefer this over calling analyze_comment_graph + get_tag_reasoning_context "
+            "separately.",
+            self.generate_program_comments
+        )
+
+        self.server.add_tool(
             "analyze_comment_graph",
-            "Build a typed dependency graph, propagate PLC comment facts to a deterministic fixed point (predecessor/successor invalidation, SCC/cycle handling), and emit deliverables only from the converged state",
+            "COMMENT PIPELINE step 1 (low-level) — used by generate_program_comments; call that instead unless "
+            "you need raw analysis. ALWAYS START HERE if generating comments manually for an entire program "
+            "or ACD. Builds a typed dependency graph and returns `decisions` (evidence-backed, automatic) AND "
+            "`assistance_requests` (operands/tags with no direct evidence that YOU must resolve from routine "
+            "logic). RULES: do not hand-author comments without running this first; do not skip or fabricate "
+            "assistance_requests; resolve every one from the logic. Then follow the `next_steps` block in the "
+            "result — resolve each assistance_request via get_tag_reasoning_context and call "
+            "generate_comment_deliverables with the COMBINED decision set. Pass generate_deliverables=True (and "
+            "edit_acd=True only if you also need an updated .ACD).",
             self.analyze_comment_graph
         )
 
@@ -1464,16 +1502,49 @@ class Studio5000MCPServer:
         return await self.tag_integration.get_tag_reasoning_context(tag_name, file_path)
 
     async def generate_comment_deliverables(
-        self, decisions: List[Dict[str, Any]], output_dir: str, project_name: str = "ModernTHAWROOM021722"
+        self,
+        decisions: Optional[List[Dict[str, Any]]] = None,
+        output_dir: Optional[str] = None,
+        project_name: Optional[str] = None,
+        file_path: Optional[str] = None,
+        edit_acd: bool = False,
+        target_acd: Optional[str] = None,
+        decisions_path: Optional[str] = None,
+        work_packet_path: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Generate Studio 5000 importable Comment_Delta.CSV and interactive comment_review_report.html"""
-        return await self.tag_integration.generate_comment_deliverables(decisions, output_dir, project_name)
+        """Generate Studio 5000 importable Comment_Delta.CSV, interactive comment_review_report.html,
+        decisions.json, comment_memory.json (and, when edit_acd is True, an updated .ACD project deliverable).
+
+        When project_name is omitted it is derived from the target ACD/L5X artifact."""
+        return await self.tag_integration.generate_comment_deliverables(
+            decisions=decisions,
+            output_dir=output_dir,
+            project_name=project_name,
+            file_path=file_path,
+            edit_acd=edit_acd,
+            target_acd=target_acd,
+            decisions_path=decisions_path,
+            work_packet_path=work_packet_path,
+        )
 
     async def manage_comment_memory(
         self, file_path: str, memory_file_path: str, decisions_to_save: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """Track granular routine/tag hashes to skip unchanged routines and incrementally save decisions"""
         return await self.tag_integration.manage_comment_memory(file_path, memory_file_path, decisions_to_save)
+
+    async def generate_program_comments(
+        self,
+        acd_path: str,
+        routine_filter: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 50,
+        config: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """One-call orchestrator: analyze + pre-fetch reasoning context for every escalation."""
+        return await self.tag_integration.generate_program_comments(
+            acd_path, routine_filter=routine_filter, offset=offset, limit=limit, config=config,
+        )
 
     async def analyze_comment_graph(
         self,
@@ -1484,11 +1555,15 @@ class Studio5000MCPServer:
         memory_file_path: Optional[str] = None,
         user_seeds: Optional[List[Dict[str, Any]]] = None,
         config: Optional[Dict[str, Any]] = None,
+        edit_acd: bool = False,
+        target_acd: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Iterative PLC comment analysis over a typed dependency graph."""
+        """Iterative PLC comment analysis over a typed dependency graph.
+        When edit_acd is True, an updated .ACD project deliverable is written."""
         return await self.tag_integration.analyze_comment_graph(
             file_path, reference_path, generate_deliverables,
             output_dir, memory_file_path, user_seeds, config,
+            edit_acd=edit_acd, target_acd=target_acd,
         )
 
     async def get_cache_performance(self) -> Dict[str, Any]:
@@ -1849,13 +1924,27 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'file_path': {'type': 'string', 'description': 'Path to ACD or L5X file'}
                 }
                 required = ['tag_name', 'file_path']
+            elif name == 'generate_program_comments':
+                properties = {
+                    'acd_path': {'type': 'string', 'description': 'Path to ACD or L5X project file'},
+                    'routine_filter': {'type': 'string', 'description': 'Optional routine name filter'},
+                    'offset': {'type': 'integer', 'description': 'Pagination offset for to_resolve items (default: 0)'},
+                    'limit': {'type': 'integer', 'description': 'Pagination limit for to_resolve items (default: 50)'},
+                    'config': {'type': 'object', 'description': 'Optional AnalysisConfig overrides'}
+                }
+                required = ['acd_path']
             elif name == 'generate_comment_deliverables':
                 properties = {
-                    'decisions': {'type': 'array', 'description': 'List of proposed comment decision dicts'},
-                    'output_dir': {'type': 'string', 'description': 'Output directory for CSV and HTML deliverables'},
-                    'project_name': {'type': 'string', 'description': 'Project name for report header'}
+                    'decisions': {'type': 'array', 'description': 'List of proposed comment decision dicts (inline)'},
+                    'decisions_path': {'type': 'string', 'description': 'Path to JSON file containing decisions list'},
+                    'work_packet_path': {'type': 'string', 'description': 'Path to work_packet.json to auto-merge and render'},
+                    'output_dir': {'type': 'string', 'description': 'Output directory for deliverables (defaults to folder alongside target file)'},
+                    'project_name': {'type': 'string', 'description': 'Project name for report header'},
+                    'file_path': {'type': 'string', 'description': 'Path to reference target ACD or L5X file'},
+                    'edit_acd': {'type': 'boolean', 'description': 'Directly edit comments/rungs in the ACD file and output an updated .ACD deliverable'},
+                    'target_acd': {'type': 'string', 'description': 'Explicit path to target ACD file to edit'}
                 }
-                required = ['decisions', 'output_dir']
+                required = []
             elif name == 'manage_comment_memory':
                 properties = {
                     'file_path': {'type': 'string', 'description': 'Path to ACD or L5X file'},
@@ -1868,10 +1957,12 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'file_path': {'type': 'string', 'description': 'Path to native L5X (authoritative) or ACD (converted offline) file'},
                     'reference_path': {'type': 'string', 'description': 'Optional reference L5X for ACD conversion validation'},
                     'generate_deliverables': {'type': 'boolean', 'description': 'Render Comment_Delta.CSV / HTML from the converged state'},
-                    'output_dir': {'type': 'string', 'description': 'Output directory for deliverables (required if generate_deliverables)'},
+                    'output_dir': {'type': 'string', 'description': 'Output directory for deliverables (defaults to folder alongside target file)'},
                     'memory_file_path': {'type': 'string', 'description': 'Optional memory JSON path; record is extended with graph_digest and source_artifact_hash'},
                     'user_seeds': {'type': 'array', 'description': 'Optional user decision seeds (UPPERCASE NAME/PROPOSED_DESCRIPTION dicts), tier-2 precedence'},
-                    'config': {'type': 'object', 'description': 'Optional AnalysisConfig overrides (max_passes, max_component_passes, max_workers, enable_instruction_doc, enable_vector_retrieval)'}
+                    'config': {'type': 'object', 'description': 'Optional AnalysisConfig overrides (max_passes, max_component_passes, max_workers, enable_instruction_doc, enable_vector_retrieval)'},
+                    'edit_acd': {'type': 'boolean', 'description': 'Directly edit comments/rungs in the ACD file and output an updated .ACD deliverable'},
+                    'target_acd': {'type': 'string', 'description': 'Explicit path to target ACD file to edit'}
                 }
                 required = ['file_path']
 

@@ -70,3 +70,7 @@ test_sdk_cache/
 # Log files
 *.log
 logs/
+
+# Debug output directories
+acd-extract-debug/
+

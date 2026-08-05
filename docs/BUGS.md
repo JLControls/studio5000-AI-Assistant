@@ -18,6 +18,7 @@ Known defects in the Studio 5000 AI Assistant. Lightweight, in-tree, hand-edited
 | [BUG-003](#bug-003--enhanced-generator-emits-todo-placeholder-logic) | Medium | Open | ai_assistant | Enhanced ladder generator emits a `// TODO` placeholder for unmatched cases |
 | [BUG-004](#bug-004--complex-l5k-structured-encoding-not-implemented) | Low | Open | acd | Complex structured L5K encoding not yet implemented in the vendored exporter |
 | [BUG-005](#bug-005--python-312-required-env-may-resolve-to-314) | Low | Open | env/tests | Hard Python 3.12 requirement; env may resolve `python` to 3.14 and break tests |
+| [BUG-006](#bug-006--edit_acd-silently-writes-no-comment-descriptions) | Medium | Open | acd | `edit_acd=True` silently writes no comment descriptions (only rung text); comment-only decisions yield an unchanged ACD |
 
 ## Details
 
@@ -65,3 +66,12 @@ Known defects in the Studio 5000 AI Assistant. Lightweight, in-tree, hand-edited
 - **Description:** The project pins to Python 3.12 (torch / sentence-transformers versions). The local environment may resolve `python` to a 3.14 interpreter, under which the test suite does not run correctly.
 - **Trigger:** Running `python -m pytest` with the wrong interpreter on PATH.
 - **Workaround:** Explicitly invoke the 3.12 interpreter / venv before running tests.
+
+### BUG-006 — `edit_acd` silently writes no comment descriptions
+- **Area:** acd
+- **Severity:** Medium
+- **Status:** Open
+- **Source:** src/tag_analyzer/comment_pipeline.py (`generate_deliverables` ACD-edit branch); src/acd/record/comments.py (parse-only)
+- **Description:** `generate_deliverables(edit_acd=True)` only patches rung **text** (decisions with `PROPOSED_RUNG_TEXT` via `patch_rungs`). Comment/description decisions are ignored by the ACD-edit path because `acd/record/comments.py` is parse-only — there is no comment writer. A comment-only run therefore produces an `_updated.ACD` that is effectively unchanged, which reads as success but silently drops the documentation.
+- **Trigger:** `edit_acd=True` with decisions carrying `PROPOSED_DESCRIPTION` but no `PROPOSED_RUNG_TEXT`.
+- **Workaround:** Use the `Comment_Delta.CSV` import in Studio 5000 (correct bindings, no corruption risk). A real fix is the direct comment writer — [FEAT-009](ROADMAP.md#feat-009--direct-acd-comment-writer-patch_comments) — spec in [acd_comment_writer_spec.md](acd_comment_writer_spec.md).

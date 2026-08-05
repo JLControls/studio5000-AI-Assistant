@@ -23,6 +23,7 @@ Planned work for the Studio 5000 AI Assistant, grouped by horizon. Hand-edited, 
 |----|----------|---------|----------|
 | [FEAT-004](#feat-004--structured-text-st--function-block-fbd-generation) | Medium | Structured Text (ST) + Function Block (FBD) generation | BUG-002 |
 | [FEAT-005](#feat-005--advanced--static-validation) | Medium | Advanced / static validation & best-practices checking | — |
+| [FEAT-009](#feat-009--direct-acd-comment-writer-patch_comments) | Medium | Direct ACD comment writer (`patch_comments`) — write descriptions into `Comments.Dat` | BUG-006 |
 
 ### Later
 | ID | Priority | Summary | Resolves |
@@ -57,6 +58,11 @@ Planned work for the Studio 5000 AI Assistant, grouped by horizon. Hand-edited, 
 - **Bucket:** Next · **Priority:** Medium · **Resolves:** —
 - **Source:** README.md:1010
 - **Outcome:** Add static analysis and best-practices checking on top of the existing fast syntax/instruction validation.
+
+### FEAT-009 — Direct ACD comment writer (`patch_comments`)
+- **Bucket:** Next · **Priority:** Medium · **Resolves:** BUG-006
+- **Source:** docs/acd_comment_writer_spec.md; src/acd/zip/write_dat.py (`patch_sbregion_dat` precedent); src/acd/record/comments.py (parse-only today)
+- **Outcome:** Write tag/operand comment *descriptions* directly into `Comments.Dat` so `edit_acd=True` emits a modified ACD containing the documentation, not just the `Comment_Delta.CSV` import. Phased: (1) byte-identical round-trip test, (2) modify existing comment records, (3) append type-1 tag descriptions (bind by `Comps` object_id — lower risk), (4) append type-11 operand comments (internal `.!HEXREF` binding — needs Studio validation), (5) wire into `comment_pipeline.generate_deliverables`. Full format notes and validation gap in the spec doc.
 
 ### FEAT-006 — Multiple Studio 5000 version detection
 - **Bucket:** Later · **Priority:** Low · **Resolves:** —

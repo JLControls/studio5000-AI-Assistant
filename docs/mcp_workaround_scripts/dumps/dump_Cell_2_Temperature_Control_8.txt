@@ -1,0 +1,96 @@
+ROUTINE: Cell_2_Temperature_Control_8  (15 items)
+
+=== ENETBRIDGE_5069:8:O.Pt03.Data  [TYPE=COMMENT SCOPE=THAWROOM occ=2]
+  R7 @Cell_2_Temperature_Control_8: XIC(N104[20].1)[LT(N109[18],N104[0]) ,XIC(N104[21].15) ,XIC(ENETBRIDGE_5069:8:O.Pt03.Data) XIO(N104[4].0) ][OTE(ENETBRIDGE_5069:8:O.Pt03.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt04.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt05.Data) ];
+     ; GLYCOL HEATING OUTPUTS — Command glycol solenoids 2-A, 2-B, and 2-C from Cell 2 enable, product temperature, operator heat command, and room-temperature inhibit conditions.
+
+O:08.04–O:08.06 — GLYCOL SOL 2-A, 2-B, and 2-C command group.
+  R3 @Glycol_Pump_Control_12: XIO(ENETBRIDGE_5069:8:O.Pt00.Data)XIO(ENETBRIDGE_5069:8:O.Pt01.Data)XIO(ENETBRIDGE_5069:8:O.Pt02.Data)XIO(ENETBRIDGE_5069:8:O.Pt03.Data)XIO(ENETBRIDGE_5069:8:O.Pt04.Data)XIO(ENETBRIDGE_5069:8:O.Pt05.Data)OTE(B3[0].1);
+     ; GLYCOL VALVE-OFF PERMISSIVE — True only when all six implemented Cell 1 and Cell 2 glycol-solenoid outputs are off.
+
+O:08.01–O:08.06 — all glycol solenoid outputs de-energized status check.
+
+=== ENETBRIDGE_5069:8:O.Pt04.Data  [TYPE=COMMENT SCOPE=THAWROOM occ=2]
+  R7 @Cell_2_Temperature_Control_8: XIC(N104[20].1)[LT(N109[18],N104[0]) ,XIC(N104[21].15) ,XIC(ENETBRIDGE_5069:8:O.Pt03.Data) XIO(N104[4].0) ][OTE(ENETBRIDGE_5069:8:O.Pt03.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt04.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt05.Data) ];
+     ; GLYCOL HEATING OUTPUTS — Command glycol solenoids 2-A, 2-B, and 2-C from Cell 2 enable, product temperature, operator heat command, and room-temperature inhibit conditions.
+
+O:08.04–O:08.06 — GLYCOL SOL 2-A, 2-B, and 2-C command group.
+  R3 @Glycol_Pump_Control_12: XIO(ENETBRIDGE_5069:8:O.Pt00.Data)XIO(ENETBRIDGE_5069:8:O.Pt01.Data)XIO(ENETBRIDGE_5069:8:O.Pt02.Data)XIO(ENETBRIDGE_5069:8:O.Pt03.Data)XIO(ENETBRIDGE_5069:8:O.Pt04.Data)XIO(ENETBRIDGE_5069:8:O.Pt05.Data)OTE(B3[0].1);
+     ; GLYCOL VALVE-OFF PERMISSIVE — True only when all six implemented Cell 1 and Cell 2 glycol-solenoid outputs are off.
+
+O:08.01–O:08.06 — all glycol solenoid outputs de-energized status check.
+
+=== ENETBRIDGE_5069:8:O.Pt05.Data  [TYPE=COMMENT SCOPE=THAWROOM occ=2]
+  R7 @Cell_2_Temperature_Control_8: XIC(N104[20].1)[LT(N109[18],N104[0]) ,XIC(N104[21].15) ,XIC(ENETBRIDGE_5069:8:O.Pt03.Data) XIO(N104[4].0) ][OTE(ENETBRIDGE_5069:8:O.Pt03.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt04.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt05.Data) ];
+     ; GLYCOL HEATING OUTPUTS — Command glycol solenoids 2-A, 2-B, and 2-C from Cell 2 enable, product temperature, operator heat command, and room-temperature inhibit conditions.
+
+O:08.04–O:08.06 — GLYCOL SOL 2-A, 2-B, and 2-C command group.
+  R3 @Glycol_Pump_Control_12: XIO(ENETBRIDGE_5069:8:O.Pt00.Data)XIO(ENETBRIDGE_5069:8:O.Pt01.Data)XIO(ENETBRIDGE_5069:8:O.Pt02.Data)XIO(ENETBRIDGE_5069:8:O.Pt03.Data)XIO(ENETBRIDGE_5069:8:O.Pt04.Data)XIO(ENETBRIDGE_5069:8:O.Pt05.Data)OTE(B3[0].1);
+     ; GLYCOL VALVE-OFF PERMISSIVE — True only when all six implemented Cell 1 and Cell 2 glycol-solenoid outputs are off.
+
+O:08.01–O:08.06 — all glycol solenoid outputs de-energized status check.
+
+=== ENETBRIDGE_5069:8:O.Pt07.Data  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R10 @Cell_2_Temperature_Control_8: XIC(N104[20].1)[GE(N109[18],N104[2]) ,XIC(N104[20].3) XIO(N104[4].1) ,XIC(N104[20].1) XIC(N104[21].5) ]OTE(ENETBRIDGE_5069:8:O.Pt07.Data);
+     ; AMMONIA COOLING OUTPUT — Command the Cell 2 ammonia solenoid from Cell 2 enable, product temperature, operator cooling command, and room-temperature inhibit conditions.
+
+O:08.08 — THAWING ROOM 2 AMMONIA SOL command.
+
+=== N104[20].3  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R10 @Cell_2_Temperature_Control_8: XIC(N104[20].1)[GE(N109[18],N104[2]) ,XIC(N104[20].3) XIO(N104[4].1) ,XIC(N104[20].1) XIC(N104[21].5) ]OTE(ENETBRIDGE_5069:8:O.Pt07.Data);
+     ; AMMONIA COOLING OUTPUT — Command the Cell 2 ammonia solenoid from Cell 2 enable, product temperature, operator cooling command, and room-temperature inhibit conditions.
+
+O:08.08 — THAWING ROOM 2 AMMONIA SOL command.
+
+=== N104[21].10  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R3 @Cell_2_Temperature_Control_8: XIC(N104[21].10)OTU(N104[21].5);
+
+=== N104[21].11  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R0 @Cell_2_Temperature_Control_8: XIC(N104[21].11)OTL(N104[20].1);
+     ; PURPOSE: CELL 2 TEMPERATURE CONTROL — Maintains the Cell 2 run state and operator cooling/heating command latches, then sequences glycol heating and ammonia cooling from the existing product/room temperatures and setpoint deadbands.
+
+=== N104[21].12  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R1 @Cell_2_Temperature_Control_8: XIC(N104[21].12)OTU(N104[20].1);
+
+=== N104[21].13  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R4 @Cell_2_Temperature_Control_8: XIC(N104[21].13)OTL(N104[21].15);
+     ; OPERATOR HEATING COMMAND LATCH
+
+=== N104[21].14  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R5 @Cell_2_Temperature_Control_8: XIC(N104[21].14)OTU(N104[21].15);
+
+=== N104[21].15  [TYPE=COMMENT SCOPE=THAWROOM occ=3]
+  R4 @Cell_2_Temperature_Control_8: XIC(N104[21].13)OTL(N104[21].15);
+     ; OPERATOR HEATING COMMAND LATCH
+  R5 @Cell_2_Temperature_Control_8: XIC(N104[21].14)OTU(N104[21].15);
+  R7 @Cell_2_Temperature_Control_8: XIC(N104[20].1)[LT(N109[18],N104[0]) ,XIC(N104[21].15) ,XIC(ENETBRIDGE_5069:8:O.Pt03.Data) XIO(N104[4].0) ][OTE(ENETBRIDGE_5069:8:O.Pt03.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt04.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt05.Data) ];
+     ; GLYCOL HEATING OUTPUTS — Command glycol solenoids 2-A, 2-B, and 2-C from Cell 2 enable, product temperature, operator heat command, and room-temperature inhibit conditions.
+
+O:08.04–O:08.06 — GLYCOL SOL 2-A, 2-B, and 2-C command group.
+
+=== N104[21].5  [TYPE=COMMENT SCOPE=THAWROOM occ=3]
+  R2 @Cell_2_Temperature_Control_8: XIC(N104[21].9)OTL(N104[21].5);
+     ; OPERATOR COOLING COMMAND LATCH
+  R3 @Cell_2_Temperature_Control_8: XIC(N104[21].10)OTU(N104[21].5);
+  R10 @Cell_2_Temperature_Control_8: XIC(N104[20].1)[GE(N109[18],N104[2]) ,XIC(N104[20].3) XIO(N104[4].1) ,XIC(N104[20].1) XIC(N104[21].5) ]OTE(ENETBRIDGE_5069:8:O.Pt07.Data);
+     ; AMMONIA COOLING OUTPUT — Command the Cell 2 ammonia solenoid from Cell 2 enable, product temperature, operator cooling command, and room-temperature inhibit conditions.
+
+O:08.08 — THAWING ROOM 2 AMMONIA SOL command.
+
+=== N104[21].9  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R2 @Cell_2_Temperature_Control_8: XIC(N104[21].9)OTL(N104[21].5);
+     ; OPERATOR COOLING COMMAND LATCH
+
+=== N104[4].0  [TYPE=COMMENT SCOPE=THAWROOM occ=2]
+  R7 @Cell_2_Temperature_Control_8: XIC(N104[20].1)[LT(N109[18],N104[0]) ,XIC(N104[21].15) ,XIC(ENETBRIDGE_5069:8:O.Pt03.Data) XIO(N104[4].0) ][OTE(ENETBRIDGE_5069:8:O.Pt03.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt04.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt05.Data) ];
+     ; GLYCOL HEATING OUTPUTS — Command glycol solenoids 2-A, 2-B, and 2-C from Cell 2 enable, product temperature, operator heat command, and room-temperature inhibit conditions.
+
+O:08.04–O:08.06 — GLYCOL SOL 2-A, 2-B, and 2-C command group.
+  R8 @Cell_2_Temperature_Control_8: GT(N109[18],N104[19])OTE(N104[4].0);
+
+=== N104[4].1  [TYPE=COMMENT SCOPE=THAWROOM occ=2]
+  R10 @Cell_2_Temperature_Control_8: XIC(N104[20].1)[GE(N109[18],N104[2]) ,XIC(N104[20].3) XIO(N104[4].1) ,XIC(N104[20].1) XIC(N104[21].5) ]OTE(ENETBRIDGE_5069:8:O.Pt07.Data);
+     ; AMMONIA COOLING OUTPUT — Command the Cell 2 ammonia solenoid from Cell 2 enable, product temperature, operator cooling command, and room-temperature inhibit conditions.
+
+O:08.08 — THAWING ROOM 2 AMMONIA SOL command.
+  R11 @Cell_2_Temperature_Control_8: LT(N109[18],N104[19])OTE(N104[4].1);

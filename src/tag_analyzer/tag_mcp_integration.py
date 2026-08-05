@@ -493,12 +493,36 @@ class TagMCPIntegration:
             return {"success": False, "error": str(e)}
 
     async def generate_comment_deliverables(
-        self, decisions: List[Dict[str, Any]], output_dir: str, project_name: str = "ModernTHAWROOM021722"
+        self,
+        decisions: Optional[List[Dict[str, Any]]] = None,
+        output_dir: Optional[str] = None,
+        project_name: Optional[str] = None,
+        file_path: Optional[str] = None,
+        edit_acd: bool = False,
+        target_acd: Optional[str] = None,
+        decisions_path: Optional[str] = None,
+        work_packet_path: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Generate Studio 5000 importable Comment_Delta.CSV and interactive comment_review_report.html."""
+        """Generate Studio 5000 deliverables (Comment_Delta.CSV, comment_review_report.html,
+        decisions.json, comment_memory.json, and optionally an updated .ACD project file)."""
         try:
+            # Derive the project name from the caller-supplied artifact rather than
+            # hardcoding a specific project; fall back to the output folder name.
+            if not project_name:
+                source_for_name = target_acd or file_path or work_packet_path or decisions_path or output_dir
+                if source_for_name:
+                    project_name = Path(str(source_for_name)).stem
             pipeline = self._get_comment_pipeline()
-            res = pipeline.generate_deliverables(decisions, output_dir, project_name)
+            res = pipeline.generate_deliverables(
+                decisions=decisions,
+                output_dir=output_dir,
+                project_name=project_name,
+                file_path=file_path,
+                edit_acd=edit_acd,
+                target_acd=target_acd,
+                decisions_path=decisions_path,
+                work_packet_path=work_packet_path,
+            )
             res["success"] = True
             return res
         except Exception as e:
@@ -527,6 +551,8 @@ class TagMCPIntegration:
         memory_file_path: Optional[str] = None,
         user_seeds: Optional[List[Dict[str, Any]]] = None,
         config: Optional[Dict[str, Any]] = None,
+        edit_acd: bool = False,
+        target_acd: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Build a typed dependency graph, propagate comment facts to a fixed
         point, and emit deliverables only from the converged state."""
@@ -543,6 +569,8 @@ class TagMCPIntegration:
                     "memory_file_path": memory_file_path,
                     "user_seeds": user_seeds or [],
                     "config": config,
+                    "edit_acd": edit_acd,
+                    "target_acd": target_acd,
                 }
             )
             # The orchestrator owns the full lifecycle, including rendering
@@ -550,9 +578,243 @@ class TagMCPIntegration:
             result = await run_analysis(request)
             res = result.to_dict()
             res["success"] = True
+            self._attach_pipeline_guidance(res, file_path)
             return res
         except Exception as e:
             logger.error(f"Error analyzing comment graph for {file_path}: {e}")
+            return {"success": False, "error": str(e)}
+
+    @staticmethod
+    def _attach_pipeline_guidance(res: Dict[str, Any], file_path: str) -> None:
+        """Embed explicit next-step guidance in the analyze result so the model
+        follows the canonical pipeline (resolve escalations from logic, then
+        render) instead of hand-authoring or skipping. See docs/ROADMAP.md
+        FEAT-002 and docs/acd_comment_writer_spec.md."""
+        requests = res.get("assistance_requests") or []
+        n = len(requests)
+        auto = len(res.get("decisions") or [])
+        steps = [
+            f"{auto} evidence-backed decisions were produced automatically; "
+            f"{n} assistance_requests still need YOU to resolve them from routine logic.",
+        ]
+        if n:
+            steps += [
+                "Do NOT skip, drop, or fabricate assistance_requests, and do NOT hand-author a "
+                "comment set that ignores them.",
+                f"For each assistance_request, call get_tag_reasoning_context(tag_name=<entity>, "
+                f"file_path='{file_path}') and read the rungs to author a specific comment. "
+                "Prefix low-confidence text with 'Candidate: '.",
+            ]
+        steps.append(
+            "Combine the automatic `decisions` with the ones you author, then call "
+            "generate_comment_deliverables(decisions=<combined>, output_dir=<dir>, "
+            f"file_path='{file_path}') to emit Comment_Delta.CSV + comment_review_report.html "
+            "+ decisions.json + comment_memory.json (all four)."
+        )
+        steps.append(
+            "Set edit_acd=True on generate_comment_deliverables only if an updated .ACD is also required."
+        )
+        res["next_steps"] = steps
+        res["decision_schema"] = {
+            "TYPE": "'COMMENT' for an operand comment, or 'Tag' for a tag description",
+            "SCOPE": "controller name (e.g. THAWROOM)",
+            "NAME": "full operand path (e.g. N101[20].1) or tag name (e.g. Fan01_DriveStatus)",
+            "PROPOSED_DESCRIPTION": "human comment; prefix 'Candidate: ' when confidence is LOW",
+            "CONFIDENCE": "HIGH | MEDIUM | LOW",
+            "STATUS": "inferred",
+            "RATIONALE": "why, citing the rung(s)/evidence used",
+        }
+        res["decision_example"] = {
+            "TYPE": "COMMENT", "SCOPE": "THAWROOM", "NAME": "N101[20].1",
+            "PROPOSED_DESCRIPTION": "Thawing Room 2 Master System Enable / Active Run State Flag",
+            "CONFIDENCE": "HIGH", "STATUS": "inferred",
+            "RATIONALE": "Latched in Cell_1_Temperature_Control_4 rung 0; gates Fan 11-20 and glycol pump start.",
+        }
+
+    async def generate_program_comments(
+        self,
+        acd_path: str,
+        routine_filter: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 50,
+        config: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Orchestrate the whole comment pipeline in one call.
+
+        Runs analyze_comment_graph (step 1) and, in a single L5X pass, pre-fetches
+        the routine-logic reasoning context for every escalated operand/tag so the
+        model can author one description per item and hand the combined set to
+        generate_comment_deliverables — no per-operand tool round-trips.
+
+        Returns a work packet: `auto_decisions` (evidence-backed, ready to pass
+        through), `to_resolve` (each escalation + its rungs + a pre-filled
+        `draft_decision` skeleton), plus `next_steps`/schema/example. The full
+        packet is also written to work_packet.json alongside the ACD.
+        """
+        try:
+            import re
+            from comment_graph.config import AnalysisRequest
+            from comment_graph.orchestrator import analyze_comment_graph as run_analysis
+
+            # 1. Run the deterministic analysis (no deliverables yet).
+            request = AnalysisRequest.from_dict({
+                "file_path": acd_path,
+                "generate_deliverables": False,
+                "config": config,
+            })
+            result = await run_analysis(request)
+            analysis = result.to_dict()
+            auto_decisions = analysis.get("decisions") or []
+            assistance = analysis.get("assistance_requests") or []
+
+            # 2. Parse the L5X once and index every rung for batched reasoning.
+            pipeline = self._get_comment_pipeline()
+            try:
+                l5x_path = pipeline.resolve_l5x_path(acd_path)
+            except Exception as exc:
+                return {
+                    "success": False,
+                    "error": f"Reasoning context needs an L5X next to the ACD: {exc}. "
+                             f"Run convert_acd_to_l5x first, then retry.",
+                }
+            root = pipeline.parse_l5x_tree(l5x_path)
+
+            controller_el = root.find(".//Controller")
+            controller = (controller_el.attrib.get("Name") if controller_el is not None
+                          else l5x_path.stem)
+
+            tag_desc_map: Dict[str, str] = {}
+            for tag in root.findall(".//Tag"):
+                nm = tag.attrib.get("Name", "")
+                c = tag.find("Comment")
+                if nm and c is not None and c.text:
+                    tag_desc_map[nm] = c.text.strip()
+
+            # Collect rungs (optionally filtered to one routine).
+            rungs = []  # (routine, rung_number, text, comment)
+            ident_pat = re.compile(r"[A-Za-z_][A-Za-z0-9_:\.\[\]]*")
+            for program in root.findall(".//Programs/Program"):
+                for routine in program.findall(".//Routine"):
+                    rout_name = routine.attrib.get("Name", "")
+                    if routine_filter and rout_name != routine_filter:
+                        continue
+                    rll = routine.find("RLLContent")
+                    if rll is None:
+                        continue
+                    for rung in rll.findall("Rung"):
+                        te = rung.find("Text")
+                        text = te.text.strip() if (te is not None and te.text) else ""
+                        ce = rung.find("Comment")
+                        rc = ce.text.strip() if (ce is not None and ce.text) else ""
+                        if text:
+                            rungs.append((rout_name, rung.attrib.get("Number", ""), text, rc))
+
+            # 3. Build entity -> rung references in a single pass over rungs.
+            entities = []
+            for req in assistance:
+                # entity ids look like "op:N101[20].1"; strip only the op: prefix
+                raw = str(req.get("entity", ""))
+                ent = raw[3:] if raw.startswith("op:") else raw
+                if ent:
+                    entities.append((ent, req.get("ambiguity", "")))
+
+            patterns = {
+                ent: re.compile(r"(?<![A-Za-z0-9_])" + re.escape(ent) + r"(?![A-Za-z0-9_:\.\[\]])")
+                for ent, _ in entities
+            }
+            refs: Dict[str, list] = {ent: [] for ent, _ in entities}
+            MAX_RUNGS = 6
+            for rout_name, rnum, text, rc in rungs:
+                for ent, pat in patterns.items():
+                    if len(refs[ent]) >= MAX_RUNGS:
+                        continue
+                    if pat.search(text):
+                        adj = []
+                        seen = set()
+                        for token in ident_pat.findall(text):
+                            base = token.split(".")[0].split("[")[0]
+                            if base != ent.split(".")[0].split("[")[0] and base not in seen and len(base) > 1:
+                                seen.add(base)
+                                d = tag_desc_map.get(base) or tag_desc_map.get(token) or ""
+                                if d:
+                                    adj.append({"name": token, "description": d})
+                        refs[ent].append({
+                            "routine": rout_name, "rung_number": rnum,
+                            "ladder_logic": text, "rung_comment": rc,
+                            "adjacent_tags": adj[:10],
+                        })
+
+            # 4. Assemble to_resolve items (each with a pre-filled skeleton).
+            def make_item(ent, ambiguity):
+                rr = refs.get(ent, [])
+                is_operand = ("[" in ent) or ("." in ent) or (":" in ent)
+                return {
+                    "entity": ent,
+                    "ambiguity": ambiguity,
+                    "occurrence_count": len(rr),
+                    "rung_references": rr,
+                    "draft_decision": {
+                        "TYPE": "COMMENT" if is_operand else "Tag",
+                        "SCOPE": controller if is_operand else "",
+                        "NAME": ent,
+                        "PROPOSED_DESCRIPTION": "",  # <-- author from rung_references; 'Candidate: ' if low confidence
+                        "CONFIDENCE": "",
+                        "STATUS": "inferred",
+                        "RATIONALE": "",
+                    },
+                }
+
+            all_items = [make_item(ent, amb) for ent, amb in entities]
+            # Items with no rung evidence sort last (hardest / likely data-table only).
+            all_items.sort(key=lambda x: (x["occurrence_count"] == 0, x["entity"]))
+            page = all_items[offset:offset + limit] if limit else all_items[offset:]
+
+            # 5. Persist the full work packet next to the ACD for reference.
+            from pathlib import Path as _Path
+            out_dir = _Path(acd_path).with_suffix("").parent / f"{_Path(acd_path).stem}_deliverables"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            packet = {
+                "controller": controller,
+                "auto_decisions": auto_decisions,
+                "to_resolve": all_items,
+            }
+            packet_path = out_dir / "work_packet.json"
+            packet_path.write_text(json.dumps(packet, indent=2), encoding="utf-8")
+
+            # P4: Return compact response envelope to avoid MCP tool output truncation
+            return {
+                "success": True,
+                "controller": controller,
+                "routine_filter": routine_filter,
+                "counts": {
+                    "auto_decisions": len(auto_decisions),
+                    "to_resolve_total": len(all_items),
+                    "to_resolve_returned": len(page),
+                    "with_logic_evidence": sum(1 for i in all_items if i["occurrence_count"]),
+                    "no_logic_evidence": sum(1 for i in all_items if not i["occurrence_count"]),
+                },
+                "page": {"offset": offset, "limit": limit, "has_more": offset + len(page) < len(all_items)},
+                "sample_to_resolve": page[:3],
+                "sample_auto_decisions": auto_decisions[:3],
+                "work_packet_path": str(packet_path),
+                "next_steps": [
+                    f"Read work_packet_path ('{packet_path}') to inspect all to_resolve items and fill draft_decision's "
+                    "PROPOSED_DESCRIPTION (and CONFIDENCE/RATIONALE). Prefix low-confidence text with 'Candidate: '.",
+                    f"Once draft descriptions are authored in work_packet.json, call generate_comment_deliverables(work_packet_path='{packet_path}') "
+                    "to render all four deliverables (Comment_Delta.CSV, comment_review_report.html, decisions.json, comment_memory.json).",
+                ],
+                "decision_schema": {
+                    "TYPE": "'COMMENT' for an operand, 'Tag' for a tag description",
+                    "SCOPE": "controller name for COMMENT rows (e.g. " + controller + "); blank for Tag",
+                    "NAME": "full operand path or tag name",
+                    "PROPOSED_DESCRIPTION": "human comment; 'Candidate: ' prefix when low confidence",
+                    "CONFIDENCE": "HIGH | MEDIUM | LOW",
+                    "STATUS": "inferred",
+                    "RATIONALE": "why, citing the rung(s) used",
+                },
+            }
+        except Exception as e:
+            logger.error(f"Error in generate_program_comments for {acd_path}: {e}")
             return {"success": False, "error": str(e)}
 
     def get_available_tools(self) -> Dict[str, str]:

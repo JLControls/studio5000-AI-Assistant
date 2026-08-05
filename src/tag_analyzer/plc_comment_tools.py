@@ -37,10 +37,13 @@ def main():
     p_ctx.add_argument("--tag", required=True, help="Tag or operand name")
 
     # generate-deliverables
-    p_del = subparsers.add_parser("generate-deliverables", help="Generate CSV delta and HTML audit report")
+    p_del = subparsers.add_parser("generate-deliverables", help="Generate CSV delta, HTML audit report, and optional updated ACD file")
     p_del.add_argument("--decisions", required=True, help="Path to decisions.json")
-    p_del.add_argument("--output-dir", required=True, help="Output directory")
-    p_del.add_argument("--project-name", default="ModernTHAWROOM021722", help="Project name")
+    p_del.add_argument("--output-dir", help="Output directory (defaults to folder alongside target file)")
+    p_del.add_argument("--project-name", default=None, help="Project name (derived from the target ACD/L5X artifact when omitted)")
+    p_del.add_argument("--file", help="Path to reference target ACD or L5X file")
+    p_del.add_argument("--edit-acd", action="store_true", help="Edit comments directly in the ACD file and output an updated .ACD deliverable")
+    p_del.add_argument("--target-acd", help="Path to explicit target ACD file to edit")
 
     # manage-memory
     p_mem = subparsers.add_parser("manage-memory", help="Update object-level comment memory")
@@ -62,7 +65,14 @@ def main():
     elif args.command == "generate-deliverables":
         dec_path = Path(args.decisions)
         decisions = json.loads(dec_path.read_text(encoding="utf-8"))
-        res = pipeline.generate_deliverables(decisions, args.output_dir, args.project_name)
+        res = pipeline.generate_deliverables(
+            decisions=decisions,
+            output_dir=args.output_dir,
+            project_name=args.project_name,
+            file_path=args.file,
+            edit_acd=args.edit_acd,
+            target_acd=args.target_acd,
+        )
         print(json.dumps(res, indent=2))
 
     elif args.command == "manage-memory":

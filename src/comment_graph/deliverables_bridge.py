@@ -78,10 +78,18 @@ class DeliverablesBridge:
         pipeline = self._pipeline or self._default_pipeline()
         output = {"decisions": len(decisions)}
 
-        if request.output_dir:
-            project_name = request.file_path.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+        if request.generate_deliverables or request.output_dir:
+            # Derive the project name from the artifact stem (no extension); the
+            # pipeline also falls back to this when project_name is None.
+            base = request.file_path.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+            project_name = base.rsplit(".", 1)[0] if "." in base else base
             deliverables = pipeline.generate_deliverables(
-                decisions, request.output_dir, project_name
+                decisions,
+                output_dir=request.output_dir,
+                project_name=project_name,
+                file_path=request.file_path,
+                edit_acd=getattr(request, "edit_acd", False),
+                target_acd=getattr(request, "target_acd", None),
             )
             output["deliverables"] = deliverables
 

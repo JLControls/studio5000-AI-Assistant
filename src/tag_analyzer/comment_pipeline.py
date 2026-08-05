@@ -59,6 +59,17 @@ class PLCCommentPipeline:
                     logger.info(f"Resolved ACD {path.name} to existing export {candidate.name}")
                     return candidate
 
+            # Auto-convert ACD to L5X if no existing export found (P8 fix)
+            try:
+                from l5x_analyzer.acd_offline_convert import convert_acd_to_l5x
+                target_l5x = path.with_name(f"{path.stem}.Offline.L5X")
+                logger.info(f"Auto-converting ACD {path.name} to {target_l5x.name}")
+                res = convert_acd_to_l5x(str(path), str(target_l5x), generate_report=False)
+                if target_l5x.exists():
+                    return target_l5x
+            except Exception as exc:
+                logger.warning(f"Failed to auto-convert ACD to L5X: {exc}")
+
             raise FileNotFoundError(
                 f"No associated L5X export found for ACD file: {path}. "
                 f"Export to L5X first using convert_acd_to_l5x."
@@ -196,8 +207,8 @@ class PLCCommentPipeline:
                 }
                 break
 
-        # 3. Scan all routines for rung occurrences
-        word_pattern = re.compile(r"\b" + re.escape(tag_name) + r"\b")
+        # 3. Scan all routines for rung occurrences (P5: identifier-safe boundaries for array operands)
+        word_pattern = re.compile(r"(?<![A-Za-z0-9_])" + re.escape(tag_name) + r"(?![A-Za-z0-9_:\.\[\]])")
         identifier_pattern = re.compile(r"[A-Za-z_][A-Za-z0-9_:\.\[\]]*")
 
         rung_references = []
@@ -253,14 +264,75 @@ class PLCCommentPipeline:
 
     def generate_deliverables(
         self,
-        decisions: List[Dict[str, Any]],
-        output_dir: str | Path,
-        project_name: str = "ModernTHAWROOM021722",
-    ) -> Dict[str, str]:
+        decisions: Optional[List[Dict[str, Any]]] = None,
+        output_dir: str | Path | None = None,
+        project_name: str | None = None,
+        file_path: str | Path | None = None,
+        edit_acd: bool = False,
+        target_acd: str | Path | None = None,
+        decisions_path: str | Path | None = None,
+        work_packet_path: str | Path | None = None,
+    ) -> Dict[str, Any]:
         """
-        Generate Studio 5000 importable Comment_Delta.CSV and an interactive comment_review_report.html.
+        Generate Studio 5000 deliverables (Comment_Delta.CSV, comment_review_report.html,
+        and optionally an updated .ACD project file when direct ACD editing is requested).
+
+        Accepts decisions inline via `decisions`, or from disk via `decisions_path` or `work_packet_path`.
+        Deliverables default to a directory located at the same level as the target file.
         """
-        out_path = Path(output_dir).resolve()
+        # 0. Resolve decisions input source (P1, P2)
+        provided_sources = sum(x is not None for x in (decisions, decisions_path, work_packet_path))
+        if provided_sources != 1:
+            raise ValueError("Must provide exactly one of: decisions, decisions_path, or work_packet_path")
+
+        skipped_unauthored_drafts = 0
+        if decisions_path:
+            p_dec = Path(decisions_path).resolve()
+            if not p_dec.exists():
+                raise FileNotFoundError(f"decisions_path file not found: {p_dec}")
+            decisions = json.loads(p_dec.read_text(encoding="utf-8"))
+        elif work_packet_path:
+            p_pkt = Path(work_packet_path).resolve()
+            if not p_pkt.exists():
+                raise FileNotFoundError(f"work_packet_path file not found: {p_pkt}")
+            packet = json.loads(p_pkt.read_text(encoding="utf-8"))
+            auto_decisions = packet.get("auto_decisions") or []
+            to_resolve = packet.get("to_resolve") or []
+            authored_drafts = []
+            for item in to_resolve:
+                draft = item.get("draft_decision") or {}
+                desc = (draft.get("PROPOSED_DESCRIPTION") or "").strip()
+                if desc:
+                    authored_drafts.append(draft)
+                else:
+                    skipped_unauthored_drafts += 1
+            decisions = auto_decisions + authored_drafts
+            if not file_path and not target_acd:
+                # Infer reference location from packet or work_packet directory
+                file_path = p_pkt.parent
+
+        # Determine reference file path (to place deliverables folder at the same level)
+        ref_file = None
+        if target_acd:
+            ref_file = Path(target_acd).resolve()
+        elif file_path:
+            ref_file = Path(file_path).resolve()
+
+        # Derive the project name from the target artifact rather than hardcoding.
+        if not project_name:
+            project_name = ref_file.stem if ref_file else "PLC_Project"
+
+        if output_dir:
+            out_p = Path(output_dir)
+            if out_p.is_absolute() or not ref_file:
+                out_path = out_p.resolve()
+            else:
+                out_path = (ref_file.parent / out_p).resolve()
+        elif ref_file:
+            out_path = ref_file.parent / f"{ref_file.stem}_deliverables"
+        else:
+            out_path = Path("deliverables").resolve()
+
         out_path.mkdir(parents=True, exist_ok=True)
 
         csv_path = out_path / "Comment_Delta.CSV"
@@ -274,18 +346,43 @@ class PLCCommentPipeline:
         ]
         headers = ["TYPE", "SCOPE", "NAME", "DESCRIPTION", "DATATYPE", "SPECIFIER", "ATTRIBUTES"]
 
+        def _normalize_cp1252(text: str) -> str:
+            if not text:
+                return ""
+            replacements = {
+                "→": "->", "←": "<-", "≥": ">=", "≤": "<=",
+                "–": "-", "—": "-", "°": "deg", "µ": "u", "″": '"', "′": "'",
+            }
+            for k, v in replacements.items():
+                text = text.replace(k, v)
+            return text
+
         csv_rows = []
         for dec in decisions:
             rec_type = dec.get("TYPE", "COMMENT")
-            scope = dec.get("SCOPE", "")
+            scope = _normalize_cp1252(dec.get("SCOPE", ""))
             name = dec.get("NAME", "")
-            raw_desc = dec.get("PROPOSED_DESCRIPTION", "")
+            raw_desc = _normalize_cp1252(dec.get("PROPOSED_DESCRIPTION", ""))
             # Convert python newline to literal $N for Studio 5000 CSV
             formatted_desc = raw_desc.replace("\r\n", "$N").replace("\n", "$N")
 
-            csv_rows.append([rec_type, scope, name, formatted_desc, "", "", ""])
+            # Studio 5000 operand comments are COMMENT rows whose member/operand
+            # reference lives in the SPECIFIER column (col 6); tag/component
+            # descriptions are TAG rows carrying DATATYPE/ATTRIBUTES instead.
+            datatype = _normalize_cp1252(dec.get("DATATYPE", ""))
+            specifier = _normalize_cp1252(dec.get("SPECIFIER", ""))
+            attributes = _normalize_cp1252(dec.get("ATTRIBUTES", ""))
 
-        with csv_path.open("w", encoding="cp1252", newline="") as f:
+            # P7: Split NAME into base tag + SPECIFIER for COMMENT rows if specifier is missing
+            if rec_type == "COMMENT" and not specifier and ("[" in name or "." in name):
+                m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)(.*)$", name)
+                if m:
+                    name = m.group(1)
+                    specifier = m.group(2)
+
+            csv_rows.append([rec_type, scope, name, formatted_desc, datatype, specifier, attributes])
+
+        with csv_path.open("w", encoding="cp1252", errors="replace", newline="") as f:
             f.writelines(prefix_lines)
             writer = csv.writer(f, lineterminator="\r\n")
             writer.writerow(headers)
@@ -295,11 +392,92 @@ class PLCCommentPipeline:
         html_content = self._render_html_report(project_name, decisions)
         html_path.write_text(html_content, encoding="utf-8")
 
-        return {
+        # 3. Persist the exact decision set used (reproducibility / hand-off).
+        decisions_json_path = out_path / "decisions.json"
+        decisions_json_path.write_text(json.dumps(decisions, indent=2), encoding="utf-8")
+
+        res: Dict[str, Any] = {
             "csv_delta": str(csv_path),
-                "html_report": str(html_path),
+            "html_report": str(html_path),
+            "decisions_json": str(decisions_json_path),
             "decisions_processed": len(decisions),
+            "skipped_unauthored_drafts": skipped_unauthored_drafts,
         }
+
+        # 4. Emit object-level comment memory alongside the deliverables so the
+        # full artifact set (CSV + HTML + decisions.json + comment_memory.json)
+        # is produced by a single call. Requires an L5X/ACD to hash routines.
+        mem_source = target_acd or file_path
+        if mem_source:
+            try:
+                mem = self.manage_incremental_memory(
+                    mem_source, out_path / "comment_memory.json", decisions
+                )
+                res["comment_memory"] = mem.get("memory_file")
+            except Exception as exc:  # non-fatal: deliverables still valid
+                logger.warning(f"comment_memory.json not written: {exc}")
+                res["comment_memory_error"] = str(exc)
+
+        # 3. Direct ACD editing (if requested)
+        if edit_acd or target_acd:
+            acd_target = None
+            if target_acd:
+                cand = Path(target_acd).resolve()
+                if cand.exists():
+                    acd_target = cand
+            elif ref_file:
+                if ref_file.suffix.lower() == ".acd":
+                    acd_target = ref_file
+                else:
+                    for cand_ext in [".ACD", ".acd"]:
+                        cand = ref_file.with_suffix(cand_ext)
+                        if cand.exists():
+                            acd_target = cand
+                            break
+
+            if acd_target and acd_target.exists():
+                try:
+                    from acd.api import load_acd, patch_rungs, save_acd
+                    proj = load_acd(str(acd_target))
+                    changes: Dict[int, str] = {}
+
+                    if hasattr(proj, "controller") and hasattr(proj.controller, "programs"):
+                        for prog in proj.controller.programs:
+                            for rout in prog.routines:
+                                rung_ids = getattr(rout, "_rung_ids", [])
+                                for idx, rung_text in enumerate(rout.rungs):
+                                    if idx < len(rung_ids):
+                                        oid = rung_ids[idx]
+                                        matched_text = None
+                                        for dec in decisions:
+                                            d_rout = dec.get("SCOPE") or dec.get("routine")
+                                            d_rung = dec.get("rung_number")
+                                            if (
+                                                d_rout
+                                                and str(d_rout).lower() == rout.name.lower()
+                                                and d_rung is not None
+                                                and str(d_rung) == str(idx)
+                                                and dec.get("PROPOSED_RUNG_TEXT")
+                                            ):
+                                                matched_text = dec["PROPOSED_RUNG_TEXT"]
+                                                break
+                                        if matched_text:
+                                            changes[oid] = matched_text
+
+                    if changes:
+                        patch_rungs(proj, changes)
+
+                    updated_acd_name = f"{acd_target.stem}_updated.ACD"
+                    updated_acd_path = out_path / updated_acd_name
+                    save_acd(proj, str(updated_acd_path))
+                    res["updated_acd"] = str(updated_acd_path)
+                except Exception as exc:
+                    logger.error(f"Failed direct ACD edit: {exc}")
+                    res["updated_acd_error"] = str(exc)
+            else:
+                res["updated_acd_error"] = f"No target ACD file found for direct editing (ref: {ref_file})"
+
+        return res
 
     @staticmethod
     def parse_rung_structure(snippet: str) -> Dict[str, Any]:

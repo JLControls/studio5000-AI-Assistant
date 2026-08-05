@@ -1,0 +1,57 @@
+ROUTINE: Glycol_Pump_Control_12  (9 items)
+
+=== B3[0].0  [TYPE=COMMENT SCOPE=THAWROOM occ=3]
+  R0 @Glycol_Pump_Control_12: [XIC(N101[20].11) ,XIO(N101[20].12) XIC(B3[0].0) ]OTE(B3[0].0);
+     ; PURPOSE: GLYCOL PUMP CONTROL — Coordinates glycol demand, legacy drive start/stop commands, the all-valves-off permissive, and the two physical glycol-pump outputs.
+  R1 @Glycol_Pump_Control_12: [XIC(B3[0].0) ,XIC(N101[20].1) ,XIC(N104[20].1) ]XIO(B3[0].1)[OTL(N101[20].13) ,OTE(M0_1[37].0) ];
+     ; GLYCOL PUMP START DEMAND
+  R2 @Glycol_Pump_Control_12: [XIO(N101[20].1) XIO(N104[20].1) XIO(B3[0].0) ,XIC(B3[0].1) ][OTU(N101[20].13) ,OTE(M0_1[37].1) ];
+     ; GLYCOL PUMP STOP DEMAND
+
+=== B3[0].1  [TYPE=COMMENT SCOPE=THAWROOM occ=3]
+  R1 @Glycol_Pump_Control_12: [XIC(B3[0].0) ,XIC(N101[20].1) ,XIC(N104[20].1) ]XIO(B3[0].1)[OTL(N101[20].13) ,OTE(M0_1[37].0) ];
+     ; GLYCOL PUMP START DEMAND
+  R2 @Glycol_Pump_Control_12: [XIO(N101[20].1) XIO(N104[20].1) XIO(B3[0].0) ,XIC(B3[0].1) ][OTU(N101[20].13) ,OTE(M0_1[37].1) ];
+     ; GLYCOL PUMP STOP DEMAND
+  R3 @Glycol_Pump_Control_12: XIO(ENETBRIDGE_5069:8:O.Pt00.Data)XIO(ENETBRIDGE_5069:8:O.Pt01.Data)XIO(ENETBRIDGE_5069:8:O.Pt02.Data)XIO(ENETBRIDGE_5069:8:O.Pt03.Data)XIO(ENETBRIDGE_5069:8:O.Pt04.Data)XIO(ENETBRIDGE_5069:8:O.Pt05.Data)OTE(B3[0].1);
+     ; GLYCOL VALVE-OFF PERMISSIVE — True only when all six implemented Cell 1 and Cell 2 glycol-solenoid outputs are off.
+
+O:08.01–O:08.06 — all glycol solenoid outputs de-energized status check.
+
+=== ENETBRIDGE_5069:8:O.Pt08.Data  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R4 @Glycol_Pump_Control_12: XIC(N101[20].13)[OTE(ENETBRIDGE_5069:8:O.Pt08.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt09.Data) ];
+     ; GLYCOL PUMP OUTPUTS — Energize glycol pump No. 1 and No. 2 together while the pump run command is latched.
+
+O:08.09 and O:08.10 — GLYCOL PUMP NO. 1 and NO. 2 commands.
+
+=== ENETBRIDGE_5069:8:O.Pt09.Data  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R4 @Glycol_Pump_Control_12: XIC(N101[20].13)[OTE(ENETBRIDGE_5069:8:O.Pt08.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt09.Data) ];
+     ; GLYCOL PUMP OUTPUTS — Energize glycol pump No. 1 and No. 2 together while the pump run command is latched.
+
+O:08.09 and O:08.10 — GLYCOL PUMP NO. 1 and NO. 2 commands.
+
+=== M0_1[37].0  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R1 @Glycol_Pump_Control_12: [XIC(B3[0].0) ,XIC(N101[20].1) ,XIC(N104[20].1) ]XIO(B3[0].1)[OTL(N101[20].13) ,OTE(M0_1[37].0) ];
+     ; GLYCOL PUMP START DEMAND
+
+=== M0_1[37].1  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R2 @Glycol_Pump_Control_12: [XIO(N101[20].1) XIO(N104[20].1) XIO(B3[0].0) ,XIC(B3[0].1) ][OTU(N101[20].13) ,OTE(M0_1[37].1) ];
+     ; GLYCOL PUMP STOP DEMAND
+
+=== N101[20].11  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R0 @Glycol_Pump_Control_12: [XIC(N101[20].11) ,XIO(N101[20].12) XIC(B3[0].0) ]OTE(B3[0].0);
+     ; PURPOSE: GLYCOL PUMP CONTROL — Coordinates glycol demand, legacy drive start/stop commands, the all-valves-off permissive, and the two physical glycol-pump outputs.
+
+=== N101[20].12  [TYPE=COMMENT SCOPE=THAWROOM occ=1]
+  R0 @Glycol_Pump_Control_12: [XIC(N101[20].11) ,XIO(N101[20].12) XIC(B3[0].0) ]OTE(B3[0].0);
+     ; PURPOSE: GLYCOL PUMP CONTROL — Coordinates glycol demand, legacy drive start/stop commands, the all-valves-off permissive, and the two physical glycol-pump outputs.
+
+=== N101[20].13  [TYPE=COMMENT SCOPE=THAWROOM occ=3]
+  R1 @Glycol_Pump_Control_12: [XIC(B3[0].0) ,XIC(N101[20].1) ,XIC(N104[20].1) ]XIO(B3[0].1)[OTL(N101[20].13) ,OTE(M0_1[37].0) ];
+     ; GLYCOL PUMP START DEMAND
+  R2 @Glycol_Pump_Control_12: [XIO(N101[20].1) XIO(N104[20].1) XIO(B3[0].0) ,XIC(B3[0].1) ][OTU(N101[20].13) ,OTE(M0_1[37].1) ];
+     ; GLYCOL PUMP STOP DEMAND
+  R4 @Glycol_Pump_Control_12: XIC(N101[20].13)[OTE(ENETBRIDGE_5069:8:O.Pt08.Data) ,OTE(ENETBRIDGE_5069:8:O.Pt09.Data) ];
+     ; GLYCOL PUMP OUTPUTS — Energize glycol pump No. 1 and No. 2 together while the pump run command is latched.
+
+O:08.09 and O:08.10 — GLYCOL PUMP NO. 1 and NO. 2 commands.

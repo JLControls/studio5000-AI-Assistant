@@ -1,0 +1,25 @@
+ROUTINE: MainRoutine  (6 items)
+
+=== Cell_1_Temperature_Control_4  [TYPE=Tag SCOPE= occ=1]
+  R2 @MainRoutine: JSR(Cell_1_Temperature_Control_4,0);
+     ; Sequence Cell 1 glycol heating and ammonia cooling.
+
+=== Cell_2_Temperature_Control_8  [TYPE=Tag SCOPE= occ=1]
+  R4 @MainRoutine: JSR(Cell_2_Temperature_Control_8,0);
+     ; Sequence Cell 2 glycol heating and ammonia cooling.
+
+=== Fan_01_10_Control_11  [TYPE=Tag SCOPE= occ=1]
+  R5 @MainRoutine: JSR(Fan_01_10_Control_11,0);
+     ; Command circulation fans 01 through 10 and collect drive feedback.
+
+=== Fan_11_20_Control_7  [TYPE=Tag SCOPE= occ=1]
+  R3 @MainRoutine: JSR(Fan_11_20_Control_7,0);
+     ; Command circulation fans 11 through 20 and collect drive feedback.
+
+=== Glycol_Pump_Control_12  [TYPE=Tag SCOPE= occ=1]
+  R6 @MainRoutine: JSR(Glycol_Pump_Control_12,0);
+     ; Coordinate glycol-pump demand, permissives, commands, and outputs.
+
+=== Temperature_Input_Scaling_3  [TYPE=Tag SCOPE= occ=1]
+  R1 @MainRoutine: JSR(Temperature_Input_Scaling_3,0);
+     ; Scale the implemented thaw-room RTD and meat-probe inputs into engineering units.
