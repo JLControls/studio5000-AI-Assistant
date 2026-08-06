@@ -58,6 +58,9 @@ test_sdk_cache/
 # Test Files and Generated Projects
 *.ACD
 *.L5X
+# Hand-authored, project-agnostic Ignition exporter test fixture (no proprietary
+# data) — must be tracked so the committed test suite can run in a clean checkout.
+!tests/ignition_exporter/fixtures/synthetic_ignition.L5X
 # Scratch scripts at the repo root only — do NOT ignore the pytest suite under tests/.
 /test_*.py
 /debug_*.py

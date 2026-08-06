@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<RSLogix5000Content SchemaRevision="1.0" SoftwareRevision="38.00" TargetName="SynthCtrl" TargetType="Controller" ContainsContext="false" ExportDate="Mon Aug 03 00:00:00 2026" ExportOptions="DecoratedData">
+<Controller Use="Target" Name="SynthCtrl" ProcessorType="1756-L83E" MajorRev="38" MinorRev="11">
+<Tags>
+<!-- Case (i): analog-INPUT scaling block. Non-standard raw range 0-10000 (NOT
+     4000-20000 or 0-16384) proves ranges are read from declared members, not assumed.
+     Direction resolves to input; engineering value is the .Output member; eng=[0,192]. -->
+<Tag Name="AIn_Tank_Level" TagType="Base" DataType="AnlgScale" ExternalAccess="Read/Write">
+<Comment><![CDATA[Hot Water Tank Level Height]]></Comment>
+<Data Format="Decorated">
+<Structure DataType="AnlgScale">
+<DataValueMember Name="Input" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="InputMin" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="InputMax" DataType="REAL" Radix="Float" Value="10000.0"/>
+<DataValueMember Name="ScaledMin" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="ScaledMax" DataType="REAL" Radix="Float" Value="192.0"/>
+<DataValueMember Name="Output" DataType="REAL" Radix="Float" Value="0.0"/>
+</Structure>
+</Data>
+</Tag>
+<!-- Case (ii): analog-OUTPUT scaling block. Input side 0-60 Hz (engineering command),
+     scaled side 0-32767 counts (microamps/wire). Direction resolves to output; the
+     engineering value is the tag feeding .Input (Cmd_Pump_Hz); eng=[0,60]. -->
+<Tag Name="AOut_Pump_Speed" TagType="Base" DataType="AnlgScale" ExternalAccess="Read/Write">
+<Comment><![CDATA[Pump VFD Speed Analog Output]]></Comment>
+<Data Format="Decorated">
+<Structure DataType="AnlgScale">
+<DataValueMember Name="Input" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="InputMin" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="InputMax" DataType="REAL" Radix="Float" Value="60.0"/>
+<DataValueMember Name="ScaledMin" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="ScaledMax" DataType="REAL" Radix="Float" Value="32767.0"/>
+<DataValueMember Name="Output" DataType="REAL" Radix="Float" Value="0.0"/>
+</Structure>
+</Data>
+</Tag>
+<Tag Name="Cmd_Pump_Hz" TagType="Base" DataType="REAL" Radix="Float" ExternalAccess="Read/Write">
+<Comment><![CDATA[Pump Speed Command in Hz]]></Comment>
+</Tag>
+<!-- Case (iii): raw analog point with no OPC-addressable engineering tag on either
+     side. The SCP in MainRoutine scales the raw input into an internal PV that is
+     ExternalAccess="None" (not addressable), so the only addressable tag is the raw
+     input -> Ignition must convert raw[0-4095] -> scaled[0-100]. -->
+<Tag Name="AIn_Turbidity_Raw" TagType="Base" DataType="INT" Radix="Decimal" ExternalAccess="Read/Write">
+<Comment><![CDATA[Raw Turbidity Analog Input Counts]]></Comment>
+</Tag>
+<Tag Name="Turbidity_PV_Internal" TagType="Base" DataType="REAL" Radix="Float" ExternalAccess="None">
+<Comment><![CDATA[Internal scaled turbidity process value]]></Comment>
+</Tag>
+<!-- Case (iv): scaling block whose decorated members are all zero (partial export).
+     The real ranges must come from the wired SCP constants (0,27648,0,150) in
+     MainRoutine, associated to this block because the SCP writes Sc_HdrPres.Output. -->
+<Tag Name="Sc_HdrPres" TagType="Base" DataType="AnlgScale" ExternalAccess="Read/Write">
+<Comment><![CDATA[Header Pressure Scaling Block]]></Comment>
+<Data Format="Decorated">
+<Structure DataType="AnlgScale">
+<DataValueMember Name="Input" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="InputMin" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="InputMax" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="ScaledMin" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="ScaledMax" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="Output" DataType="REAL" Radix="Float" Value="0.0"/>
+</Structure>
+</Data>
+</Tag>
+<Tag Name="Raw_HdrPres" TagType="Base" DataType="INT" Radix="Decimal" ExternalAccess="Read/Write">
+<Comment><![CDATA[Raw Header Pressure Analog Input Counts]]></Comment>
+</Tag>
+<!-- Case (iv-b): scaling block with all-zero members AND no wired constants
+     anywhere -> must be flagged 'none_found', never emitted as a [0,0] range. -->
+<Tag Name="Sc_Orphan" TagType="Base" DataType="AnlgScale" ExternalAccess="Read/Write">
+<Comment><![CDATA[Orphan scaling block with no populated ranges]]></Comment>
+<Data Format="Decorated">
+<Structure DataType="AnlgScale">
+<DataValueMember Name="Input" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="InputMin" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="InputMax" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="ScaledMin" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="ScaledMax" DataType="REAL" Radix="Float" Value="0.0"/>
+<DataValueMember Name="Output" DataType="REAL" Radix="Float" Value="0.0"/>
+</Structure>
+</Data>
+</Tag>
+<!-- Case (viii): process transmitter with NO SCP block. The engineering full-scale
+     lives in a companion scale-range setpoint (_Sc) whose VALUE is 120.0, and the
+     PLC computes an engineering PV. The tool should expose the PV with eng=[0,120]
+     and no Ignition scaling, associating scaling with the recognizable process tag. -->
+<Tag Name="Com_AliasAIn_Sump_Lvl" TagType="Base" DataType="INT" Radix="Decimal" ExternalAccess="Read/Write">
+<Comment><![CDATA[Raw Sump Level Analog Input Counts]]></Comment>
+<Data Format="Decorated"><DataValue DataType="INT" Radix="Decimal" Value="0"/></Data>
+</Tag>
+<Tag Name="Com_Set_Sump_Lvl_Sc" TagType="Base" DataType="REAL" Radix="Float" ExternalAccess="Read/Write">
+<Comment><![CDATA[Sump Level Transducer Scale Range]]></Comment>
+<Data Format="Decorated"><DataValue DataType="REAL" Radix="Float" Value="120.0"/></Data>
+</Tag>
+<Tag Name="Com_Sump_Lvl" TagType="Base" DataType="REAL" Radix="Float" ExternalAccess="Read/Write">
+<Comment><![CDATA[Sump Level Engineering Process Value]]></Comment>
+<Data Format="Decorated"><DataValue DataType="REAL" Radix="Float" Value="0.0"/></Data>
+</Tag>
+<!-- Case (v): ExternalAccess="None" controller tag -> excluded from generation. -->
+<Tag Name="Secret_Internal" TagType="Base" DataType="REAL" Radix="Float" ExternalAccess="None">
+<Comment><![CDATA[Internal scratch value not OPC accessible]]></Comment>
+</Tag>
+<!-- Case (vii): UDT (COUNTER) tag -> generation must address atomic members. -->
+<Tag Name="Cycle_Ctr" TagType="Base" DataType="COUNTER" ExternalAccess="Read/Write">
+<Comment><![CDATA[Auto Reset Cycle Counter]]></Comment>
+<Data Format="Decorated">
+<Structure DataType="COUNTER">
+<DataValueMember Name="PRE" DataType="DINT" Radix="Decimal" Value="100"/>
+<DataValueMember Name="ACC" DataType="DINT" Radix="Decimal" Value="0"/>
+<DataValueMember Name="DN" DataType="BOOL" Value="0"/>
+</Structure>
+</Data>
+</Tag>
+<!-- A plain digital status tag (for folder / historian / generate coverage). -->
+<Tag Name="DIn_Pump_Aux" TagType="Base" DataType="BOOL" Radix="Decimal" ExternalAccess="Read/Write">
+<Comment><![CDATA[Pump Motor Auxiliary Contact Run Status]]></Comment>
+</Tag>
+</Tags>
+<Programs>
+<Program Name="MainProgram" TestEdits="false" MainRoutineName="MainRoutine">
+<Tags>
+<!-- Case (vi): program-scope tag -> opcItemPath must carry Program:MainProgram. prefix. -->
+<Tag Name="Prog_Report_Rate" TagType="Base" DataType="REAL" Radix="Float" ExternalAccess="Read/Write">
+<Comment><![CDATA[Program scoped BTU report rate]]></Comment>
+</Tag>
+</Tags>
+<Routines>
+<Routine Name="MainRoutine" Type="RLL">
+<RLLContent>
+<Rung Number="0" Type="N">
+<Text><![CDATA[MOV(Cmd_Pump_Hz,AOut_Pump_Speed.Input);]]></Text>
+</Rung>
+<Rung Number="1" Type="N">
+<Text><![CDATA[SCP(AIn_Turbidity_Raw,0,4095,0,100,Turbidity_PV_Internal);]]></Text>
+</Rung>
+<Rung Number="2" Type="N">
+<Text><![CDATA[SCP(Raw_HdrPres,0,27648,0,150,Sc_HdrPres.Output);]]></Text>
+</Rung>
+</RLLContent>
+</Routine>
+</Routines>
+</Program>
+</Programs>
+</Controller>
+</RSLogix5000Content>

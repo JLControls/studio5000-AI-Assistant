@@ -62,6 +62,7 @@ from documentation.instruction_mcp_integration import InstructionMCPIntegration,
 from l5x_analyzer.l5x_mcp_integration import L5XSDKMCPIntegration, L5XMCPTools
 from drawings_analyzer.pdf_mcp_integration import PDFMCPIntegration, PDFMCPTools
 from tag_analyzer.tag_mcp_integration import TagMCPIntegration, TagMCPTools
+from ignition_exporter.ignition_mcp_integration import IgnitionMCPIntegration
 
 # MCP imports (we'll implement a simplified version)
 class MCPServer:
@@ -352,14 +353,16 @@ class Studio5000MCPServer:
         self._pdf_tools = None
         self._tag_integration = None
         self._tag_tools = None
-        
+        self._ignition_integration = None
+
         # Initialization locks for thread safety
         self._init_locks = {
             'sdk': threading.Lock(),
-            'instruction': threading.Lock(), 
+            'instruction': threading.Lock(),
             'l5x': threading.Lock(),
             'pdf': threading.Lock(),
-            'tag': threading.Lock()
+            'tag': threading.Lock(),
+            'ignition': threading.Lock()
         }
         
         # Fast basic initialization only - vector DBs loaded on demand
@@ -516,6 +519,17 @@ class Studio5000MCPServer:
         if self._tag_tools is None:
             self._tag_tools = TagMCPTools
         return self._tag_tools
+
+    @property
+    def ignition_integration(self):
+        """Lazy-loaded Ignition exporter integration (pure/offline engine)"""
+        if self._ignition_integration is None:
+            with self._init_locks['ignition']:
+                if self._ignition_integration is None:
+                    print("🔄 Initializing Ignition exporter...", file=sys.stderr)
+                    self._ignition_integration = IgnitionMCPIntegration()
+                    print("✅ Ignition exporter ready", file=sys.stderr)
+        return self._ignition_integration
     
     async def _ensure_instruction_db_ready(self):
         """Ensure the instruction vector database is fully initialized"""
@@ -836,13 +850,57 @@ class Studio5000MCPServer:
             self.analyze_comment_graph
         )
 
+        # Ignition SCADA exporter tools (offline; L5X/ACD -> Ignition v8.1+ JSON)
+        self.server.add_tool(
+            "extract_analog_scaling",
+            "Signal-flow-aware analog scaling detector. For each analog point reports the "
+            "engineering range and the recommended OPC tag (the .Output for inputs, the .Input "
+            "command for outputs), reading real member ranges from the authoritative source and "
+            "flagging the raw-hardware fallback when Ignition must convert. Never assumes standard "
+            "raw ranges; never silently drops a point.",
+            self.extract_analog_scaling
+        )
+        self.server.add_tool(
+            "generate_ignition_tags",
+            "Generate an Ignition v8.1+ JSON tag export from an L5X/ACD project: program-scope OPC "
+            "paths, correct raw->scaled scaling, historian defaults, folder hierarchy, and unicode "
+            "escaping. Excludes ExternalAccess=None tags and refuses to overwrite the read-only "
+            "baseline ignitionTags.json. Output requires engineering review before deployment.",
+            self.generate_ignition_tags
+        )
+        self.server.add_tool(
+            "audit_opc_item_paths",
+            "Case-sensitive audit of an Ignition export's opcItemPath references against the L5X "
+            "controller tag DB. Reports missing tags, case mismatches (Logix OPC needs exact case), "
+            "and ExternalAccess=None references that will not bind.",
+            self.audit_opc_item_paths
+        )
+        self.server.add_tool(
+            "suggest_historian_config",
+            "Recommend Tag Historian settings (historyEnabled, historyTimeDeadband) by signal type. "
+            "Value deadband is returned as advisory output only and is never written into a tag.",
+            self.suggest_historian_config
+        )
+        self.server.add_tool(
+            "propose_folder_structures",
+            "Propose 2-3 candidate Ignition folder trees (PhysicalSubsystem, EquipmentClass, "
+            "AreaLocation) generically from a project's tags, each with a one-line rationale.",
+            self.propose_folder_structures
+        )
+        self.server.add_tool(
+            "sanitize_ignition_nodes",
+            "Preview Ignition node-name sanitization for a string or list of names (strips illegal "
+            "characters that cause 'Error loading node' import failures).",
+            self.sanitize_ignition_nodes
+        )
+
         # Performance monitoring tools
         self.server.add_tool(
             "get_cache_performance",
             "Get vector database cache performance statistics",
             self.get_cache_performance
         )
-    
+
     async def search_instructions(self, query: str, category: Optional[str] = None) -> List[Dict]:
         """Enhanced search for instructions using vector database"""
         try:
@@ -1566,6 +1624,48 @@ class Studio5000MCPServer:
             edit_acd=edit_acd, target_acd=target_acd,
         )
 
+    # -- Ignition SCADA exporter handlers ---------------------------------
+    async def extract_analog_scaling(self, l5x_file_path: str,
+                                     target_tags: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Detect analog scaling per point (signal-flow aware) from an L5X/ACD project."""
+        return await self.ignition_integration.extract_analog_scaling(l5x_file_path, target_tags)
+
+    async def generate_ignition_tags(self, l5x_file_path: str, device_name: str,
+                                     output_file_path: str,
+                                     folder_hierarchy_model: str = "PhysicalSubsystem",
+                                     enable_history_defaults: bool = True) -> Dict[str, Any]:
+        """Generate an Ignition v8.1+ JSON tag export. Requires engineering review before use."""
+        return await self.ignition_integration.generate_ignition_tags(
+            l5x_file_path, device_name, output_file_path,
+            folder_hierarchy_model=folder_hierarchy_model,
+            enable_history_defaults=enable_history_defaults,
+        )
+
+    async def audit_opc_item_paths(self, ignition_json_path: str,
+                                   l5x_file_path: str) -> Dict[str, Any]:
+        """Case-sensitive audit of OPC item paths vs the L5X controller tag DB."""
+        return await self.ignition_integration.audit_opc_item_paths(ignition_json_path, l5x_file_path)
+
+    async def suggest_historian_config(self, signal_type: Optional[str] = None,
+                                       tag_name: Optional[str] = None,
+                                       description: Optional[str] = None,
+                                       eng_low: Optional[float] = None,
+                                       eng_high: Optional[float] = None) -> Dict[str, Any]:
+        """Recommend historian settings by signal type (value deadband is advisory only)."""
+        return await self.ignition_integration.suggest_historian_config(
+            signal_type=signal_type, tag_name=tag_name, description=description,
+            eng_low=eng_low, eng_high=eng_high,
+        )
+
+    async def propose_folder_structures(self, l5x_file_path: str,
+                                        max_options: int = 3) -> Dict[str, Any]:
+        """Propose candidate Ignition folder trees for a project."""
+        return await self.ignition_integration.propose_folder_structures(l5x_file_path, max_options)
+
+    async def sanitize_ignition_nodes(self, names) -> Dict[str, Any]:
+        """Preview Ignition name sanitization for a string or list of names."""
+        return await self.ignition_integration.sanitize_ignition_nodes(names)
+
     async def get_cache_performance(self) -> Dict[str, Any]:
         """Get vector database cache performance statistics"""
         try:
@@ -1965,6 +2065,47 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'target_acd': {'type': 'string', 'description': 'Explicit path to target ACD file to edit'}
                 }
                 required = ['file_path']
+            elif name == 'extract_analog_scaling':
+                properties = {
+                    'l5x_file_path': {'type': 'string', 'description': 'Path to L5X or ACD project file'},
+                    'target_tags': {'type': 'array', 'description': 'Optional list of tag names to restrict the report to'}
+                }
+                required = ['l5x_file_path']
+            elif name == 'generate_ignition_tags':
+                properties = {
+                    'l5x_file_path': {'type': 'string', 'description': 'Path to source L5X or ACD project file'},
+                    'device_name': {'type': 'string', 'description': 'OPC UA device connection name (used in opcItemPath and as the root folder)'},
+                    'output_file_path': {'type': 'string', 'description': 'Destination JSON path (must NOT be ignitionTags.json, the read-only baseline)'},
+                    'folder_hierarchy_model': {'type': 'string', 'description': "Folder tree model: 'PhysicalSubsystem', 'EquipmentClass', or 'AreaLocation' (default: PhysicalSubsystem)"},
+                    'enable_history_defaults': {'type': 'boolean', 'description': 'Apply historian defaults by signal type (default: true). Never writes value deadbands.'}
+                }
+                required = ['l5x_file_path', 'device_name', 'output_file_path']
+            elif name == 'audit_opc_item_paths':
+                properties = {
+                    'ignition_json_path': {'type': 'string', 'description': 'Path to the Ignition JSON export to audit'},
+                    'l5x_file_path': {'type': 'string', 'description': 'Path to the L5X or ACD project file to audit against'}
+                }
+                required = ['ignition_json_path', 'l5x_file_path']
+            elif name == 'suggest_historian_config':
+                properties = {
+                    'signal_type': {'type': 'string', 'description': "Optional explicit signal type (level, pressure, temperature, flow, speed, energy, alarm, status, static)"},
+                    'tag_name': {'type': 'string', 'description': 'Optional tag name used to classify the signal when signal_type is omitted'},
+                    'description': {'type': 'string', 'description': 'Optional tag description used to classify the signal'},
+                    'eng_low': {'type': 'number', 'description': 'Optional engineering-range low, used to compute an advisory value deadband'},
+                    'eng_high': {'type': 'number', 'description': 'Optional engineering-range high, used to compute an advisory value deadband'}
+                }
+                required = []
+            elif name == 'propose_folder_structures':
+                properties = {
+                    'l5x_file_path': {'type': 'string', 'description': 'Path to L5X or ACD project file'},
+                    'max_options': {'type': 'integer', 'description': 'Maximum number of candidate folder trees to return (default: 3)'}
+                }
+                required = ['l5x_file_path']
+            elif name == 'sanitize_ignition_nodes':
+                properties = {
+                    'names': {'description': 'A single name (string) or a list of names to sanitize for Ignition'}
+                }
+                required = ['names']
 
             tools.append({
                 'name': name,
