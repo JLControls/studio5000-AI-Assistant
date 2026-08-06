@@ -67,7 +67,8 @@ def classify_category(entry: TagEntry) -> str:
     # Configurators, buffers, clocks, calendars, scratch/diagnostic.
     if tokens & {"cnfg", "config", "configurator", "configurator1", "configurator2",
                  "buf", "buffer", "clock", "day", "date", "scratch", "spare",
-                 "test", "diag", "debug", "sim", "temp1", "tmp"}:
+                 "test", "diag", "debug", "sim", "temp1", "tmp",
+                 "placeholder", "holder", "future", "unused", "reserved"}:
         return "config"
 
     # --- key, operator-facing categories -----------------------------------
