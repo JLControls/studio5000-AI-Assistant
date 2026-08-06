@@ -16,6 +16,9 @@ def _run(coro):
 def _generate(synthetic_l5x, tmp_path, **kwargs):
     out = tmp_path / "ignitionTags_enhanced.json"
     engine = IgnitionMCPIntegration()
+    # These structural/scaling tests exercise the full tag set; curation is covered
+    # separately in test_curation.py.
+    kwargs.setdefault("selection", "all")
     result = _run(engine.generate_ignition_tags(
         synthetic_l5x, "DeviceA", str(out), **kwargs))
     return result, out

@@ -861,11 +861,22 @@ class Studio5000MCPServer:
             self.extract_analog_scaling
         )
         self.server.add_tool(
+            "list_ignition_tag_candidates",
+            "Present the full, categorized tag inventory of an L5X/ACD project (category, signal "
+            "type, and an operator-facing 'recommended' flag per tag) so you can curate which tags "
+            "belong in a SCADA import BEFORE generating. Ask the user when unsure, then pass your "
+            "curated selection to generate_ignition_tags as target_tags. Use this first for any "
+            "'key process metrics'-style request.",
+            self.list_ignition_tag_candidates
+        )
+        self.server.add_tool(
             "generate_ignition_tags",
             "Generate an Ignition v8.1+ JSON tag export from an L5X/ACD project: program-scope OPC "
             "paths, correct raw->scaled scaling, historian defaults, folder hierarchy, and unicode "
-            "escaping. Excludes ExternalAccess=None tags and refuses to overwrite the read-only "
-            "baseline ignitionTags.json. Output requires engineering review before deployment.",
+            "escaping. Curated by default (selection='key_process_metrics'); pass target_tags to "
+            "import an explicit curated list (see list_ignition_tag_candidates), or selection='all' "
+            "to export every addressable tag. Excludes ExternalAccess=None tags and refuses to "
+            "overwrite the read-only baseline ignitionTags.json. Requires engineering review.",
             self.generate_ignition_tags
         )
         self.server.add_tool(
@@ -1630,15 +1641,22 @@ class Studio5000MCPServer:
         """Detect analog scaling per point (signal-flow aware) from an L5X/ACD project."""
         return await self.ignition_integration.extract_analog_scaling(l5x_file_path, target_tags)
 
+    async def list_ignition_tag_candidates(self, l5x_file_path: str) -> Dict[str, Any]:
+        """Present the categorized tag inventory for agent-driven curation."""
+        return await self.ignition_integration.list_ignition_tag_candidates(l5x_file_path)
+
     async def generate_ignition_tags(self, l5x_file_path: str, device_name: str,
                                      output_file_path: str,
                                      folder_hierarchy_model: str = "PhysicalSubsystem",
-                                     enable_history_defaults: bool = True) -> Dict[str, Any]:
+                                     enable_history_defaults: bool = True,
+                                     target_tags: Optional[List[str]] = None,
+                                     selection: str = "key_process_metrics") -> Dict[str, Any]:
         """Generate an Ignition v8.1+ JSON tag export. Requires engineering review before use."""
         return await self.ignition_integration.generate_ignition_tags(
             l5x_file_path, device_name, output_file_path,
             folder_hierarchy_model=folder_hierarchy_model,
             enable_history_defaults=enable_history_defaults,
+            target_tags=target_tags, selection=selection,
         )
 
     async def audit_opc_item_paths(self, ignition_json_path: str,
@@ -2071,13 +2089,20 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'target_tags': {'type': 'array', 'description': 'Optional list of tag names to restrict the report to'}
                 }
                 required = ['l5x_file_path']
+            elif name == 'list_ignition_tag_candidates':
+                properties = {
+                    'l5x_file_path': {'type': 'string', 'description': 'Path to L5X or ACD project file'}
+                }
+                required = ['l5x_file_path']
             elif name == 'generate_ignition_tags':
                 properties = {
                     'l5x_file_path': {'type': 'string', 'description': 'Path to source L5X or ACD project file'},
                     'device_name': {'type': 'string', 'description': 'OPC UA device connection name (used in opcItemPath and as the root folder)'},
                     'output_file_path': {'type': 'string', 'description': 'Destination JSON path (must NOT be ignitionTags.json, the read-only baseline)'},
                     'folder_hierarchy_model': {'type': 'string', 'description': "Folder tree model: 'PhysicalSubsystem', 'EquipmentClass', or 'AreaLocation' (default: PhysicalSubsystem)"},
-                    'enable_history_defaults': {'type': 'boolean', 'description': 'Apply historian defaults by signal type (default: true). Never writes value deadbands.'}
+                    'enable_history_defaults': {'type': 'boolean', 'description': 'Apply historian defaults by signal type (default: true). Never writes value deadbands.'},
+                    'target_tags': {'type': 'array', 'description': 'Curated list of PLC tag names to import (your selection from list_ignition_tag_candidates). Overrides selection.'},
+                    'selection': {'type': 'string', 'description': "When target_tags is omitted: 'key_process_metrics' (curated default) or 'all' (every addressable tag)."}
                 }
                 required = ['l5x_file_path', 'device_name', 'output_file_path']
             elif name == 'audit_opc_item_paths':

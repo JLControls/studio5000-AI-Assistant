@@ -30,6 +30,7 @@ from .ignition_tag_builder import (
 )
 from .l5x_tags import IgnitionTagDB, load_tag_db
 from .opc_audit import audit_opc_item_paths
+from .tag_curation import key_process_metric_names, list_ignition_tag_candidates
 
 # Logix atomic data types -> Ignition data types.
 _IGNITION_DTYPE = {
@@ -46,6 +47,10 @@ _UDT_MEMBERS = {
 }
 # Data types that are scaling blocks / non-atomic and are not exported directly.
 _STRUCTLIKE_SKIP = set(_UDT_MEMBERS)
+
+# Folders with fewer than this many tags are merged into a single "System" folder to
+# avoid a tree fragmented into dozens of one-off folders.
+_MIN_FOLDER_SIZE = 2
 
 
 def _ignition_dtype(logix_type: str) -> Optional[str]:
@@ -112,13 +117,18 @@ def _scaling_by_ref(points: List[Dict]) -> Dict[str, Dict]:
     return out
 
 
-def _collect_export_items(db: IgnitionTagDB, scaling_points: List[Dict]) -> Tuple[List[_ExportItem], List[str]]:
+def _collect_export_items(db: IgnitionTagDB, scaling_points: List[Dict],
+                          selected: Optional[set] = None) -> Tuple[List[_ExportItem], List[str]]:
     """Decide which PLC refs become Ignition tags.
 
     Analog points contribute their recommended engineering tag (with scaling info);
     COUNTER/TIMER tags expand to atomic members; other atomic tags export directly.
-    ``ExternalAccess="None"`` tags are excluded and reported.
+    ``ExternalAccess="None"`` tags are excluded and reported. When ``selected`` is
+    given, only tags whose base name is in that set are exported (curation).
     """
+    def _wanted(base: str) -> bool:
+        return selected is None or base in selected
+
     scaling_map = _scaling_by_ref(scaling_points)
     seen: set = set()
     items: List[_ExportItem] = []
@@ -127,6 +137,8 @@ def _collect_export_items(db: IgnitionTagDB, scaling_points: List[Dict]) -> Tupl
     # 1. Analog scaling recommended tags first (they carry scaling metadata).
     for ref, point in scaling_map.items():
         base = ref.split(".")[0]
+        if not _wanted(base):
+            continue
         entry = db.get(base)
         if entry is not None and entry.external_access == "None":
             excluded.append(ref)
@@ -137,7 +149,7 @@ def _collect_export_items(db: IgnitionTagDB, scaling_points: List[Dict]) -> Tupl
 
     # 2. Remaining addressable tags.
     for entry in db.tags.values():
-        if entry.name in seen:
+        if entry.name in seen or not _wanted(entry.name):
             continue
         if entry.external_access == "None":
             excluded.append(entry.name)
@@ -225,10 +237,23 @@ def _grouped_tree(builder: IgnitionTagBuilder, db: IgnitionTagDB,
         tag = tags_by_ref.get(item.plc_ref)
         if tag is None:
             continue
-        label = label_of.get(item.base, "Ungrouped")
+        label = label_of.get(item.base, "System")
         folders.setdefault(label, []).append(tag)
 
-    folder_nodes = [builder.folder(label, tags) for label, tags in sorted(folders.items())]
+    # Collapse fragmentation: single-tag folders (junk name-stems) are gathered into
+    # one "System" folder so the tree reads as meaningful process areas, not dozens
+    # of one-off folders.
+    system_bucket: List[Dict] = []
+    kept: Dict[str, List[Dict]] = {}
+    for label, tags in folders.items():
+        if len(tags) < _MIN_FOLDER_SIZE:
+            system_bucket.extend(tags)
+        else:
+            kept[label] = tags
+    if system_bucket:
+        kept.setdefault("System", []).extend(system_bucket)
+
+    folder_nodes = [builder.folder(label, tags) for label, tags in sorted(kept.items())]
     return builder.folder(root_name, folder_nodes)
 
 
@@ -244,12 +269,26 @@ class IgnitionMCPIntegration:
         """Detect analog scaling per point (signal-flow aware)."""
         return extract_analog_scaling(l5x_file_path, target_tags=target_tags)
 
+    # -- discovery: present candidates for agent-driven curation -----------
+    async def list_ignition_tag_candidates(self, l5x_file_path: str) -> Dict:
+        """Present the full, categorized tag inventory so the agent can curate."""
+        return list_ignition_tag_candidates(l5x_file_path)
+
     # -- tool #2 -----------------------------------------------------------
     async def generate_ignition_tags(self, l5x_file_path: str, device_name: str,
                                      output_file_path: str,
                                      folder_hierarchy_model: str = "PhysicalSubsystem",
-                                     enable_history_defaults: bool = True) -> Dict:
-        """Build and write an Ignition v8.1+ JSON tag export from an L5X/ACD project."""
+                                     enable_history_defaults: bool = True,
+                                     target_tags: Optional[List[str]] = None,
+                                     selection: str = "key_process_metrics") -> Dict:
+        """Build and write an Ignition v8.1+ JSON tag export from an L5X/ACD project.
+
+        Selection precedence: an explicit ``target_tags`` list (the agent's curated
+        choice) wins; otherwise ``selection`` chooses between ``"key_process_metrics"``
+        (curated default -- operator-facing PVs/setpoints/alarms/status/commands/field
+        I/O) and ``"all"`` (every OPC-addressable tag). Use
+        ``list_ignition_tag_candidates`` first to curate deliberately.
+        """
         if os.path.basename(output_file_path) == BASELINE_FILE_NAME:
             return {
                 "success": False,
@@ -261,7 +300,17 @@ class IgnitionMCPIntegration:
         builder = IgnitionTagBuilder(device_name, tag_db=db)
         scaling_points = detect_analog_scaling(db)
 
-        items, excluded = _collect_export_items(db, scaling_points)
+        if target_tags:
+            selected: Optional[set] = {t.split(".")[0] for t in target_tags}
+            selection_mode = "target_tags"
+        elif selection == "all":
+            selected = None
+            selection_mode = "all"
+        else:
+            selected = set(key_process_metric_names(db))
+            selection_mode = "key_process_metrics"
+
+        items, excluded = _collect_export_items(db, scaling_points, selected)
 
         tags_by_ref: Dict[str, Dict] = {}
         for item in items:
@@ -284,6 +333,7 @@ class IgnitionMCPIntegration:
             "success": True,
             "output_file": os.path.abspath(output_file_path),
             "device_name": device_name,
+            "selection_mode": selection_mode,
             "folder_hierarchy_model": folder_hierarchy_model,
             "tags_written": len(flat),
             "folders_created": len(folders),

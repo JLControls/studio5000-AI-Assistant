@@ -116,6 +116,14 @@
 <Tag Name="DIn_Pump_Aux" TagType="Base" DataType="BOOL" Radix="Decimal" ExternalAccess="Read/Write">
 <Comment><![CDATA[Pump Motor Auxiliary Contact Run Status]]></Comment>
 </Tag>
+<!-- Curation NOISE: a drive-comms structure and a config/buffer tag. Neither is an
+     operator-facing process metric; both must be excluded from the curated default. -->
+<Tag Name="Com_Comms_Drive_Status" TagType="Base" DataType="INT" Radix="Decimal" ExternalAccess="Read/Write">
+<Comment><![CDATA[Danfoss drive communications status word]]></Comment>
+</Tag>
+<Tag Name="Cnfg_Scan_Buf" TagType="Base" DataType="INT" Radix="Decimal" ExternalAccess="Read/Write">
+<Comment><![CDATA[Configurator scan buffer scratch]]></Comment>
+</Tag>
 </Tags>
 <Programs>
 <Program Name="MainProgram" TestEdits="false" MainRoutineName="MainRoutine">
