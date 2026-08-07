@@ -38,6 +38,9 @@ venv.bak/
 *.swo
 *~
 
+# Local MCP client config (machine-specific absolute paths / doc + SDK roots)
+.mcp.json
+
 # OS
 .DS_Store
 .DS_Store?
@@ -77,3 +80,7 @@ logs/
 # Debug output directories
 acd-extract-debug/
 
+tests/acd/KemcoWaterHeater/ignitionTagsExisting.json
+tests/acd/KemcoWaterHeater/Kemco_HA105-Tags.CSV
+kemco_out/all.json
+kemco_out/curated.json
