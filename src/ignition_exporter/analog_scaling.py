@@ -55,11 +55,16 @@ _SCP_INSTRUCTIONS = {"SCP", "SCPLIM1", "SCPLIM", "SCL"}
 _COUNT_LIKE_THRESHOLD = 1000.0
 
 _UNIT_KEYWORDS = [
-    ("hz", "Hz"), ("rpm", "RPM"), ("psi", "PSI"), ("bar", "bar"),
-    ("gpm", "GPM"), ("lpm", "LPM"), ("degf", "degF"), ("temp", "degF"),
-    ("gal", "gal"), ("btu", "BTU"), ("level", "in"), ("height", "in"),
-    ("pres", "PSI"), ("psi", "PSI"), ("percent", "%"),
+    ("psi", "PSI"), ("pres", "PSI"), ("pressure", "PSI"), ("bar", "bar"),
+    ("degf", "°F"), ("temp", "°F"), ("temperature", "°F"), ("htc", "°F"),
+    ("gpm", "GPM"), ("flow", "GPM"), ("lpm", "LPM"),
+    ("hz", "Hz"), ("speed", "Hz"), ("rpm", "RPM"), ("vfd", "Hz"),
+    ("mbtu", "mBTU/hr"), ("btu", "mBTU/hr"),
+    ("gal", "GAL"), ("tot", "GAL"), ("total", "GAL"),
+    ("pct", "%"), ("per", "%"), ("percent", "%"),
+    ("level", "%"), ("hwt1_l", "%"), ("tank_l", "%"), ("in", "in"),
 ]
+
 # Analog role markers, matched case-sensitively against the original tag names to
 # leverage Rockwell CamelCase. Handles AIn/AOut, AnlgIn/AnlgOut, and the common
 # AI/AO forms with a trailing channel digit (AI1, AO2) or scope underscore.

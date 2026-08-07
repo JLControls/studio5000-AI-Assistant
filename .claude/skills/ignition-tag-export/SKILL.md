@@ -94,6 +94,38 @@ explicit `target_tags` list wins entirely — `selection` is ignored when `targe
 given. Single-tag folders are merged into a `System` folder so the tree reads as real
 process areas.
 
+### Human-readable output needs `tag_overrides` — the tool CANNOT humanize on its own
+
+The friendly names/descriptions/process hierarchy of a good deliverable (`Header Pressure`
+under `Cold Water System/Pump 1`, not `Com_AliasAIn_CW_Hdr_Pres` under `24vdc1`) are
+**process knowledge that is not in the L5X** — the Comm/Alias tags carry no comments. Left
+to itself the tool derives node names mechanically from the raw PLC ref and folders from
+name-stems, which reads as junk. **You (the agent) are the author of the friendly layer.**
+
+Pass `tag_overrides` — a curated list, one entry per PLC ref, that wins over
+`target_tags`/`selection`:
+
+```python
+{ "plc_tag": "Com_AliasAIn_CW_Hdr_Pres",   # exact ref; member refs ok ("Cycle_Ctr.ACC")
+  "name": "Header Pressure Raw",            # friendly node name
+  "documentation": "Cold Water Header Pressure Raw AI",  # set -> suppresses the boilerplate template
+  "folder": "Cold Water System/Pump 1" }    # slash-delimited, arbitrary depth
+```
+
+The tool still handles scaling, historian, OPC escaping and `verify_tree_against_l5x`
+(a typo'd `plc_tag` raises — no synthetic write). Gotchas when authoring the spec:
+- **TIMER/COUNTER-typed alarms** (many `_Alm_*` / `_Fail` tags are TIMER instances) must
+  address a member — use `plc_tag: "..._Fail.DN"` (the done/active bit), never the bare
+  struct, or verification rejects it.
+- **Unique node names within a folder** — the physical `AliasDIn_*_Auto` selector, the
+  `Cmd_*_Auto` HMI command and the `*_Auto` status bit all humanize to the same name;
+  qualify collisions (e.g. `Auto Mode Field Switch` vs `Auto Mode Status`).
+- Prefer the **engineering** analog PV (`Com_CW_Hdr_Pres`, carries eng range/unit) over the
+  raw `AliasAIn` twin, or include both and suffix the raw one ` Raw`.
+- Do NOT copy the old `ignitionTags_enhanced_old.json` *scaling* — it uses the wrong model
+  (eng-as-conversion). Overrides touch naming/folders only; the tool's `scaledLow/scaledHigh`
+  model stays correct.
+
 ## Analog scaling: which member is the engineering value
 
 `extract_analog_scaling` reasons about signal direction:

@@ -82,6 +82,32 @@ def test_all_selection_exports_more_than_curated(synthetic_l5x, tmp_path):
     assert "Com_Comms_Drive_Status" in everything.read_text(encoding="utf-8")
 
 
+def test_unwritten_scratch_status_pruned_from_default(synthetic_l5x, tmp_path):
+    # BUG-007: a BOOL that matches a status token but is never written and is not a
+    # physical-field device is dead scratch -> pruned by the Balanced discriminator,
+    # while a real physical-field status point (DIn_Pump_Aux) stays recommended.
+    inv = list_ignition_tag_candidates(synthetic_l5x)
+    by_name = {c["name"]: c for c in inv["candidates"]}
+    assert by_name["Seq_Step_Run"]["category"] == "status"
+    assert by_name["Seq_Step_Run"]["recommended"] is False
+    assert "Seq_Step_Run" not in inv["recommended_tags"]
+    assert by_name["DIn_Pump_Aux"]["recommended"] is True
+
+    out = tmp_path / "curated.json"
+    engine = IgnitionMCPIntegration()
+    _run(engine.generate_ignition_tags(synthetic_l5x, "DeviceA", str(out)))
+    assert "Seq_Step_Run" not in out.read_text(encoding="utf-8")
+
+
+def test_expandable_struct_members_surface_in_inventory(synthetic_l5x):
+    # BUG-008 discovery side: composite struct roots are expanded to recommended
+    # atomic members in the candidate inventory.
+    inv = list_ignition_tag_candidates(synthetic_l5x)
+    names = {c["name"] for c in inv["candidates"]}
+    assert {"Com_CW.Flow", "Com_CW.Tot", "Com_HWT1.Temp"} <= names
+    assert "Com_CW.Flow" in inv["recommended_tags"]
+
+
 def test_target_tags_curates_explicitly(synthetic_l5x, tmp_path):
     out = tmp_path / "explicit.json"
     engine = IgnitionMCPIntegration()

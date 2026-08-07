@@ -124,6 +124,22 @@
 <Tag Name="Cnfg_Scan_Buf" TagType="Base" DataType="INT" Radix="Decimal" ExternalAccess="Read/Write">
 <Comment><![CDATA[Configurator scan buffer scratch]]></Comment>
 </Tag>
+<!-- BUG-008: complex UDT/AOI structures. Ignition cannot read the struct root as a
+     scalar OPC item, so generation must PRUNE the root and emit atomic members with
+     correct per-member types (Float4 vs Int4). FData1 -> .Flow/.Tot (Float4),
+     .Tot_ACC/.Tot_Rollover (Int4); TData1 -> .Temp/.SP (Float4). -->
+<Tag Name="Com_CW" TagType="Base" DataType="FData1" ExternalAccess="Read/Write">
+<Comment><![CDATA[Cold Water Flow Meter]]></Comment>
+</Tag>
+<Tag Name="Com_HWT1" TagType="Base" DataType="TData1" ExternalAccess="Read/Write">
+<Comment><![CDATA[Hot Water Tank 1 Temperature]]></Comment>
+</Tag>
+<!-- BUG-007: a BOOL that matches a status token ("run") but is never written by any
+     rung and is not a physical-field device. The Balanced relevance discriminator
+     must prune it from the curated default (dead internal scratch bit). -->
+<Tag Name="Seq_Step_Run" TagType="Base" DataType="BOOL" Radix="Decimal" ExternalAccess="Read/Write">
+<Comment><![CDATA[Internal sequence step run flag]]></Comment>
+</Tag>
 </Tags>
 <Programs>
 <Program Name="MainProgram" TestEdits="false" MainRoutineName="MainRoutine">

@@ -39,13 +39,79 @@ def _segments(name: str) -> List[str]:
     return [s for s in re.split(r"[_\s]+", name) if s]
 
 
+_SUBSYSTEM_TOKEN_MAP = {
+    "cw": "Cold Water System",
+    "hw1_hp": "Hot Water System/High Pressure",
+    "hwt1_hp": "Hot Water System/High Pressure",
+    "hw1_lp": "Hot Water System/Low Pressure",
+    "hwt1_lp": "Hot Water System/Low Pressure",
+    "hwt1": "Hot Water Tank",
+    "htr1": "Heater",
+    "comb": "Heater/Combustion",
+    "disch_p1": "Heater/Discharge Pump 1",
+    "disch_p2": "Heater/Discharge Pump 2",
+    "recirc_p1": "Heater/Heater Recirculation Pump 1",
+    "estop": "Plant Alarms",
+    "alm": "Plant Alarms",
+    "hr1": "Energy Reporting",
+    "vc1": "Energy Reporting",
+}
+
+_EQUIPMENT_SUBFOLDERS = {
+    "p1": "Pump 1",
+    "p2": "Pump 2",
+    "htc1": "Heat Circulator",
+}
+
+
 def _subsystem_of(name: str) -> str:
-    """Infer a physical-subsystem label by dropping leading role/scope segments."""
+    """Infer a physical-subsystem label using token translation rules."""
     segs = _segments(name)
+    low_name = name.lower()
+
+    # Match compound multi-token prefixes first
+    for token, mapped_path in _SUBSYSTEM_TOKEN_MAP.items():
+        if token in low_name:
+            # Check for subfolder additions (e.g. Pump 1 / Pump 2)
+            subfolder = ""
+            for sub_tok, sub_name in _EQUIPMENT_SUBFOLDERS.items():
+                if f"_{sub_tok}" in low_name or low_name.endswith(f"_{sub_tok}"):
+                    subfolder = f"/{sub_name}"
+                    break
+            return f"{mapped_path}{subfolder}"
+
     for seg in segs:
         if seg.lower() not in _ROLE_PREFIX_SEGMENTS:
             return seg
     return segs[0] if segs else _UNGROUPED
+
+
+def generate_friendly_tag_name(name: str, comment: str = "") -> str:
+    """Generate a clean, operator-facing HMI node name from a PLC tag symbol or comment."""
+    if comment and len(comment) < 60 and not comment.startswith("*"):
+        return comment.strip()
+
+    # Clean member suffixes
+    clean = re.sub(r'\.DN$', ' Done', name)
+    clean = re.sub(r'\.PRE$', ' Preset', clean)
+    clean = re.sub(r'\.ACC$', ' Accumulator', clean)
+    clean = re.sub(r'\.Flow$', ' Flow Rate', clean)
+    clean = re.sub(r'\.Tot$', ' Flow Total', clean)
+    clean = re.sub(r'\.Temp$', ' Temperature', clean)
+    clean = re.sub(r'\.mBTUhr$', ' Heat Duty', clean)
+
+    # Replace common acronyms
+    clean = re.sub(r'\bCom_AliasAIn_', 'Raw ', clean)
+    clean = re.sub(r'\bCom_AliasDIn_', '', clean)
+    clean = re.sub(r'\bCom_AlmStat_', 'Alarm Status ', clean)
+    clean = re.sub(r'\bCom_Alm_', 'Alarm ', clean)
+    clean = re.sub(r'\bCom_Cmd_', 'Command ', clean)
+    clean = re.sub(r'\bCom_Set_', 'Setpoint ', clean)
+    clean = re.sub(r'\bCom_', '', clean)
+
+    clean = clean.replace("_", " ").strip()
+    return clean
+
 
 
 def _role_of(name: str) -> str:

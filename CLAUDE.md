@@ -18,7 +18,7 @@ python -m pip install -r requirements.txt
 python src/mcp_server/studio5000_mcp_server.py --test
 python src/mcp_server/studio5000_mcp_server.py --doc-root "<Studio 5000 help path>" --test   # explicit doc root if auto-detect fails
 
-# Tests — src/ must lead sys.path. conftest.py (repo root) handles this, so plain pytest works:
+# Tests — src/ must lead sys.path. tests/conftest.py handles this, so plain pytest works:
 python -m pytest
 python -m pytest tests/comment_graph/test_orchestrator.py           # single file
 python -m pytest tests/comment_graph/test_orchestrator.py::test_x   # single test
@@ -32,7 +32,7 @@ No build step, linter, or formatter is configured. There is no coverage threshol
 Packages are imported bare (`from l5x_analyzer... import ...`, `from comment_graph... import ...`),
 **not** as `src.l5x_analyzer`. This works because:
 - The MCP server does `sys.path.append('..')` at startup (`studio5000_mcp_server.py:25`).
-- The root `conftest.py` **prepends** `src` to `sys.path` for pytest.
+- `tests/conftest.py` **prepends** `src` to `sys.path` for pytest (discovered before any test under `tests/` is imported).
 
 The prepend also makes the **vendored `src/acd`** shadow a stale `acd_tools` package that may be
 installed in the venv's site-packages. If you see the wrong `acd` being imported, that's the cause —

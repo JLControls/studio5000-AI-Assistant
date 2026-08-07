@@ -15,7 +15,13 @@ from __future__ import annotations
 import os
 from typing import Dict, List, Optional, Tuple
 
-from .analog_scaling import detect_analog_scaling, extract_analog_scaling
+from .analog_scaling import _guess_unit, detect_analog_scaling, extract_analog_scaling
+from .aoi_structure_parser import (
+    expand_structure_members,
+    find_member_rule,
+    is_expandable_structure,
+)
+
 from .folder_structures import (
     build_folder_grouping,
     propose_folder_structures,
@@ -30,7 +36,7 @@ from .ignition_tag_builder import (
 )
 from .l5x_tags import IgnitionTagDB, load_tag_db
 from .opc_audit import audit_opc_item_paths
-from .tag_curation import key_process_metric_names, list_ignition_tag_candidates
+from .tag_curation import build_write_map, key_process_metric_names, list_ignition_tag_candidates
 
 # Logix atomic data types -> Ignition data types.
 _IGNITION_DTYPE = {
@@ -96,15 +102,22 @@ def _controls_for(comment: str, plc_tag: str) -> str:
 class _ExportItem:
     """One tag to export: a resolved PLC ref plus its Ignition metadata."""
 
-    __slots__ = ("plc_ref", "base", "data_type", "comment", "scaling")
+    __slots__ = ("plc_ref", "base", "data_type", "comment", "scaling",
+                 "ign_dtype", "eng_unit")
 
     def __init__(self, plc_ref: str, base: str, data_type: str, comment: str,
-                 scaling: Optional[Dict] = None):
+                 scaling: Optional[Dict] = None, ign_dtype: Optional[str] = None,
+                 eng_unit: str = ""):
         self.plc_ref = plc_ref
         self.base = base
         self.data_type = data_type
         self.comment = comment
         self.scaling = scaling
+        # Pre-resolved Ignition data type / engineering unit for expanded UDT-AOI
+        # struct members (from aoi_structure_parser). None/"" for ordinary tags,
+        # whose type/unit are derived downstream.
+        self.ign_dtype = ign_dtype
+        self.eng_unit = eng_unit
 
 
 def _scaling_by_ref(points: List[Dict]) -> Dict[str, Dict]:
@@ -156,9 +169,18 @@ def _collect_export_items(db: IgnitionTagDB, scaling_points: List[Dict],
             continue
         dtype = entry.data_type.upper()
         if dtype in _UDT_MEMBERS:
-            for member, _ign in _UDT_MEMBERS[dtype].items():
+            for member, ign in _UDT_MEMBERS[dtype].items():
                 ref = f"{entry.name}.{member}"
-                items.append(_ExportItem(ref, entry.name, dtype, entry.comment))
+                items.append(_ExportItem(ref, entry.name, dtype, entry.comment,
+                                         ign_dtype=ign))
+            continue
+        if is_expandable_structure(entry.data_type):
+            # Complex UDT/AOI struct -> Ignition cannot read the struct root as a
+            # scalar OPC item (BUG-008). Prune the root; export its atomic members.
+            for m in expand_structure_members(entry.name, entry.data_type, entry.comment):
+                items.append(_ExportItem(m["plc_tag"], entry.name, entry.data_type,
+                                         m["doc_desc"] or entry.comment,
+                                         ign_dtype=m["dataType"], eng_unit=m["engUnit"]))
             continue
         if _ignition_dtype(dtype) is None:
             # Unknown struct / scaling-block instance -> not atomically addressable.
@@ -168,8 +190,120 @@ def _collect_export_items(db: IgnitionTagDB, scaling_points: List[Dict],
     return items, excluded
 
 
+def _expand_struct_overrides(db: IgnitionTagDB, overrides: List[Dict]) -> List[Dict]:
+    """Expand any override whose ``plc_tag`` is a bare expandable struct root.
+
+    Ignition cannot read a complex UDT/AOI struct root as a scalar OPC item
+    (BUG-008), so an agent-supplied bare root (e.g. ``Com_CW`` of type ``FData1``) is
+    replaced by one override per atomic member, inheriting the override's friendly
+    ``name`` (as a title prefix), ``folder``, ``tooltip`` and ``documentation``. The
+    member's Ignition data type / engineering unit ride along on private ``_ign_dtype``
+    / ``_eng_unit`` keys. Member refs supplied directly (``Com_CW.Flow``) pass through.
+    """
+    expanded: List[Dict] = []
+    for o in overrides:
+        ref = (o.get("plc_tag") or "").strip()
+        base = ref.split(".")[0]
+        entry = db.get(base) if ref else None
+        if (ref and "." not in ref and entry is not None
+                and is_expandable_structure(entry.data_type)):
+            base_name = o.get("name") or ""
+            for m in expand_structure_members(entry.name, entry.data_type, base_name):
+                expanded.append({
+                    "plc_tag": m["plc_tag"],
+                    "name": m["name"],
+                    "documentation": o.get("documentation") or m["doc_desc"],
+                    "tooltip": o.get("tooltip", ""),
+                    "folder": o.get("folder", ""),
+                    "_ign_dtype": m["dataType"],
+                    "_eng_unit": m["engUnit"],
+                })
+        else:
+            expanded.append(o)
+    return expanded
+
+
+def _collect_override_items(db: IgnitionTagDB, scaling_map: Dict[str, Dict],
+                            overrides: List[Dict]) -> Tuple[List[_ExportItem], List[str]]:
+    """Build export items directly from an agent-authored override list.
+
+    The overrides ARE the curated set: one export item per ``plc_tag`` entry, in the
+    given order, with its data type / comment resolved from the L5X and any detected
+    scaling attached. ``ExternalAccess="None"`` tags are excluded and reported. A
+    ``plc_tag`` absent from the L5X is still emitted so ``verify_tree_against_l5x``
+    rejects it (no silent drop of a typo'd ref). Duplicate refs are de-duplicated.
+    Struct-member refs resolve their per-member Ignition type/unit (BUG-008) either
+    from expansion metadata (``_ign_dtype``) or the struct's member rule table.
+    """
+    items: List[_ExportItem] = []
+    excluded: List[str] = []
+    seen: set = set()
+    for o in overrides:
+        ref = (o.get("plc_tag") or "").strip()
+        if not ref or ref in seen:
+            continue
+        seen.add(ref)
+        base = ref.split(".")[0]
+        entry = db.get(base)
+        if entry is None:
+            # Unknown ref: keep it so verification raises with a clear message.
+            items.append(_ExportItem(ref, base, "REAL", "", scaling_map.get(ref)))
+            continue
+        if entry.external_access == "None":
+            excluded.append(ref)
+            continue
+        ign_dtype = o.get("_ign_dtype")
+        eng_unit = o.get("_eng_unit", "") or ""
+        if ign_dtype is None and "." in ref:
+            # Member ref supplied directly -> recover its type/unit from the rules.
+            rule = find_member_rule(entry.data_type, ref[len(base):])
+            if rule is not None:
+                ign_dtype = rule.data_type
+                eng_unit = eng_unit or rule.eng_unit
+        items.append(_ExportItem(ref, base, entry.data_type, entry.comment,
+                                 scaling_map.get(ref), ign_dtype=ign_dtype,
+                                 eng_unit=eng_unit))
+    return items, excluded
+
+
+def _override_tree(builder: IgnitionTagBuilder, items: List[_ExportItem],
+                   tags_by_ref: Dict[str, Dict], overrides_by_ref: Dict[str, Dict],
+                   root_name: str) -> Dict:
+    """Nest built tags into an arbitrary-depth folder tree from override ``folder`` paths.
+
+    Each override's ``folder`` is a ``/``-delimited process hierarchy (e.g.
+    ``"Boiler/Cold Water System/Pumps/CW Pump 1"``). A folder node's ``tags`` list
+    mixes child AtomicTags and child Folder dicts, exactly how a nested Ignition tree
+    is shaped. Tags with no ``folder`` sit at the root.
+    """
+    def _new_node() -> Dict:
+        return {"tags": [], "sub": {}}
+
+    root = _new_node()
+    for item in items:
+        tag = tags_by_ref.get(item.plc_ref)
+        if tag is None:
+            continue
+        o = overrides_by_ref.get(item.plc_ref, {})
+        parts = [sanitize_name(p) for p in (o.get("folder") or "").split("/") if p.strip()]
+        node = root
+        for part in parts:
+            node = node["sub"].setdefault(part, _new_node())
+        node["tags"].append(tag)
+
+    def _to_folder(name: str, node: Dict) -> Dict:
+        child_folders = [_to_folder(n, sub) for n, sub in sorted(node["sub"].items())]
+        return builder.folder(name, node["tags"] + child_folders)
+
+    top_folders = [_to_folder(n, sub) for n, sub in sorted(root["sub"].items())]
+    return builder.folder(root_name, root["tags"] + top_folders)
+
+
 def _member_dtype(item: _ExportItem) -> str:
     """Ignition data type for an export item, resolving UDT members and scaling."""
+    if item.ign_dtype:
+        # Pre-resolved by struct expansion (correct per-member type, incl. Boolean/Int).
+        return item.ign_dtype
     if "." in item.plc_ref:
         member = item.plc_ref.split(".")[-1]
         udt = _UDT_MEMBERS.get(item.data_type.upper())
@@ -180,11 +314,27 @@ def _member_dtype(item: _ExportItem) -> str:
 
 
 def _build_tag(builder: IgnitionTagBuilder, item: _ExportItem,
-               enable_history: bool) -> Optional[Dict]:
-    """Construct a single Ignition tag dict for an export item."""
+               enable_history: bool, override: Optional[Dict] = None) -> Optional[Dict]:
+    """Construct a single Ignition tag dict for an export item.
+
+    When ``override`` (an agent-authored ``{name, documentation, tooltip}`` dict) is
+    supplied, its friendly name/description/tooltip replace the mechanical raw-ref
+    name and the generic "Value Set By / Controls" template is suppressed -- the agent
+    is the author of record for that tag. Scaling and history behaviour are unchanged.
+    """
     ign_dtype = _member_dtype(item)
-    name = sanitize_name(item.plc_ref.replace(".", " "))
-    doc = item.comment or name
+    default_name = sanitize_name(item.plc_ref.replace(".", " "))
+    if override is not None:
+        name = override.get("name") or default_name
+        doc = override.get("documentation") or item.comment or default_name
+        tooltip = override.get("tooltip", "") or ""
+        origin = controls = ""
+    else:
+        name = default_name
+        doc = item.comment or default_name
+        tooltip = ""
+        origin = _origin_for(item.plc_ref, item.comment, ign_dtype)
+        controls = _controls_for(item.comment, item.plc_ref)
 
     unit = ""
     eng_low = eng_high = raw_low = raw_high = scaled_low = scaled_high = None
@@ -200,6 +350,13 @@ def _build_tag(builder: IgnitionTagBuilder, item: _ExportItem,
             scaled_low = item.scaling.get("scaled_low")
             scaled_high = item.scaling.get("scaled_high")
 
+    if not unit and item.eng_unit:
+        # Known engineering unit from struct-member expansion (GPM, GAL, degF, ...).
+        unit = item.eng_unit
+    if not unit and ign_dtype in ("Float4", "Float8", "Int2", "Int4"):
+        unit = _guess_unit(item.plc_ref, doc)
+
+
     history = False
     time_deadband = 15
     if enable_history:
@@ -213,9 +370,7 @@ def _build_tag(builder: IgnitionTagBuilder, item: _ExportItem,
         requires_scaling=requires_scaling,
         raw_low=raw_low, raw_high=raw_high,
         scaled_low=scaled_low, scaled_high=scaled_high,
-        doc=doc,
-        origin=_origin_for(item.plc_ref, item.comment, ign_dtype),
-        controls=_controls_for(item.comment, item.plc_ref),
+        doc=doc, tooltip=tooltip, origin=origin, controls=controls,
         history=history, time_deadband=time_deadband,
     )
 
@@ -280,14 +435,20 @@ class IgnitionMCPIntegration:
                                      folder_hierarchy_model: str = "PhysicalSubsystem",
                                      enable_history_defaults: bool = True,
                                      target_tags: Optional[List[str]] = None,
-                                     selection: str = "key_process_metrics") -> Dict:
+                                     selection: str = "key_process_metrics",
+                                     tag_overrides: Optional[List[Dict]] = None) -> Dict:
         """Build and write an Ignition v8.1+ JSON tag export from an L5X/ACD project.
 
-        Selection precedence: an explicit ``target_tags`` list (the agent's curated
-        choice) wins; otherwise ``selection`` chooses between ``"key_process_metrics"``
-        (curated default -- operator-facing PVs/setpoints/alarms/status/commands/field
-        I/O) and ``"all"`` (every OPC-addressable tag). Use
-        ``list_ignition_tag_candidates`` first to curate deliberately.
+        Selection precedence: a non-empty ``tag_overrides`` list wins entirely -- it is
+        the agent-authored curated set, each entry
+        ``{plc_tag, name?, documentation?, tooltip?, folder?}`` supplying a friendly
+        node name, description and ``/``-delimited process-folder path (this is how you
+        restore human-readable output; the raw PLC ref, comment fallback and generic
+        "Value Set By / Controls" template are used only for tags without an override).
+        Otherwise an explicit ``target_tags`` list wins; otherwise ``selection`` chooses
+        between ``"key_process_metrics"`` (curated default -- operator-facing
+        PVs/setpoints/alarms/status/commands/field I/O) and ``"all"`` (every
+        OPC-addressable tag). Use ``list_ignition_tag_candidates`` first to curate.
         """
         if os.path.basename(output_file_path) == BASELINE_FILE_NAME:
             return {
@@ -299,27 +460,46 @@ class IgnitionMCPIntegration:
         db = load_tag_db(l5x_file_path)
         builder = IgnitionTagBuilder(device_name, tag_db=db)
         scaling_points = detect_analog_scaling(db)
+        scaling_map = _scaling_by_ref(scaling_points)
 
-        if target_tags:
-            selected: Optional[set] = {t.split(".")[0] for t in target_tags}
-            selection_mode = "target_tags"
-        elif selection == "all":
-            selected = None
-            selection_mode = "all"
+        overrides_by_ref: Dict[str, Dict] = {}
+        if tag_overrides:
+            # Expand bare struct-root overrides into their atomic members first, so the
+            # friendly-name map and export items agree on the member refs (BUG-008).
+            tag_overrides = _expand_struct_overrides(db, tag_overrides)
+            overrides_by_ref = {
+                (o.get("plc_tag") or "").strip(): o
+                for o in tag_overrides if (o.get("plc_tag") or "").strip()
+            }
+            items, excluded = _collect_override_items(db, scaling_map, tag_overrides)
+            selection_mode = "tag_overrides"
         else:
-            selected = set(key_process_metric_names(db))
-            selection_mode = "key_process_metrics"
-
-        items, excluded = _collect_export_items(db, scaling_points, selected)
+            if target_tags:
+                selected: Optional[set] = {t.split(".")[0] for t in target_tags}
+                selection_mode = "target_tags"
+            elif selection == "all":
+                selected = None
+                selection_mode = "all"
+            else:
+                # Curated default: the Balanced relevance discriminator (BUG-007), shared
+                # with list_ignition_tag_candidates via the write-detection map.
+                write_map = build_write_map(l5x_file_path)
+                selected = set(key_process_metric_names(db, write_map))
+                selection_mode = "key_process_metrics"
+            items, excluded = _collect_export_items(db, scaling_points, selected)
 
         tags_by_ref: Dict[str, Dict] = {}
         for item in items:
-            tag = _build_tag(builder, item, enable_history_defaults)
+            tag = _build_tag(builder, item, enable_history_defaults,
+                             override=overrides_by_ref.get(item.plc_ref))
             if tag is not None:
                 tags_by_ref[item.plc_ref] = tag
 
         root_name = sanitize_name(device_name) or db.controller_name
-        tree = _grouped_tree(builder, db, items, tags_by_ref, folder_hierarchy_model, root_name)
+        if tag_overrides:
+            tree = _override_tree(builder, items, tags_by_ref, overrides_by_ref, root_name)
+        else:
+            tree = _grouped_tree(builder, db, items, tags_by_ref, folder_hierarchy_model, root_name)
 
         # Enforce zero synthetic tags before writing (raises on violation).
         verify_tree_against_l5x(db, tree)
@@ -334,6 +514,7 @@ class IgnitionMCPIntegration:
             "output_file": os.path.abspath(output_file_path),
             "device_name": device_name,
             "selection_mode": selection_mode,
+            "overrides_applied": len(overrides_by_ref),
             "folder_hierarchy_model": folder_hierarchy_model,
             "tags_written": len(flat),
             "folders_created": len(folders),

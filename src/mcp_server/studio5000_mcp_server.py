@@ -875,7 +875,9 @@ class Studio5000MCPServer:
             "paths, correct raw->scaled scaling, historian defaults, folder hierarchy, and unicode "
             "escaping. Curated by default (selection='key_process_metrics'); pass target_tags to "
             "import an explicit curated list (see list_ignition_tag_candidates), or selection='all' "
-            "to export every addressable tag. Excludes ExternalAccess=None tags and refuses to "
+            "to export every addressable tag. For HUMAN-READABLE names/descriptions/process folders "
+            "(instead of raw PLC tag names), pass tag_overrides -- an agent-authored per-tag spec "
+            "that wins over target_tags/selection. Excludes ExternalAccess=None tags and refuses to "
             "overwrite the read-only baseline ignitionTags.json. Requires engineering review.",
             self.generate_ignition_tags
         )
@@ -1650,13 +1652,15 @@ class Studio5000MCPServer:
                                      folder_hierarchy_model: str = "PhysicalSubsystem",
                                      enable_history_defaults: bool = True,
                                      target_tags: Optional[List[str]] = None,
-                                     selection: str = "key_process_metrics") -> Dict[str, Any]:
+                                     selection: str = "key_process_metrics",
+                                     tag_overrides: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """Generate an Ignition v8.1+ JSON tag export. Requires engineering review before use."""
         return await self.ignition_integration.generate_ignition_tags(
             l5x_file_path, device_name, output_file_path,
             folder_hierarchy_model=folder_hierarchy_model,
             enable_history_defaults=enable_history_defaults,
             target_tags=target_tags, selection=selection,
+            tag_overrides=tag_overrides,
         )
 
     async def audit_opc_item_paths(self, ignition_json_path: str,
@@ -2102,7 +2106,27 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'folder_hierarchy_model': {'type': 'string', 'description': "Folder tree model: 'PhysicalSubsystem', 'EquipmentClass', or 'AreaLocation' (default: PhysicalSubsystem)"},
                     'enable_history_defaults': {'type': 'boolean', 'description': 'Apply historian defaults by signal type (default: true). Never writes value deadbands.'},
                     'target_tags': {'type': 'array', 'description': 'Curated list of PLC tag names to import (your selection from list_ignition_tag_candidates). Overrides selection.'},
-                    'selection': {'type': 'string', 'description': "When target_tags is omitted: 'key_process_metrics' (curated default) or 'all' (every addressable tag)."}
+                    'selection': {'type': 'string', 'description': "When target_tags is omitted: 'key_process_metrics' (curated default) or 'all' (every addressable tag)."},
+                    'tag_overrides': {
+                        'type': 'array',
+                        'description': (
+                            'Agent-authored curated set for HUMAN-READABLE output; wins over target_tags/selection. '
+                            'Each entry supplies a friendly node name, description and process-folder hierarchy for one PLC ref. '
+                            'Use this (with list_ignition_tag_candidates + extract_analog_scaling) to produce operator-facing '
+                            'names/folders instead of raw PLC tag names. Scaling/historian/OPC escaping are still handled automatically.'
+                        ),
+                        'items': {
+                            'type': 'object',
+                            'properties': {
+                                'plc_tag': {'type': 'string', 'description': 'Exact PLC ref to export, e.g. "Com_AliasAIn_CW_Hdr_Pres" or a member "Cycle_Ctr.ACC".'},
+                                'name': {'type': 'string', 'description': 'Friendly Ignition node name, e.g. "Header Pressure Raw".'},
+                                'documentation': {'type': 'string', 'description': 'Clean description; when set, suppresses the generic "Value Set By / Controls" template.'},
+                                'tooltip': {'type': 'string', 'description': 'Optional operator tooltip.'},
+                                'folder': {'type': 'string', 'description': 'Slash-delimited process hierarchy, e.g. "Boiler/Cold Water System/Pumps/CW Pump 1". Arbitrary depth.'}
+                            },
+                            'required': ['plc_tag']
+                        }
+                    }
                 }
                 required = ['l5x_file_path', 'device_name', 'output_file_path']
             elif name == 'audit_opc_item_paths':

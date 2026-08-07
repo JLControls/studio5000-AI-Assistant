@@ -20,13 +20,18 @@ never project-specific tag names, and every candidate carries a human-readable
 from __future__ import annotations
 
 import re
-from typing import Dict, List
+import xml.etree.ElementTree as ET
+from typing import Dict, List, Optional
 
 from tag_analyzer.tag_chunk import detect_function_from_description
+from l5x_analyzer.write_analyzer import TagWriteMap, analyze_l5x_tag_writes
+from l5x_analyzer.ambiguity_detector import detect_tag_ambiguities
 
 from .analog_scaling import _has_scaling_signature, _normalize_members
+from .aoi_structure_parser import is_expandable_structure, expand_structure_members
 from .historian_rules import classify_signal_type
 from .l5x_tags import IgnitionTagDB, TagEntry, load_tag_db
+
 
 # Operator-facing categories included in the curated "key process metrics" default.
 KEY_CATEGORIES = frozenset({
@@ -34,6 +39,25 @@ KEY_CATEGORIES = frozenset({
 })
 # Categories excluded from the curated default (still listed for the agent).
 NOISE_CATEGORIES = frozenset({"comms", "config", "internal", "other"})
+
+# Physical-field naming tokens. A tag carrying one of these is a real device point
+# (an aliased channel / motor aux / E-Stop), so it stays relevant even when the
+# write-detection engine finds no logic writing it (it is driven by the wire).
+_FIELD_TOKENS = frozenset({"din", "dout", "ain", "aout", "aux", "estop"})
+
+
+def build_write_map(file_path) -> Optional[TagWriteMap]:
+    """Parse an L5X and build its tag write-map, or None if it can't be analyzed.
+
+    Shared by the discovery inventory and the generation default so both apply the
+    same relevance discriminator (BUG-007). ``file_path`` should be a resolved
+    ``.L5X`` (pass ``IgnitionTagDB.l5x_path``); non-XML inputs return None.
+    """
+    try:
+        tree = ET.parse(str(file_path))
+        return analyze_l5x_tag_writes(tree.getroot())
+    except Exception:
+        return None
 
 
 def _tokens(name: str) -> List[str]:
@@ -107,7 +131,39 @@ def _reason(category: str, entry: TagEntry) -> str:
     return reasons.get(category, "")
 
 
-def candidate_inventory(db: IgnitionTagDB) -> List[Dict[str, object]]:
+def _is_field_device(name: str) -> bool:
+    """True when a tag name follows a physical-field-device naming convention."""
+    tokens = {t.lower() for t in _tokens(name)}
+    if tokens & _FIELD_TOKENS:
+        return True
+    return _has(name, "aliasdin", "aliasain", "aliasdout", "aliasaout", "e_stop")
+
+
+def is_export_relevant(entry: TagEntry, write_map: Optional[TagWriteMap] = None) -> bool:
+    """Balanced relevance discriminator for the curated default (BUG-007).
+
+    Only operator-facing (KEY) categories qualify. Analog PVs, setpoints and physical
+    field I/O are always kept -- these carry positive process/scale/wire evidence and
+    are frequently written by instructions the write engine does not model (e.g. SCP).
+    Alarms, status and command bits are kept only with live evidence: written by logic,
+    or a recognized physical-field device. This prunes dead scratch bits that merely
+    happen to match a status/command token while preserving real device points.
+    """
+    cat = classify_category(entry)
+    if cat not in KEY_CATEGORIES:
+        return False
+    if cat in ("analog_pv", "setpoint", "field_io"):
+        return True
+    # alarm / status / command
+    if write_map is None:
+        return True  # no logic available -> keep (back-compat)
+    if write_map.is_written(entry.name):
+        return True
+    return _is_field_device(entry.name)
+
+
+def candidate_inventory(db: IgnitionTagDB,
+                        write_map: Optional[TagWriteMap] = None) -> List[Dict[str, object]]:
     """Categorized inventory of every OPC-addressable tag, with include recommendation."""
     out: List[Dict[str, object]] = []
     for entry in db.opc_addressable_tags():
@@ -119,39 +175,84 @@ def candidate_inventory(db: IgnitionTagDB) -> List[Dict[str, object]]:
             "comment": entry.comment,
             "signal_type": classify_signal_type(tag_name=entry.name, description=entry.comment),
             "category": category,
-            "recommended": category in KEY_CATEGORIES,
+            "recommended": is_export_relevant(entry, write_map),
             "reason": _reason(category, entry),
         })
     out.sort(key=lambda c: (not c["recommended"], str(c["category"]), str(c["name"])))
     return out
 
 
-def key_process_metric_names(db: IgnitionTagDB) -> List[str]:
-    """Names of the operator-facing tags that make up the curated default selection."""
+def key_process_metric_names(db: IgnitionTagDB,
+                             write_map: Optional[TagWriteMap] = None) -> List[str]:
+    """Base names of the curated default selection: the operator-facing (relevance-
+    discriminated) tags plus expandable UDT/AOI struct roots (whose atomic members the
+    generator expands downstream, BUG-008)."""
     return [entry.name for entry in db.opc_addressable_tags()
-            if classify_category(entry) in KEY_CATEGORIES]
+            if is_export_relevant(entry, write_map)
+            or is_expandable_structure(entry.data_type)]
 
 
 def list_ignition_tag_candidates(file_path: str) -> Dict[str, object]:
     """Present the full, categorized candidate inventory for agent-driven curation."""
     db = load_tag_db(file_path)
-    candidates = candidate_inventory(db)
+
+    # 1. Run the write-detection engine on the resolved L5X (handles ACD too), then
+    #    categorize/recommend through the shared relevance discriminator so this
+    #    inventory's 'recommended' set matches what generate_ignition_tags builds.
+    write_map = build_write_map(db.l5x_path)
+    candidates = candidate_inventory(db, write_map)
+
+    # 2. Expand Composite Structures (FData1, TData1, Btu1, SCP, TOTALIZER, etc.)
+    expanded_candidates = []
+    for c in candidates:
+        tag_name = str(c["name"])
+        dt = str(c["data_type"])
+        c["is_written"] = write_map.is_written(tag_name) if write_map else True
+
+        expanded_candidates.append(c)
+
+        if is_expandable_structure(dt):
+            members = expand_structure_members(tag_name, dt, str(c["comment"]))
+            for m in members:
+                expanded_candidates.append({
+                    "name": m["plc_tag"],
+                    "scope": c["scope"],
+                    "data_type": m["dataType"],
+                    "comment": m["doc_desc"],
+                    "signal_type": classify_signal_type(tag_name=m["plc_tag"], description=m["doc_desc"]),
+                    "category": "analog_pv" if m["engUnit"] else "status",
+                    "recommended": True,
+                    "reason": f"Expanded SCADA metric member from {dt} structure",
+                    "is_written": True
+                })
 
     by_category: Dict[str, int] = {}
-    for c in candidates:
-        by_category[c["category"]] = by_category.get(str(c["category"]), 0) + 1
-    recommended = [c["name"] for c in candidates if c["recommended"]]
+    for c in expanded_candidates:
+        cat = str(c["category"])
+        by_category[cat] = by_category.get(cat, 0) + 1
+    recommended = [c["name"] for c in expanded_candidates if c.get("recommended", False)]
+
+    # 3. Detect Ambiguities for interactive agent guidance queries
+    queries = []
+    try:
+        tree = ET.parse(str(db.l5x_path))
+        raw_queries = detect_tag_ambiguities(tree.getroot())
+        queries = [q.to_dict() for q in raw_queries]
+    except Exception:
+        pass
 
     return {
         "success": True,
         "project_name": db.controller_name,
-        "total_candidates": len(candidates),
+        "total_candidates": len(expanded_candidates),
         "recommended_count": len(recommended),
         "category_counts": dict(sorted(by_category.items())),
         "recommended_tags": recommended,
-        "candidates": candidates,
+        "candidates": expanded_candidates,
+        "guidance_queries": queries,
         "note": ("Review the categorized candidates, decide which tags matter for this "
                  "SCADA import (ask the user if unsure), then call generate_ignition_tags "
                  "with target_tags set to your curated selection. 'recommended' marks the "
                  "operator-facing default; override freely."),
     }
+

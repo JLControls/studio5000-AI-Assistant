@@ -23,6 +23,8 @@ import json
 import re
 from typing import Dict, List, Optional, Set, Tuple
 
+from .aoi_structure_parser import is_expandable_structure
+from .aoi_structure_parser import is_expandable_structure
 from .l5x_tags import IgnitionTagDB
 
 # The Ignition scaling property keys are centralized here so they are the single
@@ -237,8 +239,8 @@ def verify_tree_against_l5x(tag_db: IgnitionTagDB, tree: Dict) -> Dict[str, obje
     """Verify every OPC tag in ``tree`` exists in the L5X tag DB.
 
     Raises ``ValueError`` on synthetic (non-existent) tags, program-scope tags
-    missing their ``Program:`` prefix, or bare COUNTER/TIMER tags without an atomic
-    member. Returns a summary dict on success.
+    missing their ``Program:`` prefix, or bare COUNTER/TIMER/expandable-UDT-AOI
+    struct roots without an atomic member. Returns a summary dict on success.
     """
     enh_tags, _ = flatten_tags(tree)
     missing: List[str] = []
@@ -267,7 +269,8 @@ def verify_tree_against_l5x(tag_db: IgnitionTagDB, tree: Dict) -> Dict[str, obje
             continue
         if entry.program and not plc_ref.startswith("Program:"):
             prefix_issues.append(f"{info['full_path']} -> {base_tag} (in {entry.program})")
-        if entry.data_type in _UDT_TYPES_REQUIRING_MEMBER and not sub_member:
+        if not sub_member and (entry.data_type in _UDT_TYPES_REQUIRING_MEMBER
+                               or is_expandable_structure(entry.data_type)):
             udt_issues.append(f"{info['full_path']} -> {base_tag} ({entry.data_type})")
 
     if missing:
@@ -279,7 +282,8 @@ def verify_tree_against_l5x(tag_db: IgnitionTagDB, tree: Dict) -> Dict[str, obje
             + "; ".join(prefix_issues))
     if udt_issues:
         raise ValueError(
-            "COUNTER/TIMER tags must address an atomic member (.PRE/.ACC/.DN): "
-            + "; ".join(udt_issues))
+            "COUNTER/TIMER and complex UDT/AOI struct tags must address an atomic "
+            "member (e.g. .PRE/.ACC/.DN, .Flow/.Tot, .Temp); Ignition cannot read a "
+            "struct root as a scalar OPC item: " + "; ".join(udt_issues))
 
     return {"verified_tag_count": len(enh_tags), "success": True}
