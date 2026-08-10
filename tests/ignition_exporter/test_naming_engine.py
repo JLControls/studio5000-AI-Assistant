@@ -93,6 +93,27 @@ def test_build_presentation_records_unknown_tokens_without_dropping_them():
     assert result.unknown_tokens == ("MysterySignal",)
 
 
+def test_build_presentation_keeps_curve_point_index_for_air_rate_characterization():
+    profile, _ = load_naming_profile()
+
+    result = build_presentation("Com_Air_R_SCP1", "", profile)
+
+    assert result.name == "Air Rate Curve Point 1"
+    assert result.unknown_tokens == ()
+
+
+def test_profile_test_markers_classify_custom_prefix_and_route_to_diagnostics(tmp_path):
+    profile_path = tmp_path / "profile.json"
+    profile_path.write_text(json.dumps({"test_markers": ["QA"]}), encoding="utf-8")
+    profile, _ = load_naming_profile(str(profile_path))
+
+    result = build_presentation("QA_Com_HWT1_Temp", "", profile)
+
+    assert result.name == "Hot Water Tank Temperature"
+    assert result.is_test is True
+    assert result.folder == "Boiler/Diagnostics/Test"
+
+
 def test_profile_extension_overrides_one_token(tmp_path):
     profile_path = tmp_path / "profile.json"
     profile_path.write_text(

@@ -183,13 +183,21 @@ def _split_member(plc_tag: str) -> tuple[str, str | None]:
 
 
 def _strip_prefixes(name: str, markers: frozenset[str]) -> tuple[str, bool]:
-    is_test = bool(re.search(r"(?i)(test|tes\d|testbtu)", name))
+    marker_prefixes = sorted(markers | {"d", "D"}, key=len, reverse=True)
+    is_test = any(marker.casefold() in name.casefold() for marker in markers)
     while True:
-        matched = next((prefix for prefix in ("d_", "D_", "Test_", "TESTbtu_", "testhr_") if name.startswith(prefix)), None)
+        matched = next(
+            (
+                marker
+                for marker in marker_prefixes
+                if name.casefold().startswith(f"{marker}_".casefold())
+            ),
+            None,
+        )
         if matched is None:
             return name, is_test
-        is_test = is_test or matched.rstrip("_") in markers or matched in {"d_", "D_"}
-        name = name[len(matched):]
+        is_test = True
+        name = name[len(matched) + 1:]
 
 
 def _normal_token(token: str) -> str:
@@ -208,7 +216,7 @@ def _expand_words(tokens: list[str], profile: NamingProfile, unknown: list[str])
     for token in joined.split("_"):
         if not token or re.fullmatch(r"SCP\d+|\d+", token):
             continue
-        if token.startswith("Auto Mode"):
+        if token.startswith(("Auto Mode", "Curve Point ")) or token == "Output":
             words.append(token)
         elif token in profile.tokens:
             words.append(profile.tokens[token])
@@ -243,6 +251,11 @@ def _build_name(base: str, member: str | None, profile: NamingProfile) -> tuple[
     elif "Alm" in tokens:
         prefix, tokens = "Alarm ", [token for token in tokens if token != "Alm"]
     is_command = "Cmd" in tokens or "Set" in tokens
+    curve_match = re.search(r"_(Air|Gas)_(R|L)(_|$|\.)", base)
+    if curve_match and curve_match.group(2) == "L":
+        tokens = ["Output" if token == "L" else token for token in tokens]
+    if re.search(r"_(R|L)_SCP\d", base):
+        tokens = [re.sub(r"^SCP(\d+)$", r"Curve Point \1", token) for token in tokens]
     adjusted = []
     for token in tokens:
         if token == "Auto":
