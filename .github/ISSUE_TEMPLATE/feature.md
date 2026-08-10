@@ -1,12 +1,14 @@
 ---
 name: Feature request
 about: Propose a roadmap item for the Studio 5000 AI Assistant
-title: "[FEAT] "
-labels: enhancement
+title: "FEAT-NNN — "
+labels: type:feature
 ---
 
 <!--
-Fields mirror docs/ROADMAP.md so this drops straight into the roadmap.
+Roadmap items are tracked as GitHub Issues + the "Studio 5000 AI Assistant" Project.
+A maintainer assigns the sequential FEAT-NNN id (edit it into the title) and sets the
+Bucket (Now/Next/Later)/Priority/Status Project fields.
 SDK-interface (src/sdk_interface) work is out of scope — the live SDK is
 gated off by default and offline work targets the vendored src/acd parser.
 -->

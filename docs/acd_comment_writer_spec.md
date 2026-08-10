@@ -1,6 +1,6 @@
 # Spec: Direct ACD Comment Writer (`patch_comments`)
 
-**Status:** Not started — design/spec only. Tracked as [FEAT-009](ROADMAP.md#feat-009--direct-acd-comment-writer-patch_comments) / [BUG-006](BUGS.md#bug-006--edit_acd-silently-writes-no-comment-descriptions).
+**Status:** Not started — design/spec only. Tracked as FEAT-009 (GitHub issue #22) / BUG-006 (issue #6).
 
 **Goal:** Write tag/operand comment *descriptions* directly into an `.ACD` file's
 `Comments.Dat`, so `analyze_comment_graph` / `generate_comment_deliverables` with

@@ -1,7 +1,12 @@
 # Bug Tracker & Feature Roadmap — Design
 
+> **Superseded 2026-08-10:** the in-tree Markdown trackers this spec describes
+> (`docs/BUGS.md`, `docs/ROADMAP.md`, `docs/bugs/`, `docs/roadmap/`) were migrated to
+> GitHub Issues + the "Studio 5000 AI Assistant" Project on the `JLControls` fork, which
+> is now the single source of truth. This document is kept for historical rationale only.
+
 **Date:** 2026-08-05
-**Status:** Approved (pending spec review)
+**Status:** Superseded by GitHub Issues (see note above)
 
 ## Purpose
 
