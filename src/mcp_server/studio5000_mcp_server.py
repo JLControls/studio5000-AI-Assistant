@@ -955,9 +955,11 @@ class Studio5000MCPServer:
             "escaping. Curated by default (selection='key_process_metrics'); pass target_tags to "
             "import an explicit curated list (see list_ignition_tag_candidates), or selection='all' "
             "to export every addressable tag. For HUMAN-READABLE names/descriptions/process folders "
-            "(instead of raw PLC tag names), pass tag_overrides -- an agent-authored per-tag spec "
-            "that wins over target_tags/selection. Excludes ExternalAccess=None tags and refuses to "
-            "overwrite the read-only baseline ignitionTags.json. Requires engineering review.",
+            "(instead of raw PLC tag names), use naming='human' for deterministic presentation-only "
+            "naming, optionally extended by naming_profile_path; tag_overrides remains an "
+            "agent-authored per-tag spec that wins over target_tags/selection. Excludes "
+            "ExternalAccess=None tags and refuses to overwrite the read-only baseline "
+            "ignitionTags.json. Requires engineering review.",
             self.generate_ignition_tags
         )
         self.server.add_tool(
@@ -1793,7 +1795,9 @@ class Studio5000MCPServer:
                                      enable_history_defaults: bool = True,
                                      target_tags: Optional[List[str]] = None,
                                      selection: str = "key_process_metrics",
-                                     tag_overrides: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+                                     tag_overrides: Optional[List[Dict[str, Any]]] = None,
+                                     naming: str = "raw",
+                                     naming_profile_path: Optional[str] = None) -> Dict[str, Any]:
         """Generate an Ignition v8.1+ JSON tag export. Requires engineering review before use."""
         return await self.ignition_integration.generate_ignition_tags(
             l5x_file_path, device_name, output_file_path,
@@ -1801,6 +1805,7 @@ class Studio5000MCPServer:
             enable_history_defaults=enable_history_defaults,
             target_tags=target_tags, selection=selection,
             tag_overrides=tag_overrides,
+            naming=naming, naming_profile_path=naming_profile_path,
         )
 
     async def audit_opc_item_paths(self, ignition_json_path: str,
@@ -2307,6 +2312,15 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'enable_history_defaults': {'type': 'boolean', 'description': 'Apply historian defaults by signal type (default: true). Never writes value deadbands.'},
                     'target_tags': {'type': 'array', 'description': 'Curated list of PLC tag names to import (your selection from list_ignition_tag_candidates). Overrides selection.'},
                     'selection': {'type': 'string', 'description': "When target_tags is omitted: 'key_process_metrics' (curated default) or 'all' (every addressable tag)."},
+                    'naming': {
+                        'type': 'string',
+                        'enum': ['raw', 'human'],
+                        'description': 'Presentation naming mode; raw is the backward-compatible default.'
+                    },
+                    'naming_profile_path': {
+                        'type': 'string',
+                        'description': 'Optional JSON profile extending the built-in deterministic naming rules.'
+                    },
                     'tag_overrides': {
                         'type': 'array',
                         'description': (

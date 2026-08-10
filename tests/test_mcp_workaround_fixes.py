@@ -1,4 +1,5 @@
 import json
+import asyncio
 import pytest
 from pathlib import Path
 from tag_analyzer.comment_pipeline import PLCCommentPipeline
@@ -111,7 +112,6 @@ def test_comment_row_name_specifier_split_and_cp1252_safe(tmp_work_dir):
 def test_tools_list_schema_contains_generate_program_comments():
     server = Studio5000MCPServer(doc_root=".")
     req = {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}
-    import asyncio
     resp = asyncio.run(handle_mcp_request(server, req))
     tools = resp["result"]["tools"]
     gen_prog = next((t for t in tools if t["name"] == "generate_program_comments"), None)
@@ -140,3 +140,14 @@ def test_tools_list_schema_contains_clear_vector_cache():
         "properties": {},
         "required": [],
     }
+
+def test_generate_ignition_tags_schema_exposes_human_naming():
+    server = Studio5000MCPServer(doc_root=".")
+    response = asyncio.run(handle_mcp_request(
+        server, {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}))
+    tool = next(t for t in response["result"]["tools"]
+                if t["name"] == "generate_ignition_tags")
+    props = tool["inputSchema"]["properties"]
+    assert props["naming"]["enum"] == ["raw", "human"]
+    assert "naming_profile_path" in props
+    assert "naming" not in tool["inputSchema"]["required"]
