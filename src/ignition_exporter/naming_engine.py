@@ -184,7 +184,9 @@ def _split_member(plc_tag: str) -> tuple[str, str | None]:
 
 def _strip_prefixes(name: str, markers: frozenset[str]) -> tuple[str, bool]:
     marker_prefixes = sorted(markers | {"d", "D"}, key=len, reverse=True)
-    is_test = any(marker.casefold() in name.casefold() for marker in markers)
+    is_test = bool(re.search(r"(?i)(test|tes\d|testbtu)", name)) or any(
+        marker.casefold() in name.casefold() for marker in markers
+    )
     while True:
         matched = next(
             (

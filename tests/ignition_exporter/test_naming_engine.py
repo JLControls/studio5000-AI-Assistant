@@ -114,6 +114,15 @@ def test_profile_test_markers_classify_custom_prefix_and_route_to_diagnostics(tm
     assert result.folder == "Boiler/Diagnostics/Test"
 
 
+def test_build_presentation_classifies_generic_tes_digit_prefix_as_test():
+    profile, _ = load_naming_profile()
+
+    result = build_presentation("tes1_Com_HWT1_Temp", "", profile)
+
+    assert result.is_test is True
+    assert result.folder == "Boiler/Diagnostics/Test"
+
+
 def test_profile_extension_overrides_one_token(tmp_path):
     profile_path = tmp_path / "profile.json"
     profile_path.write_text(
