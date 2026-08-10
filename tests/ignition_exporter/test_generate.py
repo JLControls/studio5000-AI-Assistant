@@ -166,6 +166,69 @@ def test_generate_guardrail_refuses_baseline_filename(synthetic_l5x, tmp_path):
     assert not out.exists()
 
 
+def test_human_mode_changes_presentation_not_technical_fields(synthetic_l5x, tmp_path):
+    """Human naming must not change the selected PLC references or OPC addresses."""
+    raw_dir = tmp_path / "raw"
+    human_dir = tmp_path / "human"
+    raw_dir.mkdir()
+    human_dir.mkdir()
+    raw_result, raw_out = _generate(synthetic_l5x, raw_dir, naming="raw")
+    human_result, human_out = _generate(synthetic_l5x, human_dir, naming="human")
+    raw_tree, raw = _load_tags(raw_out)
+    human_tree, human = _load_tags(human_out)
+    raw_by_opc = {tag["opcItemPath"]: tag for tag in raw.values()}
+    human_by_opc = {tag["opcItemPath"]: tag for tag in human.values()}
+    sump_opc = next(opc for opc in raw_by_opc if opc.endswith("]Com_Sump_Lvl"))
+
+    assert set(raw_by_opc) == set(human_by_opc)
+    assert raw_tree["name"] == "DeviceA"
+    assert human_tree["name"] == "Boiler"
+    assert raw_by_opc[sump_opc]["name"] == "Com_Sump_Lvl"
+    assert human_by_opc[sump_opc]["name"] == "Sump Level"
+    human_sump = next(tag for opc, tag in _tags_with_opc(human_out) if opc == sump_opc)
+    assert human_sump["documentation"] == "Sump Level Engineering Process Value"
+    assert raw_result["tags_written"] == human_result["tags_written"]
+    assert human_result["naming_mode"] == "human"
+    assert human_result["human_names_applied"] == human_result["tags_written"]
+    assert human_result["overrides_applied"] == 0
+
+
+def test_human_mode_uses_profile_display_root_without_changing_opc_device_prefix(
+        synthetic_l5x, tmp_path):
+    profile_path = tmp_path / "profile.json"
+    profile_path.write_text('{"display_root": "Utilities"}', encoding="utf-8")
+
+    result, out = _generate(
+        synthetic_l5x, tmp_path, naming="human", naming_profile_path=str(profile_path)
+    )
+    tree, flat = _load_tags(out)
+
+    assert result["success"] is True
+    assert result["naming_profile"] == str(profile_path.resolve())
+    assert tree["name"] == "Utilities"
+    assert any(opc.startswith("ns=1;s=[DeviceA]") and opc.endswith("]Com_Sump_Lvl")
+               for opc in (tag["opcItemPath"] for tag in flat.values()))
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "error_text"),
+    [
+        ({"naming": "friendly"}, "naming"),
+        ({"naming": "human", "naming_profile_path": "missing-profile.json"}, "profile"),
+    ],
+)
+def test_invalid_human_naming_configuration_returns_error_before_creating_output(
+        synthetic_l5x, tmp_path, kwargs, error_text):
+    out = tmp_path / "invalid.json"
+    result = _run(IgnitionMCPIntegration().generate_ignition_tags(
+        synthetic_l5x, "DeviceA", str(out), **kwargs
+    ))
+
+    assert result["success"] is False
+    assert error_text in result["error"].lower()
+    assert not out.exists()
+
+
 def test_sanitize_ignition_nodes_string_and_list():
     engine = IgnitionMCPIntegration()
     one = _run(engine.sanitize_ignition_nodes("Level & Volume"))

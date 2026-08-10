@@ -121,3 +121,45 @@ def test_override_no_value_deadband_keys(synthetic_l5x, tmp_path):
     raw = out.read_text(encoding="utf-8")
     for forbidden in ("historicalDeadband", "historicalDeadbandMode", "deadbandStyle", '"deadband"'):
         assert forbidden not in raw
+
+
+def test_human_mode_partial_override_preserves_selected_set_and_fills_missing_fields(
+        synthetic_l5x, tmp_path):
+    result, out = _generate(synthetic_l5x, tmp_path, [{
+        "plc_tag": "Com_Sump_Lvl",
+        "name": "Operator Sump Level",
+    }], naming="human")
+
+    tags = _atomic_tags(out)
+    assert result["selection_mode"] == "tag_overrides"
+    assert result["tags_written"] == 1
+    assert result["human_names_applied"] == 1
+    assert tags[0][0] == "Boiler/System"
+    assert tags[0][1]["name"] == "Operator Sump Level"
+    assert tags[0][1]["documentation"] == "Sump Level Engineering Process Value"
+    assert tags[0][1]["tooltip"] == "Sump Level"
+
+
+def test_human_mode_explicit_override_fields_win_over_profile_and_generated_values(
+        synthetic_l5x, tmp_path):
+    profile_path = tmp_path / "profile.json"
+    profile_path.write_text(json.dumps({
+        "display_root": "Utilities",
+        "explicit": {"Com_Sump_Lvl": {
+            "name": "Profile Sump Level", "folder": "Profile/Levels",
+        }},
+    }), encoding="utf-8")
+    result, out = _generate(synthetic_l5x, tmp_path, [{
+        "plc_tag": "Com_Sump_Lvl",
+        "name": "Override Sump Level",
+        "folder": "Overrides/Sump",
+        "documentation": "Operator-authorized description",
+        "tooltip": "Operator-authorized tooltip",
+    }], naming="human", naming_profile_path=str(profile_path))
+
+    tags = _atomic_tags(out)
+    assert result["naming_profile"] == str(profile_path.resolve())
+    assert tags[0][0] == "Utilities/Overrides/Sump"
+    assert tags[0][1]["name"] == "Override Sump Level"
+    assert tags[0][1]["documentation"] == "Operator-authorized description"
+    assert tags[0][1]["tooltip"] == "Operator-authorized tooltip"

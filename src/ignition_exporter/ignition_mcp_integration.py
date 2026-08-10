@@ -41,6 +41,11 @@ from .ignition_tag_builder import (
     verify_tree_against_l5x,
 )
 from .l5x_tags import IgnitionTagDB, load_tag_db
+from .naming_engine import (
+    build_presentation,
+    disambiguate_presentations,
+    load_naming_profile,
+)
 from .opc_audit import audit_opc_item_paths
 from .tag_curation import (
     build_write_map,
@@ -517,7 +522,9 @@ class IgnitionMCPIntegration:
                                      enable_history_defaults: bool = True,
                                      target_tags: Optional[List[str]] = None,
                                      selection: str = "key_process_metrics",
-                                     tag_overrides: Optional[List[Dict]] = None) -> Dict:
+                                     tag_overrides: Optional[List[Dict]] = None,
+                                     naming: str = "raw",
+                                     naming_profile_path: Optional[str] = None) -> Dict:
         """Build and write an Ignition v8.1+ JSON tag export from an L5X/ACD project.
 
         Selection precedence: a non-empty ``tag_overrides`` list wins entirely -- it is
@@ -531,6 +538,20 @@ class IgnitionMCPIntegration:
         PVs/setpoints/alarms/status/commands/field I/O) and ``"all"`` (every
         OPC-addressable tag). Use ``list_ignition_tag_candidates`` first to curate.
         """
+        if naming not in {"raw", "human"}:
+            return {
+                "success": False,
+                "error": f"naming must be 'raw' or 'human', got {naming!r}",
+            }
+
+        profile = None
+        naming_profile = "not applied"
+        if naming == "human":
+            try:
+                profile, naming_profile = load_naming_profile(naming_profile_path)
+            except ValueError as exc:
+                return {"success": False, "error": str(exc)}
+
         if os.path.basename(output_file_path) == BASELINE_FILE_NAME:
             return {
                 "success": False,
@@ -544,7 +565,8 @@ class IgnitionMCPIntegration:
         scaling_map = _scaling_by_ref(scaling_points)
 
         overrides_by_ref: Dict[str, Dict] = {}
-        if tag_overrides:
+        has_explicit_overrides = bool(tag_overrides)
+        if has_explicit_overrides:
             # Expand bare struct-root overrides into their atomic members first, so the
             # friendly-name map and export items agree on the member refs (BUG-008).
             tag_overrides = _expand_struct_overrides(db, tag_overrides)
@@ -574,15 +596,57 @@ class IgnitionMCPIntegration:
                 prune_scaled_raw_aliases=selection_mode == "key_process_metrics",
             )
 
+        explicit_overrides_applied = len(overrides_by_ref)
+        human_names_applied = 0
+        naming_fallback_count = 0
+        naming_diagnostics: List[Dict] = []
+        if naming == "human":
+            presentations = disambiguate_presentations([
+                build_presentation(item.plc_ref, item.comment, profile)
+                for item in items
+            ])
+            generated_by_ref: Dict[str, Dict] = {}
+            for presentation in presentations:
+                folder_parts = [part for part in presentation.folder.split("/") if part.strip()]
+                if folder_parts and sanitize_name(folder_parts[0]) == sanitize_name(profile.display_root):
+                    folder_parts = folder_parts[1:]
+                generated_by_ref[presentation.plc_tag] = {
+                    "plc_tag": presentation.plc_tag,
+                    "name": presentation.name,
+                    "documentation": presentation.documentation,
+                    "tooltip": presentation.tooltip,
+                    "folder": "/".join(folder_parts),
+                }
+                if presentation.unknown_tokens:
+                    naming_fallback_count += 1
+                    naming_diagnostics.append({
+                        "plc_tag": presentation.plc_tag,
+                        "unknown_tokens": list(presentation.unknown_tokens),
+                    })
+            if has_explicit_overrides:
+                for plc_ref, explicit in overrides_by_ref.items():
+                    generated = generated_by_ref.get(plc_ref)
+                    if generated is not None:
+                        generated.update({
+                            field: explicit[field]
+                            for field in ("name", "documentation", "tooltip", "folder")
+                            if field in explicit
+                        })
+            overrides_by_ref = generated_by_ref
+            human_names_applied = len(generated_by_ref)
+
         tags_by_ref: Dict[str, Dict] = {}
         for item in items:
             tag = _build_tag(builder, item, enable_history_defaults,
-                             override=overrides_by_ref.get(item.plc_ref))
+                             override=(overrides_by_ref.get(item.plc_ref)
+                                       if naming == "human" or has_explicit_overrides else None))
             if tag is not None:
                 tags_by_ref[item.plc_ref] = tag
 
         root_name = sanitize_name(device_name) or db.controller_name
-        if tag_overrides:
+        if naming == "human" and profile.display_root.strip():
+            root_name = sanitize_name(profile.display_root) or root_name
+        if naming == "human" or has_explicit_overrides:
             tree = _override_tree(builder, items, tags_by_ref, overrides_by_ref, root_name)
         else:
             tree = _grouped_tree(builder, db, items, tags_by_ref, folder_hierarchy_model, root_name)
@@ -600,7 +664,7 @@ class IgnitionMCPIntegration:
             "output_file": os.path.abspath(output_file_path),
             "device_name": device_name,
             "selection_mode": selection_mode,
-            "overrides_applied": len(overrides_by_ref),
+            "overrides_applied": explicit_overrides_applied,
             "folder_hierarchy_model": folder_hierarchy_model,
             "tags_written": len(flat),
             "folders_created": len(folders),
@@ -620,6 +684,11 @@ class IgnitionMCPIntegration:
                 if item.advisory == "unscaled_analog_point"
             ],
             "inaccessible_reported": builder.inaccessible_tags,
+            "naming_mode": naming,
+            "naming_profile": naming_profile,
+            "human_names_applied": human_names_applied,
+            "naming_fallback_count": naming_fallback_count,
+            "naming_diagnostics": naming_diagnostics,
             "note": ("Generated SCADA tags require engineering review and Ignition "
                      "validation before deployment."),
         }
