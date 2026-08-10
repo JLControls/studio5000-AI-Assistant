@@ -1,0 +1,1003 @@
+[
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_LP_P2_Aux",
+  "name": "Hot Water Tank Low Pressure Pump 2 Aux Contact",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 2",
+  "documentation": "Hot Water Tank Low Pressure Pump 2 Aux Contact",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_Lp_P2_Disc_On",
+  "name": "Hot Water Tank Low Pressure Pump 2 Disconnect On",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 2",
+  "documentation": "Hot Water Tank Low Pressure Pump 2 Disconnect On",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HWT1_LP_P2_Cmd_Hz",
+  "name": "Hot Water Tank Low Pressure Pump 2 Command Speed",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 2",
+  "documentation": "Hot Water Tank Low Pressure Pump 2 Command Speed",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_AlmStat_HWT1_LP_P2",
+  "name": "Alarm Status Hot Water Tank Low Pressure Pump 2",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 2",
+  "documentation": "Alarm Status Hot Water Tank Low Pressure Pump 2",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Com_HWT1_LP_P2_Auto",
+  "name": "Hot Water Tank Low Pressure Pump 2 Auto Mode Status",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 2",
+  "documentation": "Hot Water Tank Low Pressure Pump 2 Auto Mode (Status)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_LP_P2_Auto",
+  "name": "Hot Water Tank Low Pressure Pump 2 Auto Mode Field Switch",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 2",
+  "documentation": "Hot Water Tank Low Pressure Pump 2 Auto Mode (Field Switch)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_Lp_P2_Disc_Off.DN",
+  "name": "Alarm Hot Water Tank Low Pressure Pump 2 Disconnect Off",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 2",
+  "documentation": "Alarm Hot Water Tank Low Pressure Pump 2 Disconnect Off",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_LP_P2_Suc_Lo.DN",
+  "name": "Alarm Hot Water Tank Low Pressure Pump 2 Suction Low",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 2",
+  "documentation": "Alarm Hot Water Tank Low Pressure Pump 2 Suction Low",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_Lp_P2_Fail.DN",
+  "name": "Alarm Hot Water Tank Low Pressure Pump 2 Fail",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 2",
+  "documentation": "Alarm Hot Water Tank Low Pressure Pump 2 Fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HW1_LP_En",
+  "name": "Hot Water Low Pressure Enable",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pressure",
+  "documentation": "Hot Water Low Pressure Enable",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HW1_Lp_Hdr_Pres",
+  "name": "Hot Water Low Pressure Header Pressure",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pressure",
+  "documentation": "Hot Water Low Pressure Header Pressure",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_HW1_LP.Flow_Cur_Ttl",
+  "name": "Hot Water Low Pressure Flow Total",
+  "folder": "Boiler/Hot Water System/Low Pressure/Flow",
+  "documentation": "Hot Water Low Pressure Flow Total",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_HW1_LP.Flow_GPM",
+  "name": "Hot Water Low Pressure Flow",
+  "folder": "Boiler/Hot Water System/Low Pressure/Flow",
+  "documentation": "Hot Water Low Pressure Flow",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_Lp_P1_Disc_On",
+  "name": "Hot Water Tank Low Pressure Pump 1 Disconnect On",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 1",
+  "documentation": "Hot Water Tank Low Pressure Pump 1 Disconnect On",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_LP_P1_Aux",
+  "name": "Hot Water Tank Low Pressure Pump 1 Aux Contact",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 1",
+  "documentation": "Hot Water Tank Low Pressure Pump 1 Aux Contact",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_AlmStat_HWT1_LP_P1",
+  "name": "Alarm Status Hot Water Tank Low Pressure Pump 1",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 1",
+  "documentation": "Alarm Status Hot Water Tank Low Pressure Pump 1",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_LP_P1_Suc_Lo.DN",
+  "name": "Alarm Hot Water Tank Low Pressure Pump 1 Suction Low",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 1",
+  "documentation": "Alarm Hot Water Tank Low Pressure Pump 1 Suction Low",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HWT1_LP_P1_Cmd_Hz",
+  "name": "Hot Water Tank Low Pressure Pump 1 Command Speed",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 1",
+  "documentation": "Hot Water Tank Low Pressure Pump 1 Command Speed",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_Lp_P1_Disc_Off.DN",
+  "name": "Alarm Hot Water Tank Low Pressure Pump 1 Disconnect Off",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 1",
+  "documentation": "Alarm Hot Water Tank Low Pressure Pump 1 Disconnect Off",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_Lp_P1_Auto",
+  "name": "Hot Water Tank Low Pressure Pump 1 Auto Mode Field Switch",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 1",
+  "documentation": "Hot Water Tank Low Pressure Pump 1 Auto Mode (Field Switch)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_Lp_P1_Fail.DN",
+  "name": "Alarm Hot Water Tank Low Pressure Pump 1 Fail",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 1",
+  "documentation": "Alarm Hot Water Tank Low Pressure Pump 1 Fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HWT1_Lp_P1_Auto",
+  "name": "Hot Water Tank Low Pressure Pump 1 Auto Mode Status",
+  "folder": "Boiler/Hot Water System/Low Pressure/Pump 1",
+  "documentation": "Hot Water Tank Low Pressure Pump 1 Auto Mode (Status)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HWT1_HP_P1_Auto",
+  "name": "Hot Water Tank High Pressure Pump 1 Auto Mode Status",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 1",
+  "documentation": "Hot Water Tank High Pressure Pump 1 Auto Mode (Status)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_HP_P1_Suc_Lo.DN",
+  "name": "Alarm Hot Water Tank High Pressure Pump 1 Suction Low",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 1",
+  "documentation": "Alarm Hot Water Tank High Pressure Pump 1 Suction Low",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_HP_P1_Disc_On",
+  "name": "Hot Water Tank High Pressure Pump 1 Disconnect On",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 1",
+  "documentation": "Hot Water Tank High Pressure Pump 1 Disconnect On",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_HP_P1_Disc_Off.DN",
+  "name": "Alarm Hot Water Tank High Pressure Pump 1 Disconnect Off",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 1",
+  "documentation": "Alarm Hot Water Tank High Pressure Pump 1 Disconnect Off",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HWT1_HP_P1_Cmd_Hz",
+  "name": "Hot Water Tank High Pressure Pump 1 Command Speed",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 1",
+  "documentation": "Hot Water Tank High Pressure Pump 1 Command Speed",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_HP_P1_Auto",
+  "name": "Hot Water Tank High Pressure Pump 1 Auto Mode Field Switch",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 1",
+  "documentation": "Hot Water Tank High Pressure Pump 1 Auto Mode (Field Switch)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AlmStat_HWT1_HP_P1",
+  "name": "Alarm Status Hot Water Tank High Pressure Pump 1",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 1",
+  "documentation": "Alarm Status Hot Water Tank High Pressure Pump 1",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_HP_P1_Temp_Hi.DN",
+  "name": "Alarm Hot Water Tank High Pressure Pump 1 Temperature High",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 1",
+  "documentation": "Alarm Hot Water Tank High Pressure Pump 1 Temperature High",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_HP_P1_Fail.DN",
+  "name": "Alarm Hot Water Tank High Pressure Pump 1 Fail",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 1",
+  "documentation": "Alarm Hot Water Tank High Pressure Pump 1 Fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_HP_P1_Aux",
+  "name": "Hot Water Tank High Pressure Pump 1 Aux Contact",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 1",
+  "documentation": "Hot Water Tank High Pressure Pump 1 Aux Contact",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HW1_HP_En",
+  "name": "Hot Water High Pressure Enable",
+  "folder": "Boiler/Hot Water System/High Pressure/Pressure",
+  "documentation": "Hot Water High Pressure Enable",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HW1_HP_Hdr_Pres",
+  "name": "Hot Water High Pressure Header Pressure",
+  "folder": "Boiler/Hot Water System/High Pressure/Pressure",
+  "documentation": "Hot Water High Pressure Header Pressure",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_HWT1_HP_P2_Auto",
+  "name": "Hot Water Tank High Pressure Pump 2 Auto Mode Status",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 2",
+  "documentation": "Hot Water Tank High Pressure Pump 2 Auto Mode (Status)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AlmStat_HWT1_HP_P2",
+  "name": "Alarm Status Hot Water Tank High Pressure Pump 2",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 2",
+  "documentation": "Alarm Status Hot Water Tank High Pressure Pump 2",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_HP_P2_Aux",
+  "name": "Hot Water Tank High Pressure Pump 2 Aux Contact",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 2",
+  "documentation": "Hot Water Tank High Pressure Pump 2 Aux Contact",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_HP_P2_Disc_Off.DN",
+  "name": "Alarm Hot Water Tank High Pressure Pump 2 Disconnect Off",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 2",
+  "documentation": "Alarm Hot Water Tank High Pressure Pump 2 Disconnect Off",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_HP_P2_Fail.DN",
+  "name": "Alarm Hot Water Tank High Pressure Pump 2 Fail",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 2",
+  "documentation": "Alarm Hot Water Tank High Pressure Pump 2 Fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_HP_P2_Temp_Hi.DN",
+  "name": "Alarm Hot Water Tank High Pressure Pump 2 Temperature High",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 2",
+  "documentation": "Alarm Hot Water Tank High Pressure Pump 2 Temperature High",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_HP_P2_Auto",
+  "name": "Hot Water Tank High Pressure Pump 2 Auto Mode Field Switch",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 2",
+  "documentation": "Hot Water Tank High Pressure Pump 2 Auto Mode (Field Switch)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HWT1_HP_P2_Cmd_Hz",
+  "name": "Hot Water Tank High Pressure Pump 2 Command Speed",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 2",
+  "documentation": "Hot Water Tank High Pressure Pump 2 Command Speed",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_HP_P2_Suc_Lo.DN",
+  "name": "Alarm Hot Water Tank High Pressure Pump 2 Suction Low",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 2",
+  "documentation": "Alarm Hot Water Tank High Pressure Pump 2 Suction Low",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_HP_P2_Disc_On",
+  "name": "Hot Water Tank High Pressure Pump 2 Disconnect On",
+  "folder": "Boiler/Hot Water System/High Pressure/Pump 2",
+  "documentation": "Hot Water Tank High Pressure Pump 2 Disconnect On",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HW1_HP.Flow_GPM",
+  "name": "Hot Water High Pressure Flow",
+  "folder": "Boiler/Hot Water System/High Pressure/Flow",
+  "documentation": "Hot Water High Pressure Flow",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_HW1_HP.Flow_Cur_Ttl",
+  "name": "Hot Water High Pressure Flow Total",
+  "folder": "Boiler/Hot Water System/High Pressure/Flow",
+  "documentation": "Hot Water High Pressure Flow Total",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_Rep_HWT1_Temp_En",
+  "name": "Report Hot Water Tank Temperature Enable",
+  "folder": "Boiler/Hot Water Tank/Temperature",
+  "documentation": "Report Hot Water Tank Temperature Enable",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HWT1_Temp",
+  "name": "Hot Water Tank Temperature",
+  "folder": "Boiler/Hot Water Tank/Temperature",
+  "documentation": "Hot Water Tank Temperature",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_HWT1_HtC1_Auto",
+  "name": "Hot Water Tank Heat Circulator Auto Mode Status",
+  "folder": "Boiler/Hot Water Tank/Circulator",
+  "documentation": "Hot Water Tank Heat Circulator Auto Mode (Status)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AlmStat_HWT1_HtC1",
+  "name": "Alarm Status Hot Water Tank Heat Circulator",
+  "folder": "Boiler/Hot Water Tank/Circulator",
+  "documentation": "Alarm Status Hot Water Tank Heat Circulator",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_HtC1_Fail.DN",
+  "name": "Alarm Hot Water Tank Heat Circulator Fail",
+  "folder": "Boiler/Hot Water Tank/Circulator",
+  "documentation": "Alarm Hot Water Tank Heat Circulator Fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_HtC1_Aux",
+  "name": "Hot Water Tank Heat Circulator Aux Contact",
+  "folder": "Boiler/Hot Water Tank/Circulator",
+  "documentation": "Hot Water Tank Heat Circulator Aux Contact",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_HWT1_HtC1_Auto",
+  "name": "Hot Water Tank Heat Circulator Auto Mode Field Switch",
+  "folder": "Boiler/Hot Water Tank/Circulator",
+  "documentation": "Hot Water Tank Heat Circulator Auto Mode (Field Switch)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HWT1.Gal",
+  "name": "Hot Water Tank Level Gal",
+  "folder": "Boiler/Hot Water Tank/Level",
+  "documentation": "Hot Water Tank Level (Gallons)\t",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_Hi_L",
+  "name": "Alarm Hot Water Tank High Level",
+  "folder": "Boiler/Hot Water Tank/Level",
+  "documentation": "Alarm Hot Water Tank High Level",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HWT1.L",
+  "name": "Hot Water Tank Level",
+  "folder": "Boiler/Hot Water Tank/Level",
+  "documentation": "Hot Water Tank Level",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_Alm_HWT1_Lo_L.DN",
+  "name": "Alarm Hot Water Tank Low Level",
+  "folder": "Boiler/Hot Water Tank/Level",
+  "documentation": "Alarm Hot Water Tank Low Level",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AlmStat_HWT1_L",
+  "name": "Alarm Status Hot Water Tank Level",
+  "folder": "Boiler/Hot Water Tank/Level",
+  "documentation": "Alarm Status Hot Water Tank Level",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Htr1_Alm_Stk_Temp_Hi",
+  "name": "Heater Alarm Stack Temperature High",
+  "folder": "Boiler/Heater/Combustion",
+  "documentation": "Heater Alarm Stack Temperature High",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_FGR_Blwr1_Disc_On",
+  "name": "Heater Flue Gas Recirc Blower 1 Disconnect On",
+  "folder": "Boiler/Heater/Combustion/Blower 1",
+  "documentation": "Heater Flue Gas Recirc Blower 1 Disconnect On",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Alm_Blwr1_Disc_Off.DN",
+  "name": "Heater Alarm Blower 1 Disconnect Off",
+  "folder": "Boiler/Heater/Combustion/Blower 1",
+  "documentation": "Heater Alarm Blower 1 Disconnect Off",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Alm_Blwr_Fail",
+  "name": "Heater Alarm Blower Fail",
+  "folder": "Boiler/Heater/Combustion/Blower 1",
+  "documentation": "Heater Alarm Blower Fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_Blwr1_Disc_On",
+  "name": "Heater Blower 1 Disconnect On",
+  "folder": "Boiler/Heater/Combustion/Blower 1",
+  "documentation": "Heater Blower 1 Disconnect On",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_FGR_Blwr1_Aux",
+  "name": "Heater Flue Gas Recirc Blower 1 Aux Contact",
+  "folder": "Boiler/Heater/Combustion/Blower 1",
+  "documentation": "Heater Flue Gas Recirc Blower 1 Aux Contact",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_FGR_Blwr1_Cmd_Hz",
+  "name": "Heater Flue Gas Recirc Blower 1 Command Speed",
+  "folder": "Boiler/Heater/Combustion/Blower 1",
+  "documentation": "Heater Flue Gas Recirc Blower 1 Command Speed",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Htr1_Blwr1_Cmd_Hz",
+  "name": "Heater Blower 1 Command Speed",
+  "folder": "Boiler/Heater/Combustion/Blower 1",
+  "documentation": "Heater Blower 1 Command Speed",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Htr1_FGR_Blwr1_Fail.DN",
+  "name": "Heater Flue Gas Recirc Blower 1 Fail",
+  "folder": "Boiler/Heater/Combustion/Blower 1",
+  "documentation": "Heater Flue Gas Recirc Blower 1 Fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Alm_Gas_Pres_Lo",
+  "name": "Heater Alarm Gas Pressure Low",
+  "folder": "Boiler/Heater/Combustion/Gas",
+  "documentation": "Heater Alarm Gas Pressure Low",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Gas.Input_Gas_psi",
+  "name": "Heater Gas Pressure",
+  "folder": "Boiler/Heater/Combustion/Gas",
+  "documentation": "Heater Gas Pressure",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_Main_Gas_Aux_Closure",
+  "name": "Heater Main Gas Aux Contact Closure",
+  "folder": "Boiler/Heater/Combustion/Gas",
+  "documentation": "Heater Main Gas Aux Contact Closure",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1_Gas_En",
+  "name": "Heater Gas Enable",
+  "folder": "Boiler/Heater/Combustion/Gas",
+  "documentation": "Heater Gas Enable",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Alm_Gas_Pres_Hi",
+  "name": "Heater Alarm Gas Pressure High",
+  "folder": "Boiler/Heater/Combustion/Gas",
+  "documentation": "Heater Alarm Gas Pressure High",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Outlet_Temp",
+  "name": "Heater Outlet Temperature",
+  "folder": "Boiler/Heater/Combustion",
+  "documentation": "Heater Outlet Temperature",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1_Alm_Brn_Fld",
+  "name": "Heater Alarm Burner Fld",
+  "folder": "Boiler/Heater/Combustion",
+  "documentation": "Heater Alarm Burner Fld",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Alm_FGR_Blwr1_Disc_Off.DN",
+  "name": "Heater Alarm Flue Gas Recirc Blower 1 Disconnect Off",
+  "folder": "Boiler/Heater/Combustion",
+  "documentation": "Heater Alarm Flue Gas Recirc Blower 1 Disconnect Off",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Inlet_Temp",
+  "name": "Heater Inlet Temperature",
+  "folder": "Boiler/Heater/Combustion",
+  "documentation": "Heater Inlet Temperature",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_Disch_P1_Auto",
+  "name": "Heater Discharge Pump 1 Auto Mode Field Switch",
+  "folder": "Boiler/Heater/Discharge Pump 1",
+  "documentation": "Heater Discharge Pump 1 Auto Mode (Field Switch)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Alm_Disch_P1_Fail.DN",
+  "name": "Heater Alarm Discharge Pump 1 Fail",
+  "folder": "Boiler/Heater/Discharge Pump 1",
+  "documentation": "Heater Alarm Discharge Pump 1 Fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_Disch_P1_Aux",
+  "name": "Heater Discharge Pump 1 Aux Contact",
+  "folder": "Boiler/Heater/Discharge Pump 1",
+  "documentation": "Heater Discharge Pump 1 Aux Contact",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1_Alm_Disch_P1_Disc_Off.DN",
+  "name": "Heater Alarm Discharge Pump 1 Disconnect Off",
+  "folder": "Boiler/Heater/Discharge Pump 1",
+  "documentation": "Heater Alarm Discharge Pump 1 Disconnect Off",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Disch_P1_Cmd_Hz",
+  "name": "Heater Discharge Pump 1 Command Speed",
+  "folder": "Boiler/Heater/Discharge Pump 1",
+  "documentation": "Heater Discharge Pump 1 Command Speed",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Htr1_Disch_P1_Auto",
+  "name": "Heater Discharge Pump 1 Auto Mode Status",
+  "folder": "Boiler/Heater/Discharge Pump 1",
+  "documentation": "Heater Discharge Pump 1 Auto Mode (Status)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AlmStat_Htr_Disch_P1",
+  "name": "Heater Alarm Status Heater Discharge Pump 1",
+  "folder": "Boiler/Heater/Discharge Pump 1",
+  "documentation": "Heater Alarm Status Heater Discharge Pump 1",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_Disch_P1_Disc_On",
+  "name": "Heater Discharge Pump 1 Disconnect On",
+  "folder": "Boiler/Heater/Discharge Pump 1",
+  "documentation": "Heater Discharge Pump 1 Disconnect On",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_Res_Auto_Rest",
+  "name": "Heater Reset Auto Mode Rest",
+  "folder": "Boiler/Heater",
+  "documentation": "Heater Reset Auto Mode Rest",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_HWT1_MU.Flow_Cur_Ttl",
+  "name": "Heater Make-Up Flow Total",
+  "folder": "Boiler/Heater/Make-Up",
+  "documentation": "Heater Make-Up Flow Total",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1_MU_Pres_PSI",
+  "name": "Heater Make-Up Pressure PSI",
+  "folder": "Boiler/Heater/Make-Up",
+  "documentation": "Heater Make-Up Pressure PSI",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1_Rep_MU_HrCtr_En",
+  "name": "Heater Report Make-Up HrCtr Enable",
+  "folder": "Boiler/Heater/Make-Up",
+  "documentation": "Heater Report Make-Up HrCtr Enable",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Program:Common.Com_HR1_Fresh_MU_GPM_Hi",
+  "name": "HR1 Fresh Make-Up GPM High",
+  "folder": "Boiler/Heater/Make-Up",
+  "documentation": "HR1 Fresh Make-Up GPM High",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_HWT1_MU.Flow_GPM",
+  "name": "Heater Make-Up Flow GPM",
+  "folder": "Boiler/Heater/Make-Up",
+  "documentation": "Heater Make-Up Flow GPM",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1_Alm_Recirc_P1_Fail.DN",
+  "name": "Heater Alarm Recirculation Pump 1 Fail",
+  "folder": "Boiler/Heater/Recirculation Pump 1",
+  "documentation": "Heater Alarm Recirculation Pump 1 Fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Recirc_P1_Auto",
+  "name": "Heater Recirculation Pump 1 Auto Mode Status",
+  "folder": "Boiler/Heater/Recirculation Pump 1",
+  "documentation": "Heater Recirculation Pump 1 Auto Mode (Status)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_Recirc_P1_Auto",
+  "name": "Heater Recirculation Pump 1 Auto Mode Field Switch",
+  "folder": "Boiler/Heater/Recirculation Pump 1",
+  "documentation": "Heater Recirculation Pump 1 Auto Mode (Field Switch)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_Rec_P1_Auto",
+  "name": "Heater Recirc Pump 1 Auto Mode",
+  "folder": "Boiler/Heater/Recirculation Pump 1",
+  "documentation": "Heater Recirc Pump 1 Auto Mode",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_Recirc_P1_Aux",
+  "name": "Heater Recirculation Pump 1 Aux Contact",
+  "folder": "Boiler/Heater/Recirculation Pump 1",
+  "documentation": "Heater Recirculation Pump 1 Aux Contact",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1_Alm_VFD_Fault",
+  "name": "Heater Alarm VFD Fault",
+  "folder": "Boiler/Heater",
+  "documentation": "Heater Alarm VFD Fault",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_Disch_P2_Disc_On",
+  "name": "Heater Discharge Pump 2 Disconnect On",
+  "folder": "Boiler/Heater/Discharge Pump 2",
+  "documentation": "Heater Discharge Pump 2 Disconnect On",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Disch_P2_Cmd_Hz",
+  "name": "Heater Discharge Pump 2 Command Speed",
+  "folder": "Boiler/Heater/Discharge Pump 2",
+  "documentation": "Heater Discharge Pump 2 Command Speed",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Htr1_Alm_Disch_P2_Fail.DN",
+  "name": "Heater Alarm Discharge Pump 2 Fail",
+  "folder": "Boiler/Heater/Discharge Pump 2",
+  "documentation": "Heater Alarm Discharge Pump 2 Fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AlmStat_Htr_Disch_P2",
+  "name": "Heater Alarm Status Heater Discharge Pump 2",
+  "folder": "Boiler/Heater/Discharge Pump 2",
+  "documentation": "Heater Alarm Status Heater Discharge Pump 2",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Htr1_Disch_P2_Auto",
+  "name": "Heater Discharge Pump 2 Auto Mode Status",
+  "folder": "Boiler/Heater/Discharge Pump 2",
+  "documentation": "Heater Discharge Pump 2 Auto Mode (Status)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Alm_Disch_P2_Disc_Off.DN",
+  "name": "Heater Alarm Discharge Pump 2 Disconnect Off",
+  "folder": "Boiler/Heater/Discharge Pump 2",
+  "documentation": "Heater Alarm Discharge Pump 2 Disconnect Off",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_Disch_P2_Auto",
+  "name": "Heater Discharge Pump 2 Auto Mode Field Switch",
+  "folder": "Boiler/Heater/Discharge Pump 2",
+  "documentation": "Heater Discharge Pump 2 Auto Mode (Field Switch)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_AliasDIn_Disch_P2_Aux",
+  "name": "Heater Discharge Pump 2 Aux Contact",
+  "folder": "Boiler/Heater/Discharge Pump 2",
+  "documentation": "Heater Discharge Pump 2 Aux Contact",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1.L",
+  "name": "Heater Level",
+  "folder": "Boiler/Heater/Level",
+  "documentation": "Heater Level",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1.Gal",
+  "name": "Heater Level Gal",
+  "folder": "Boiler/Heater/Level",
+  "documentation": "Heater Level (Gallons)",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1_StK_Temp",
+  "name": "Heater StK Temperature",
+  "folder": "Boiler/Heater",
+  "documentation": "Heater StK Temperature",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1_Rep_IP_Lo_En",
+  "name": "Heater Report IP Low Enable",
+  "folder": "Boiler/Heater/Report",
+  "documentation": "Heater Report IP Low Enable",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Rep_mBTUhr",
+  "name": "Heater Report MBTU hr",
+  "folder": "Boiler/Heater/Report",
+  "documentation": "Heater Report MBTU/hr",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Htr1_Rep_En",
+  "name": "Heater Report Enable",
+  "folder": "Boiler/Heater/Report",
+  "documentation": "Heater Report Enable",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Rep_Rec_HrCtr_En",
+  "name": "Heater Report Recirc HrCtr Enable",
+  "folder": "Boiler/Heater/Report",
+  "documentation": "Heater Report Recirc HrCtr Enable",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Htr1_Alm_VFD_Fault_Del.DN",
+  "name": "Heater Alarm VFD Fault Delay",
+  "folder": "Boiler/Heater",
+  "documentation": "Heater Alarm VFD Fault Delay",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_CW.Flow_GPM",
+  "name": "Cold Water Flow",
+  "folder": "Boiler/Cold Water System/Flow",
+  "documentation": "Cold Water Flow",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_CW.Flow_Cur_Ttl",
+  "name": "Cold Water Flow Total",
+  "folder": "Boiler/Cold Water System/Flow",
+  "documentation": "Cold Water Flow Total",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_CW_Suc_Pres",
+  "name": "Cold Water Suction Pressure",
+  "folder": "Boiler/Cold Water System/Pressure",
+  "documentation": "Cold Water Suction Pressure",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_CW_Hdr_Pres",
+  "name": "Cold Water Header Pressure",
+  "folder": "Boiler/Cold Water System/Pressure",
+  "documentation": "Cold Water Header Pressure",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_Comms_CW_P2.RUNNING",
+  "name": "Cold Water Pump 2 Running",
+  "folder": "Boiler/Cold Water System/Pump 2",
+  "documentation": "Cold Water Pump 2 Running",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_CW_P2_Suc_Lo.DN",
+  "name": "Alarm Cold Water Pump 2 Suction Low",
+  "folder": "Boiler/Cold Water System/Pump 2",
+  "documentation": "Alarm Cold Water Pump 2 Suction Low",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_CW_P2_Aux",
+  "name": "Cold Water Pump 2 Aux Contact",
+  "folder": "Boiler/Cold Water System/Pump 2",
+  "documentation": "Cold Water Pump 2 Aux Contact",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_CW_P2_Fail.DN",
+  "name": "Alarm Cold Water Pump 2 Fail",
+  "folder": "Boiler/Cold Water System/Pump 2",
+  "documentation": "Alarm Cold Water Pump 2 Fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_CW_P2_Auto",
+  "name": "Cold Water Pump 2 Auto Mode Status",
+  "folder": "Boiler/Cold Water System/Pump 2",
+  "documentation": "Cold Water Pump 2 Auto Mode (Status)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_CW_P2_Disc_Off.DN",
+  "name": "Alarm Cold Water Pump 2 Disconnect Off",
+  "folder": "Boiler/Cold Water System/Pump 2",
+  "documentation": "Alarm Cold Water Pump 2 Disconnect Off",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AlmStat_CW_P2",
+  "name": "Alarm Status Cold Water Pump 2",
+  "folder": "Boiler/Cold Water System/Pump 2",
+  "documentation": "Alarm Status Cold Water Pump 2",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Com_CW_P2_hz_Running",
+  "name": "Cold Water Pump 2 Speed",
+  "folder": "Boiler/Cold Water System/Pump 2",
+  "documentation": "Cold Water Pump 2 Speed",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_CW_P2_Disc_On",
+  "name": "Cold Water Pump 2 Disconnect On",
+  "folder": "Boiler/Cold Water System/Pump 2",
+  "documentation": "Cold Water Pump 2 Disconnect On",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_CW_P2_Auto",
+  "name": "Cold Water Pump 2 Auto Mode Field Switch",
+  "folder": "Boiler/Cold Water System/Pump 2",
+  "documentation": "Cold Water Pump 2 Auto Mode (Field Switch)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_CW_P1_Disc_On",
+  "name": "Cold Water Pump 1 Disconnect On",
+  "folder": "Boiler/Cold Water System/Pump 1",
+  "documentation": "Cold Water Pump 1 Disconnect On",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_CW_P1_Auto",
+  "name": "Cold Water Pump 1 Auto Mode Status",
+  "folder": "Boiler/Cold Water System/Pump 1",
+  "documentation": "Cold Water Pump 1 Auto Mode (Status)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Comms_CW_P1.RUNNING",
+  "name": "Cold Water Pump 1 Running",
+  "folder": "Boiler/Cold Water System/Pump 1",
+  "documentation": "Cold Water Pump 1 Running",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_CW_P1_Auto",
+  "name": "Cold Water Pump 1 Auto Mode Field Switch",
+  "folder": "Boiler/Cold Water System/Pump 1",
+  "documentation": "Cold Water Pump 1 Auto Mode (Field Switch)",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_CW_P1_hz_Running",
+  "name": "Cold Water Pump 1 Speed",
+  "folder": "Boiler/Cold Water System/Pump 1",
+  "documentation": "Cold Water Pump 1 Speed",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Com_Alm_CW_P1_Disc_Off.DN",
+  "name": "Alarm Cold Water Pump 1 Disconnect Off",
+  "folder": "Boiler/Cold Water System/Pump 1",
+  "documentation": "Alarm Cold Water Pump 1 Disconnect Off",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_CW_P1_Fail.DN",
+  "name": "Alarm Cold Water Pump 1 Fail",
+  "folder": "Boiler/Cold Water System/Pump 1",
+  "documentation": "Alarm Cold Water Pump 1 Fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AlmStat_CW_P1",
+  "name": "Alarm Status Cold Water Pump 1",
+  "folder": "Boiler/Cold Water System/Pump 1",
+  "documentation": "Alarm Status Cold Water Pump 1",
+  "dataType": "Int2"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_CW_P1_Aux",
+  "name": "Cold Water Pump 1 Aux Contact",
+  "folder": "Boiler/Cold Water System/Pump 1",
+  "documentation": "Cold Water Pump 1 Aux Contact",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_CW_P1_Suc_Lo.DN",
+  "name": "Alarm Cold Water Pump 1 Suction Low",
+  "folder": "Boiler/Cold Water System/Pump 1",
+  "documentation": "Alarm Cold Water Pump 1 Suction Low",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_VFD_Fault_Del.DN",
+  "name": "Alarm VFD Fault Delay",
+  "folder": "Boiler/Panel Alarms",
+  "documentation": "Alarm VFD Fault Delay",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_VFD_Fault",
+  "name": "Alarm VFD Fault",
+  "folder": "Boiler/Panel Alarms",
+  "documentation": "Alarm VFD Fault",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Cmd_Estop_En",
+  "name": "Command E-Stop Enable",
+  "folder": "Boiler/Panel Alarms",
+  "documentation": "Command E-Stop Enable",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_AC1_Aux",
+  "name": "Air Compressor 1 Aux Contact",
+  "folder": "Boiler/Panel Alarms",
+  "documentation": "Air Compressor 1 Aux Contact",
+  "dataType": "Float4"
+ },
+ {
+  "plc_tag": "Com_AliasDIn_Estop",
+  "name": "E-Stop",
+  "folder": "Boiler/Panel Alarms",
+  "documentation": "E-Stop",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_FrW_24vdc_fail.DN",
+  "name": "Alarm Firewall 24VDC fail",
+  "folder": "Boiler/Panel Alarms",
+  "documentation": "Alarm Firewall 24VDC fail",
+  "dataType": "Boolean"
+ },
+ {
+  "plc_tag": "Com_Alm_Estop",
+  "name": "Alarm E-Stop",
+  "folder": "Boiler/Panel Alarms",
+  "documentation": "Alarm E-Stop",
+  "dataType": "Boolean"
+ }
+]
