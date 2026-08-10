@@ -538,6 +538,11 @@ class IgnitionMCPIntegration:
         PVs/setpoints/alarms/status/commands/field I/O) and ``"all"`` (every
         OPC-addressable tag). Use ``list_ignition_tag_candidates`` first to curate.
         """
+        if not isinstance(naming, str):
+            return {
+                "success": False,
+                "error": "naming must be a string: 'raw' or 'human'",
+            }
         if naming not in {"raw", "human"}:
             return {
                 "success": False,
@@ -632,6 +637,8 @@ class IgnitionMCPIntegration:
                             for field in ("name", "documentation", "tooltip", "folder")
                             if field in explicit
                         })
+                        if "name" in explicit and "tooltip" not in explicit:
+                            generated["tooltip"] = generated["name"]
             overrides_by_ref = generated_by_ref
             human_names_applied = len(generated_by_ref)
 

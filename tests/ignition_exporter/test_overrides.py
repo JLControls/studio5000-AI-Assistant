@@ -137,7 +137,7 @@ def test_human_mode_partial_override_preserves_selected_set_and_fills_missing_fi
     assert tags[0][0] == "Boiler/System"
     assert tags[0][1]["name"] == "Operator Sump Level"
     assert tags[0][1]["documentation"] == "Sump Level Engineering Process Value"
-    assert tags[0][1]["tooltip"] == "Sump Level"
+    assert tags[0][1]["tooltip"] == "Operator Sump Level"
 
 
 def test_human_mode_explicit_override_fields_win_over_profile_and_generated_values(

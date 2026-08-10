@@ -178,6 +178,8 @@ def test_human_mode_changes_presentation_not_technical_fields(synthetic_l5x, tmp
     human_tree, human = _load_tags(human_out)
     raw_by_opc = {tag["opcItemPath"]: tag for tag in raw.values()}
     human_by_opc = {tag["opcItemPath"]: tag for tag in human.values()}
+    raw_atomic_by_opc = {opc: tag for opc, tag in _tags_with_opc(raw_out)}
+    human_atomic_by_opc = {opc: tag for opc, tag in _tags_with_opc(human_out)}
     sump_opc = next(opc for opc in raw_by_opc if opc.endswith("]Com_Sump_Lvl"))
 
     assert set(raw_by_opc) == set(human_by_opc)
@@ -187,6 +189,24 @@ def test_human_mode_changes_presentation_not_technical_fields(synthetic_l5x, tmp
     assert human_by_opc[sump_opc]["name"] == "Sump Level"
     human_sump = next(tag for opc, tag in _tags_with_opc(human_out) if opc == sump_opc)
     assert human_sump["documentation"] == "Sump Level Engineering Process Value"
+    assert set(raw_atomic_by_opc) == set(human_atomic_by_opc)
+    presentation_fields = {"name", "documentation", "tooltip"}
+    assert {
+        opc: {key: value for key, value in tag.items() if key not in presentation_fields}
+        for opc, tag in raw_atomic_by_opc.items()
+    } == {
+        opc: {key: value for key, value in tag.items() if key not in presentation_fields}
+        for opc, tag in human_atomic_by_opc.items()
+    }
+    turbidity_opc = next(opc for opc in raw_atomic_by_opc if "AIn_Turbidity_Raw" in opc)
+    assert raw_atomic_by_opc[turbidity_opc]["dataType"] == "Float4"
+    assert raw_atomic_by_opc[turbidity_opc]["scaleMode"] == "Linear"
+    assert raw_atomic_by_opc[turbidity_opc]["rawLow"] == 0.0
+    assert raw_atomic_by_opc[turbidity_opc]["scaledHigh"] == 100.0
+    assert raw_atomic_by_opc[turbidity_opc]["historyEnabled"] is True
+    assert raw_atomic_by_opc[turbidity_opc]["historyProvider"] == "Ignition_SCADA"
+    assert raw_result["excluded_external_access_none"] == human_result["excluded_external_access_none"]
+    assert raw_result["excluded_count"] == human_result["excluded_count"]
     assert raw_result["tags_written"] == human_result["tags_written"]
     assert human_result["naming_mode"] == "human"
     assert human_result["human_names_applied"] == human_result["tags_written"]
@@ -214,6 +234,7 @@ def test_human_mode_uses_profile_display_root_without_changing_opc_device_prefix
     ("kwargs", "error_text"),
     [
         ({"naming": "friendly"}, "naming"),
+        ({"naming": ["human"]}, "string"),
         ({"naming": "human", "naming_profile_path": "missing-profile.json"}, "profile"),
     ],
 )
