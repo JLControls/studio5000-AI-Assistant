@@ -84,3 +84,4 @@ tests/acd/KemcoWaterHeater/ignitionTagsExisting.json
 tests/acd/KemcoWaterHeater/Kemco_HA105-Tags.CSV
 kemco_out/all.json
 kemco_out/curated.json
+.worktrees/
