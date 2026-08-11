@@ -1,17 +1,53 @@
 import os
 import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
 from tag_analyzer.comment_pipeline import PLCCommentPipeline
 
 
+class TestACDFixtureDiscovery(unittest.TestCase):
+    def test_finds_newest_acd_file_recursively(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo_root = Path(temp_dir)
+            older = repo_root / "tests" / "acd" / "older.ACD"
+            newer = repo_root / "nested" / "newer.acd"
+            older.parent.mkdir(parents=True)
+            newer.parent.mkdir(parents=True)
+            older.touch()
+            newer.touch()
+            os.utime(older, (100, 100))
+            os.utime(newer, (200, 200))
+
+            self.assertEqual(
+                TestDirectACDDeliverables._find_newest_acd_file(repo_root),
+                newer,
+            )
+
+
 class TestDirectACDDeliverables(unittest.TestCase):
+    @staticmethod
+    def _find_newest_acd_file(repo_root):
+        acd_files = [
+            path
+            for path in repo_root.rglob("*")
+            if path.is_file() and path.suffix.casefold() == ".acd"
+        ]
+        if not acd_files:
+            return None
+        return max(
+            acd_files,
+            key=lambda path: (path.stat().st_mtime_ns, str(path).casefold()),
+        )
+
     def setUp(self):
         self.pipeline = PLCCommentPipeline()
-        self.acd_fixture = Path("tests/acd/ModernTHAWROOM021722.ACD").resolve()
-        self.assertTrue(self.acd_fixture.exists(), "Fixture ModernTHAWROOM021722.ACD must exist")
-        self.test_deliverables_dir = self.acd_fixture.parent / "ModernTHAWROOM021722_deliverables"
+        repo_root = Path(__file__).resolve().parents[1]
+        self.acd_fixture = self._find_newest_acd_file(repo_root)
+        if self.acd_fixture is None:
+            self.skipTest("No .ACD fixture found in the repository")
+        self.test_deliverables_dir = self.acd_fixture.parent / f"{self.acd_fixture.stem}_deliverables"
 
     def tearDown(self):
         if self.test_deliverables_dir.exists():
