@@ -626,6 +626,16 @@ class IgnitionMCPIntegration:
                         presentation = replace(presentation, **fields)
                     merged_presentations.append(presentation)
                 presentations = merged_presentations
+            presentations = [replace(
+                presentation,
+                name=sanitize_name(presentation.name),
+                folder="/".join(
+                    sanitize_name(part)
+                    for part in presentation.folder.split("/")
+                    if part.strip()
+                ),
+                tooltip=sanitize_name(presentation.tooltip),
+            ) for presentation in presentations]
             presentations = disambiguate_presentations(presentations)
             generated_by_ref: Dict[str, Dict] = {}
             for presentation in presentations:

@@ -178,3 +178,18 @@ def test_human_mode_disambiguates_duplicate_explicit_override_names(
         ("Boiler/Plant/Sump", "Same"),
         ("Boiler/Plant/Sump", "Same 2"),
     }
+
+
+def test_human_mode_disambiguates_names_that_collide_after_ignition_sanitization(
+        synthetic_l5x, tmp_path):
+    result, out = _generate(synthetic_l5x, tmp_path, [
+        {"plc_tag": "Com_Sump_Lvl", "name": "A/B", "folder": "Plant/Sump"},
+        {"plc_tag": "DIn_Pump_Aux", "name": "A B", "folder": "Plant/Sump"},
+    ], naming="human")
+
+    assert result["success"] is True
+    tags = _atomic_tags(out)
+    assert {(path, tag["name"]) for path, tag in tags} == {
+        ("Boiler/Plant/Sump", "A B"),
+        ("Boiler/Plant/Sump", "A B 2"),
+    }
