@@ -20,6 +20,7 @@ import tempfile
 
 from .l5x_chunk import L5XChunk, L5XChunkType, L5XLocation
 from .sdk_powered_analyzer import SDKPoweredL5XAnalyzer
+from .l5x_structure import parse_l5x_structure, merge_structures, summarize_structure
 
 # sentence_transformers import moved to lazy load in initialize_model()
 try:
@@ -123,17 +124,30 @@ class L5XVectorDatabase:
             all_chunks.extend(chunks)
         
         logger.info(f"Parsed {len(all_chunks)} chunks from {len(l5x_files)} L5X files")
-        
+
+        # Capture deterministic project structure (issue #9) by walking every
+        # indexed L5X and merging by program / (program, routine) / UDT. This is
+        # the authoritative source for get_project_overview; the vector DB is
+        # reserved for semantic lookup only.
+        structure = merge_structures(
+            parse_l5x_structure(str(l5x_file)) for l5x_file in l5x_files
+        )
+        counts = summarize_structure(structure)
+
         # Build vector database from chunks
         self.build_vector_database(all_chunks, force_rebuild=True)
-        
+
         # Update indexing status
         project_name = l5x_dir.name
         self.indexed_projects[project_name] = {
             'path': l5x_directory,
             'indexed_at': time.time(),
             'file_count': len(l5x_files),
-            'chunk_count': len(all_chunks)
+            'chunk_count': len(all_chunks),
+            'structure': structure,
+            'program_count': counts['program_count'],
+            'routine_count': counts['routine_count'],
+            'udt_count': counts['udt_count'],
         }
         self._save_metadata()
         
@@ -174,6 +188,10 @@ class L5XVectorDatabase:
                     logger.error("Offline ACD conversion failed: %s", conversion)
                     return False
                 all_chunks = self.sdk_analyzer.parse_routine_l5x(str(l5x_path))
+                # Capture structure from the converted L5X before the temp dir is
+                # removed, so ACD indexing yields the same overview shape as
+                # exported-L5X indexing (issue #9).
+                structure = parse_l5x_structure(str(l5x_path))
 
             if routines_to_index is not None:
                 allowed = set(routines_to_index)
@@ -191,12 +209,17 @@ class L5XVectorDatabase:
             # Build vector database from chunks
             self.build_vector_database(all_chunks, force_rebuild=True)
             
-            # Update project indexing status
+            # Update project indexing status. Prefer the structural routine
+            # count over the chunk-derived one so the overview matches the tree.
+            counts = summarize_structure(structure)
             self.indexed_projects[project_name] = {
                 'path': acd_path,
                 'indexed_at': time.time(),
-                'routine_count': len(routine_names),
-                'chunk_count': len(all_chunks)
+                'routine_count': counts['routine_count'] or len(routine_names),
+                'chunk_count': len(all_chunks),
+                'structure': structure,
+                'program_count': counts['program_count'],
+                'udt_count': counts['udt_count'],
             }
             self._save_metadata()
             

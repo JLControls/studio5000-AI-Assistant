@@ -738,52 +738,61 @@ class L5XSDKMCPIntegration:
                 logger.info(f"Using indexed project data from: {project_name}")
             
             project_stats = indexed_projects[project_name]
-            
-            # Get all chunks to analyze structure
-            all_chunks = []
-            try:
-                # Search for all content to get structure overview
-                structure_results = self.vector_db.search_l5x_content(
-                    "routine program tag", limit=1000  # Get lots of results for overview
-                )
-                all_chunks = structure_results
-            except Exception as e:
-                logger.warning(f"Could not retrieve structure details: {e}")
-            
-            # Analyze the chunks to build overview
-            programs = set()
-            routines = set()
-            udts = set()
-            tags = set()
-            
-            for result in all_chunks:
-                if result.location.parent_program:
-                    programs.add(result.location.parent_program)
-                if result.location.parent_routine:
-                    routines.add(result.location.parent_routine)
-                if result.chunk_type.value == 'udt':
-                    udts.add(result.name)
-                # Tags would need additional parsing
-            
+
+            # The overview is derived from a deterministic structural walk of the
+            # indexed L5X (issue #9), never from a semantic/vector search. If an
+            # older cache predates structural capture, require a re-index rather
+            # than silently returning recall-limited counts.
+            structure = project_stats.get('structure')
+            if not structure:
+                return {
+                    'success': False,
+                    'error': (
+                        f"Indexed project '{project_name}' has no structural metadata "
+                        "(indexed by an older version). Re-index it with "
+                        "index_exported_l5x_files (or index_acd_project) to get an "
+                        "accurate project overview."
+                    )
+                }
+
+            programs = list(structure.get('programs', []))
+            routine_details = list(structure.get('routines', []))
+            udts = list(structure.get('udts', []))
+            add_on_instructions = list(structure.get('add_on_instructions', []))
+            modules = list(structure.get('modules', []))
+            # Preserve the historical `routines` shape (a list of names) for
+            # existing callers; routine_details carries full (program, routine)
+            # identity so same-named routines stay distinguishable.
+            routine_names = sorted({r.get('name') for r in routine_details if r.get('name')})
+
             return {
                 'success': True,
                 'project_path': acd_path,
                 'project_name': project_name,
+                'controller': structure.get('controller'),
                 'indexing_stats': {
                     'files_indexed': project_stats.get('file_count', 0),
                     'chunks_created': project_stats.get('chunk_count', 0),
-                    'last_indexed': project_stats.get('last_indexed', 'Unknown')
+                    'last_indexed': project_stats.get('indexed_at',
+                                                      project_stats.get('last_indexed', 'Unknown'))
                 },
                 'overview': {
                     'program_count': len(programs),
-                    'routine_count': len(routines),
+                    'routine_count': len(routine_details),
                     'udt_count': len(udts),
-                    'total_chunks': len(all_chunks)
+                    'add_on_instruction_count': len(add_on_instructions),
+                    'module_count': len(modules)
                 },
-                'programs': list(programs),
-                'routines': list(routines),
-                'udts': list(udts),
-                'note': 'Overview generated from indexed L5X data. Results may vary based on what L5X files were exported and indexed.'
+                'programs': programs,
+                'routines': routine_names,
+                'routine_details': routine_details,
+                'udts': udts,
+                # Add-On-Defined types (one per AOI) and the module I/O inventory
+                # are surfaced explicitly: AOIs are the type category most often
+                # missed, and modules describe how to read un-aliased I/O points.
+                'add_on_instructions': add_on_instructions,
+                'modules': modules,
+                'note': 'Overview derived from a deterministic structural walk of the indexed L5X.'
             }
             
         except Exception as e:
