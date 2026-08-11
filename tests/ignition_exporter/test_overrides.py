@@ -163,3 +163,18 @@ def test_human_mode_explicit_override_fields_win_over_profile_and_generated_valu
     assert tags[0][1]["name"] == "Override Sump Level"
     assert tags[0][1]["documentation"] == "Operator-authorized description"
     assert tags[0][1]["tooltip"] == "Operator-authorized tooltip"
+
+
+def test_human_mode_disambiguates_duplicate_explicit_override_names(
+        synthetic_l5x, tmp_path):
+    result, out = _generate(synthetic_l5x, tmp_path, [
+        {"plc_tag": "Com_Sump_Lvl", "name": "Same", "folder": "Plant/Sump"},
+        {"plc_tag": "DIn_Pump_Aux", "name": "Same", "folder": "Plant/Sump"},
+    ], naming="human")
+
+    assert result["success"] is True
+    tags = _atomic_tags(out)
+    assert {(path, tag["name"]) for path, tag in tags} == {
+        ("Boiler/Plant/Sump", "Same"),
+        ("Boiler/Plant/Sump", "Same 2"),
+    }

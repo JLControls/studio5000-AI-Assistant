@@ -151,3 +151,4 @@ def test_generate_ignition_tags_schema_exposes_human_naming():
     assert props["naming"]["enum"] == ["raw", "human"]
     assert "naming_profile_path" in props
     assert "naming" not in tool["inputSchema"]["required"]
+    assert "naming_profile_path" not in tool["inputSchema"]["required"]

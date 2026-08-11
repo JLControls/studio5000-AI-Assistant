@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 import re
+from dataclasses import replace
 from typing import Dict, List, Optional, Tuple
 
 from .analog_scaling import (
@@ -606,10 +607,26 @@ class IgnitionMCPIntegration:
         naming_fallback_count = 0
         naming_diagnostics: List[Dict] = []
         if naming == "human":
-            presentations = disambiguate_presentations([
+            presentations = [
                 build_presentation(item.plc_ref, item.comment, profile)
                 for item in items
-            ])
+            ]
+            if has_explicit_overrides:
+                merged_presentations = []
+                for presentation in presentations:
+                    explicit = overrides_by_ref.get(presentation.plc_tag)
+                    if explicit:
+                        fields = {
+                            field: explicit[field]
+                            for field in ("name", "documentation", "tooltip", "folder")
+                            if field in explicit
+                        }
+                        if "name" in explicit and "tooltip" not in explicit:
+                            fields["tooltip"] = fields["name"]
+                        presentation = replace(presentation, **fields)
+                    merged_presentations.append(presentation)
+                presentations = merged_presentations
+            presentations = disambiguate_presentations(presentations)
             generated_by_ref: Dict[str, Dict] = {}
             for presentation in presentations:
                 folder_parts = [part for part in presentation.folder.split("/") if part.strip()]
@@ -628,17 +645,6 @@ class IgnitionMCPIntegration:
                         "plc_tag": presentation.plc_tag,
                         "unknown_tokens": list(presentation.unknown_tokens),
                     })
-            if has_explicit_overrides:
-                for plc_ref, explicit in overrides_by_ref.items():
-                    generated = generated_by_ref.get(plc_ref)
-                    if generated is not None:
-                        generated.update({
-                            field: explicit[field]
-                            for field in ("name", "documentation", "tooltip", "folder")
-                            if field in explicit
-                        })
-                        if "name" in explicit and "tooltip" not in explicit:
-                            generated["tooltip"] = generated["name"]
             overrides_by_ref = generated_by_ref
             human_names_applied = len(generated_by_ref)
 
