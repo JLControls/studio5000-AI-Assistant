@@ -67,6 +67,9 @@ test_sdk_cache/
 # Hand-authored, project-agnostic multi-program fixture for the structural project
 # overview tests (issue #9) — no proprietary data; tracked for clean-checkout runs.
 !tests/l5x_analyzer/fixtures/multiprogram.L5X
+# Hand-authored, project-agnostic fixture for the tag/AOI fact-accessor tests
+# (issue #28) — no proprietary data; tracked for clean-checkout runs.
+!tests/l5x_analyzer/fixtures/fact_accessor.L5X
 # Scratch scripts at the repo root only — do NOT ignore the pytest suite under tests/.
 /test_*.py
 /debug_*.py

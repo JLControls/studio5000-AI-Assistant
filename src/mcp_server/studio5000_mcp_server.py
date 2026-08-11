@@ -683,7 +683,28 @@ class Studio5000MCPServer:
             "Get comprehensive overview of project structure",
             self.get_project_overview
         )
-        
+
+        self.server.add_tool(
+            "get_tag_value",
+            "Read a tag's configured value(s) and radix straight from decorated L5X data "
+            "(scalars, UDT members, arrays). Scope-aware and deterministic; no indexing required.",
+            self.get_tag_value
+        )
+
+        self.server.add_tool(
+            "describe_aoi",
+            "Return an Add-On Instruction's parameters in invocation (document) order with "
+            "Usage/DataType/Required/Visible, so AOI calls become legible.",
+            self.describe_aoi
+        )
+
+        self.server.add_tool(
+            "decode_aoi_call",
+            "Decode a rung's AOI invocation into argument-position -> parameter bindings "
+            "(backing tag + Input/Output/InOut roles), flagging NA placeholders and operand mismatches.",
+            self.decode_aoi_call
+        )
+
         # Add PDF drawings tools
         self.server.add_tool(
             "index_pdf_drawings",
@@ -1488,7 +1509,27 @@ class Studio5000MCPServer:
     async def get_project_overview(self, acd_path: str) -> Dict[str, Any]:
         """Get comprehensive overview of project structure"""
         return await self.l5x_integration.get_project_overview(acd_path)
-    
+
+    async def get_tag_value(self, l5x_file_path: str, tag_name: str,
+                            member: Optional[str] = None,
+                            program_name: Optional[str] = None) -> Dict[str, Any]:
+        """Read a tag's configured value(s) from decorated L5X data"""
+        return await self.l5x_integration.get_tag_value(
+            l5x_file_path, tag_name, member, program_name
+        )
+
+    async def describe_aoi(self, l5x_file_path: str, aoi_name: str) -> Dict[str, Any]:
+        """Return an AOI's ordered parameter definition"""
+        return await self.l5x_integration.describe_aoi(l5x_file_path, aoi_name)
+
+    async def decode_aoi_call(self, l5x_file_path: str, routine_name: str,
+                              rung_number: int, program_name: Optional[str] = None,
+                              aoi_name: Optional[str] = None) -> Dict[str, Any]:
+        """Decode a rung's AOI invocation(s) into operand->parameter bindings"""
+        return await self.l5x_integration.decode_aoi_call(
+            l5x_file_path, routine_name, rung_number, program_name, aoi_name
+        )
+
     # PDF Drawings Tool Handlers
     async def index_pdf_drawings(self, pdf_file_path: str, force_rebuild: bool = False, 
                                use_vision_ai: bool = False, max_pages: Optional[int] = None) -> Dict[str, Any]:
@@ -1947,7 +1988,30 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'acd_path': {'type': 'string', 'description': 'Path to ACD/L5K file'}
                 }
                 required = ['acd_path']
-            
+            elif name == 'get_tag_value':
+                properties = {
+                    'l5x_file_path': {'type': 'string', 'description': 'Path to the exported L5X file'},
+                    'tag_name': {'type': 'string', 'description': 'Tag to read, e.g. "Htr1_Set_Htr1_L_Sleep"'},
+                    'member': {'type': 'string', 'description': 'Optional nested member/array path, e.g. "Cfg.Min" or "[1]" (omit for the full value tree)'},
+                    'program_name': {'type': 'string', 'description': 'Optional program scope; required to disambiguate a tag name defined at multiple scopes'}
+                }
+                required = ['l5x_file_path', 'tag_name']
+            elif name == 'describe_aoi':
+                properties = {
+                    'l5x_file_path': {'type': 'string', 'description': 'Path to the exported L5X file'},
+                    'aoi_name': {'type': 'string', 'description': 'Add-On Instruction name, e.g. "PSet2_LL1"'}
+                }
+                required = ['l5x_file_path', 'aoi_name']
+            elif name == 'decode_aoi_call':
+                properties = {
+                    'l5x_file_path': {'type': 'string', 'description': 'Path to the exported L5X file'},
+                    'routine_name': {'type': 'string', 'description': 'Routine containing the rung, e.g. "Disch_P"'},
+                    'rung_number': {'type': 'integer', 'description': 'Rung Number attribute within the routine'},
+                    'program_name': {'type': 'string', 'description': 'Optional program scope; required to disambiguate a routine name used in multiple programs'},
+                    'aoi_name': {'type': 'string', 'description': 'Optional AOI mnemonic filter when a rung has multiple AOI calls'}
+                }
+                required = ['l5x_file_path', 'routine_name', 'rung_number']
+
             # PDF Drawings Tool Parameters
             elif name == 'index_pdf_drawings':
                 properties = {
