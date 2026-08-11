@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<RSLogix5000Content SchemaRevision="1.0" SoftwareRevision="36.00" TargetName="TestCtl" TargetType="Controller" ContainsContext="false" ExportDate="Mon Aug 11 12:00:00 2026" ExportOptions="DecoratedData">
+<Controller Use="Target" Name="TestCtl" ProcessorType="5069-L306ER" MajorRev="36" MinorRev="11">
+<DataTypes>
+<DataType Name="MyUDT" Family="NoFamily" Class="User">
+<Members>
+<Member Name="Value" DataType="REAL" Dimension="0" Radix="Float" Hidden="false" ExternalAccess="Read/Write"/>
+</Members>
+</DataType>
+</DataTypes>
+<Tags>
+<Tag Name="Ctl_Tag_A" TagType="Base" DataType="DINT" Radix="Decimal" Constant="false" ExternalAccess="Read/Write"/>
+</Tags>
+<Programs>
+<Program Name="Alpha" TestEdits="false" MainRoutineName="Logic" Disabled="false" UseAsFolder="false">
+<Tags>
+<Tag Name="Alpha_Tag" TagType="Base" DataType="BOOL" Radix="Decimal" Constant="false" ExternalAccess="Read/Write"/>
+</Tags>
+<Routines>
+<Routine Name="Logic" Type="RLL">
+<RLLContent>
+<Rung Number="0" Type="N">
+<Text><![CDATA[XIC(Alpha_Tag)OTE(Ctl_Tag_A.0);]]></Text>
+</Rung>
+</RLLContent>
+</Routine>
+<Routine Name="Init" Type="RLL">
+<RLLContent>
+<Rung Number="0" Type="N">
+<Text><![CDATA[NOP();]]></Text>
+</Rung>
+</RLLContent>
+</Routine>
+</Routines>
+</Program>
+<Program Name="Beta" TestEdits="false" MainRoutineName="MainRoutine" Disabled="false" UseAsFolder="false">
+<Routines>
+<Routine Name="MainRoutine" Type="RLL">
+<RLLContent>
+<Rung Number="0" Type="N">
+<Text><![CDATA[NOP();]]></Text>
+</Rung>
+</RLLContent>
+</Routine>
+<EncodedData EncodedType="Routine" Name="Secret" Type="RLL" EncryptionConfig="9">
+QUFBQkJCQ0NDRERE
+</EncodedData>
+</Routines>
+</Program>
+<Program Name="Gamma" TestEdits="false" MainRoutineName="Logic" Disabled="false" UseAsFolder="false">
+<Routines>
+<Routine Name="Logic" Type="RLL">
+<RLLContent>
+<Rung Number="0" Type="N">
+<Text><![CDATA[NOP();]]></Text>
+</Rung>
+</RLLContent>
+</Routine>
+</Routines>
+</Program>
+</Programs>
+</Controller>
+</RSLogix5000Content>
