@@ -92,6 +92,32 @@ def test_overview_counts_duplicate_named_routines(tmp_path, monkeypatch):
     assert identities == {("Alpha", "Logic"), ("Gamma", "Logic")}
 
 
+def test_overview_surfaces_add_on_and_module_inventory(tmp_path, monkeypatch):
+    vdb = L5XVectorDatabase(cache_dir=str(tmp_path / "cache"))
+    vdb.indexed_projects["MyProj"] = {
+        "structure": {
+            "controller": "TestCtl",
+            "programs": ["Alpha"],
+            "routines": [{"program": "Alpha", "name": "Logic", "type": "RLL", "encoded": False}],
+            "udts": ["MyUDT"],
+            "add_on_instructions": ["Scale"],
+            "modules": [
+                {"name": "Local", "catalog": "5069-L306ER", "parent": "Local", "slot": "0"},
+                {"name": "AI_Module", "catalog": "5069-IF8/A", "parent": "Local", "slot": "2"},
+            ],
+        },
+    }
+    integration = L5XSDKMCPIntegration(vector_db=vdb)
+    monkeypatch.setattr(vdb, "search_l5x_content", _no_semantic_search)
+
+    result = asyncio.run(integration.get_project_overview("MyProj.L5X"))
+
+    assert result["overview"]["add_on_instruction_count"] == 1
+    assert result["overview"]["module_count"] == 2
+    assert result["add_on_instructions"] == ["Scale"]
+    assert {m["name"] for m in result["modules"]} == {"Local", "AI_Module"}
+
+
 def test_stale_cache_without_structure_requires_reindex(tmp_path, monkeypatch):
     vdb = L5XVectorDatabase(cache_dir=str(tmp_path / "cache"))
     # Legacy cache entry: no 'structure' key.

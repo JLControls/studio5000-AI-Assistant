@@ -10,6 +10,17 @@ Routines are keyed by ``(program, routine)`` so that same-named routines in
 different programs are counted independently, and encrypted routines exported
 as ``<EncodedData EncodedType="Routine">`` are counted alongside plain
 ``<Routine>`` elements so encrypted logic is never silently dropped.
+
+Beyond programs/routines, the walk also surfaces the data-type surface that is
+easy to overlook because it does not live under ``<DataTypes>``:
+
+- **Add-On-Defined types** — each ``<AddOnInstructionDefinition>`` implicitly
+  defines a data type of the same name. These are reported in
+  ``add_on_instructions``; missing them is a recurring analysis gap.
+- **Modules** — the I/O tree from ``<Modules>``. Module-defined types describe
+  how to read individual I/O datapoints directly (e.g. ``Local:<slot>:I``) when
+  no friendly alias exists, so the module inventory (name / catalog / slot) is
+  reported in ``modules``.
 """
 from __future__ import annotations
 
@@ -22,7 +33,23 @@ logger = logging.getLogger(__name__)
 
 
 def _empty_structure() -> Dict[str, Any]:
-    return {"controller": None, "programs": [], "routines": [], "udts": []}
+    return {
+        "controller": None,
+        "programs": [],
+        "routines": [],
+        "udts": [],
+        "add_on_instructions": [],
+        "modules": [],
+    }
+
+
+def _module_slot(module: ET.Element) -> Optional[str]:
+    """Return a module's slot / node address from its first port, if present."""
+    for port in module.findall("Ports/Port"):
+        address = port.get("Address")
+        if address:
+            return address
+    return None
 
 
 def parse_l5x_structure(l5x_path: str | Path) -> Dict[str, Any]:
@@ -82,6 +109,23 @@ def parse_l5x_structure(l5x_path: str | Path) -> Dict[str, Any]:
     for data_type in root.findall(".//DataTypes/DataType[@Class='User']"):
         structure["udts"].append(data_type.get("Name", "Unknown"))
 
+    # Add-On-Defined types: one per AddOnInstructionDefinition. Their internal
+    # routines are intentionally not walked above, so they never leak into the
+    # program routine inventory.
+    for aoi in root.findall(".//AddOnInstructionDefinitions/AddOnInstructionDefinition"):
+        structure["add_on_instructions"].append(aoi.get("Name", "Unknown"))
+
+    # Module inventory (I/O tree). Module-defined types describe how to read raw
+    # I/O points directly when no alias exists; name + catalog + slot are enough
+    # to locate a module's connection tags (e.g. Local:<slot>:I).
+    for module in root.findall(".//Modules/Module"):
+        structure["modules"].append({
+            "name": module.get("Name"),
+            "catalog": module.get("CatalogNumber"),
+            "parent": module.get("ParentModule"),
+            "slot": _module_slot(module),
+        })
+
     return structure
 
 
@@ -95,6 +139,8 @@ def merge_structures(structures: Iterable[Optional[Dict[str, Any]]]) -> Dict[str
     programs: "dict[str, None]" = {}
     routines: "dict[tuple, Dict[str, Any]]" = {}
     udts: "dict[str, None]" = {}
+    aois: "dict[str, None]" = {}
+    modules: "dict[str, Dict[str, Any]]" = {}
     controller: Optional[str] = None
 
     for structure in structures:
@@ -109,12 +155,27 @@ def merge_structures(structures: Iterable[Optional[Dict[str, Any]]]) -> Dict[str
             routines.setdefault(key, routine)
         for udt_name in structure.get("udts", []):
             udts.setdefault(udt_name, None)
+        for aoi_name in structure.get("add_on_instructions", []):
+            aois.setdefault(aoi_name, None)
+        for module in structure.get("modules", []):
+            # ACD->L5X conversion can leave local rack modules unnamed; key on the
+            # full identity (name, catalog, parent, slot) so distinct nameless
+            # modules are not collapsed while true duplicates across files are.
+            key = (
+                module.get("name"),
+                module.get("catalog"),
+                module.get("parent"),
+                module.get("slot"),
+            )
+            modules.setdefault(key, module)
 
     return {
         "controller": controller,
         "programs": list(programs.keys()),
         "routines": list(routines.values()),
         "udts": list(udts.keys()),
+        "add_on_instructions": list(aois.keys()),
+        "modules": list(modules.values()),
     }
 
 
@@ -124,4 +185,6 @@ def summarize_structure(structure: Dict[str, Any]) -> Dict[str, int]:
         "program_count": len(structure.get("programs", [])),
         "routine_count": len(structure.get("routines", [])),
         "udt_count": len(structure.get("udts", [])),
+        "add_on_instruction_count": len(structure.get("add_on_instructions", [])),
+        "module_count": len(structure.get("modules", [])),
     }

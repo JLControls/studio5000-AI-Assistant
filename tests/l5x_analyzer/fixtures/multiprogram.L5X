@@ -8,6 +8,36 @@
 </Members>
 </DataType>
 </DataTypes>
+<Modules>
+<Module Name="Local" CatalogNumber="5069-L306ER" Vendor="1" ProductType="14" ProductCode="200" Major="36" Minor="11" ParentModule="Local" ParentModPortId="1" Inhibited="false" MajorFault="true">
+<Ports>
+<Port Id="1" Type="ICP" Address="0" Upstream="false"/>
+</Ports>
+</Module>
+<Module Name="AI_Module" CatalogNumber="5069-IF8/A" Vendor="1" ProductType="115" ProductCode="2196" Major="2" Minor="11" ParentModule="Local" ParentModPortId="1" Inhibited="false" MajorFault="false">
+<Ports>
+<Port Id="1" Type="ICP" Address="2" Upstream="true"/>
+</Ports>
+</Module>
+</Modules>
+<AddOnInstructionDefinitions>
+<AddOnInstructionDefinition Name="Scale" Revision="1.0" ExecutePrescan="false" ExecutePostscan="false" ExecuteEnableInFalse="false">
+<Parameters>
+<Parameter Name="EnableIn" TagType="Base" DataType="BOOL" Usage="Input" Radix="Decimal" Required="false" Visible="false"/>
+<Parameter Name="In" TagType="Base" DataType="REAL" Usage="Input" Radix="Float" Required="true" Visible="true"/>
+<Parameter Name="Out" TagType="Base" DataType="REAL" Usage="Output" Radix="Float" Required="true" Visible="true"/>
+</Parameters>
+<Routines>
+<Routine Name="Logic" Type="RLL">
+<RLLContent>
+<Rung Number="0" Type="N">
+<Text><![CDATA[MUL(In,2.0,Out);]]></Text>
+</Rung>
+</RLLContent>
+</Routine>
+</Routines>
+</AddOnInstructionDefinition>
+</AddOnInstructionDefinitions>
 <Tags>
 <Tag Name="Ctl_Tag_A" TagType="Base" DataType="DINT" Radix="Decimal" Constant="false" ExternalAccess="Read/Write"/>
 </Tags>

@@ -758,6 +758,8 @@ class L5XSDKMCPIntegration:
             programs = list(structure.get('programs', []))
             routine_details = list(structure.get('routines', []))
             udts = list(structure.get('udts', []))
+            add_on_instructions = list(structure.get('add_on_instructions', []))
+            modules = list(structure.get('modules', []))
             # Preserve the historical `routines` shape (a list of names) for
             # existing callers; routine_details carries full (program, routine)
             # identity so same-named routines stay distinguishable.
@@ -777,12 +779,19 @@ class L5XSDKMCPIntegration:
                 'overview': {
                     'program_count': len(programs),
                     'routine_count': len(routine_details),
-                    'udt_count': len(udts)
+                    'udt_count': len(udts),
+                    'add_on_instruction_count': len(add_on_instructions),
+                    'module_count': len(modules)
                 },
                 'programs': programs,
                 'routines': routine_names,
                 'routine_details': routine_details,
                 'udts': udts,
+                # Add-On-Defined types (one per AOI) and the module I/O inventory
+                # are surfaced explicitly: AOIs are the type category most often
+                # missed, and modules describe how to read un-aliased I/O points.
+                'add_on_instructions': add_on_instructions,
+                'modules': modules,
                 'note': 'Overview derived from a deterministic structural walk of the indexed L5X.'
             }
             
