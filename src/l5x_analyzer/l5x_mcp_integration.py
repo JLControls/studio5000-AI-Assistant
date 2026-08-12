@@ -16,6 +16,7 @@ from enum import Enum
 from .l5x_vector_db import L5XVectorDatabase, L5XSearchResult
 from .sdk_powered_analyzer import SDKPoweredL5XAnalyzer
 from .l5x_chunk import L5XChunkType
+from .l5x_fact_accessor import get_tag_value, describe_aoi, decode_aoi_call
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,9 @@ class L5XMCPTools(Enum):
     FIND_RELATED_COMPONENTS = "find_related_components"
     GET_PROJECT_OVERVIEW = "get_project_overview"
     BATCH_ROUTINE_ANALYSIS = "batch_routine_analysis"
+    GET_TAG_VALUE = "get_tag_value"  # issue #28: configured L5X value accessor
+    DESCRIBE_AOI = "describe_aoi"  # issue #28: ordered AOI parameter definition
+    DECODE_AOI_CALL = "decode_aoi_call"  # issue #28: AOI-call operand bindings
 
 class L5XSDKMCPIntegration:
     """
@@ -802,6 +806,40 @@ class L5XSDKMCPIntegration:
                 'error': f'Failed to get project overview: {str(e)}'
             }
     
+    async def get_tag_value(self, l5x_file_path: str, tag_name: str,
+                            member: Optional[str] = None,
+                            program_name: Optional[str] = None) -> Dict[str, Any]:
+        """Return a tag's configured value(s) from decorated L5X data (issue #28).
+
+        A deterministic structural read: no vector indexing required, so it works
+        on a concrete L5X path without calling index_exported_l5x_files first.
+        """
+        try:
+            return get_tag_value(l5x_file_path, tag_name, member, program_name)
+        except Exception as e:
+            logger.error(f"Error reading tag value: {e}")
+            return {'success': False, 'error': f'Failed to read tag value: {str(e)}'}
+
+    async def describe_aoi(self, l5x_file_path: str, aoi_name: str) -> Dict[str, Any]:
+        """Return an AOI's ordered parameter definition (issue #28)."""
+        try:
+            return describe_aoi(l5x_file_path, aoi_name)
+        except Exception as e:
+            logger.error(f"Error describing AOI: {e}")
+            return {'success': False, 'error': f'Failed to describe AOI: {str(e)}'}
+
+    async def decode_aoi_call(self, l5x_file_path: str, routine_name: str,
+                              rung_number: int, program_name: Optional[str] = None,
+                              aoi_name: Optional[str] = None) -> Dict[str, Any]:
+        """Decode a rung's AOI invocation(s) into operand→parameter bindings (issue #28)."""
+        try:
+            return decode_aoi_call(
+                l5x_file_path, routine_name, rung_number, program_name, aoi_name
+            )
+        except Exception as e:
+            logger.error(f"Error decoding AOI call: {e}")
+            return {'success': False, 'error': f'Failed to decode AOI call: {str(e)}'}
+
     def get_available_tools(self) -> Dict[str, str]:
         """Get list of available MCP tools"""
         return {

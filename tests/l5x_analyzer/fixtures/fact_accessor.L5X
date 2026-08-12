@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<RSLogix5000Content SchemaRevision="1.0" SoftwareRevision="36.00" TargetName="FactCtl" TargetType="Controller" ContainsContext="false" ExportDate="Tue Aug 11 14:00:00 2026" ExportOptions="DecoratedData">
+<Controller Use="Target" Name="FactCtl" ProcessorType="5069-L306ER" MajorRev="36" MinorRev="11">
+<DataTypes>
+<DataType Name="ScaleCfg" Family="NoFamily" Class="User">
+<Members>
+<Member Name="Min" DataType="REAL" Dimension="0" Radix="Float" Hidden="false" ExternalAccess="Read/Write"/>
+<Member Name="Max" DataType="REAL" Dimension="0" Radix="Float" Hidden="false" ExternalAccess="Read/Write"/>
+</Members>
+</DataType>
+</DataTypes>
+<AddOnInstructionDefinitions>
+<AddOnInstructionDefinition Name="PScale" Revision="1.0" ExecutePrescan="false" ExecutePostscan="false" ExecuteEnableInFalse="false">
+<Description>
+<![CDATA[Scale a raw analog with pump enable]]>
+</Description>
+<Parameters>
+<Parameter Name="EnableIn" TagType="Base" DataType="BOOL" Usage="Input" Radix="Decimal" Required="false" Visible="false"/>
+<Parameter Name="EnableOut" TagType="Base" DataType="BOOL" Usage="Output" Radix="Decimal" Required="false" Visible="false"/>
+<Parameter Name="In" TagType="Base" DataType="REAL" Usage="Input" Radix="Float" Required="true" Visible="true">
+<Description>
+<![CDATA[Raw analog input]]>
+</Description>
+</Parameter>
+<Parameter Name="En_P1" TagType="Base" DataType="BOOL" Usage="Input" Radix="Decimal" Required="true" Visible="true">
+<Description>
+<![CDATA[Pump 1 enable]]>
+</Description>
+</Parameter>
+<Parameter Name="Setpoint" TagType="Base" DataType="REAL" Usage="InOut" Radix="Float" Required="true" Visible="true"/>
+<Parameter Name="Out" TagType="Base" DataType="REAL" Usage="Output" Radix="Float" Required="true" Visible="true"/>
+<Parameter Name="Opt_Trim" TagType="Base" DataType="REAL" Usage="Input" Radix="Float" Required="false" Visible="true"/>
+<Parameter Name="Gains" TagType="Base" DataType="REAL" Usage="Input" Dimensions="4" Radix="Float" Required="false" Visible="false"/>
+</Parameters>
+<Routines>
+<Routine Name="Logic" Type="RLL">
+<RLLContent>
+<Rung Number="0" Type="N">
+<Text><![CDATA[MUL(In,2.0,Out);]]></Text>
+</Rung>
+</RLLContent>
+</Routine>
+</Routines>
+</AddOnInstructionDefinition>
+</AddOnInstructionDefinitions>
+<Tags>
+<Tag Name="Ctl_Count" TagType="Base" DataType="DINT" Radix="Decimal" Constant="false" ExternalAccess="Read/Write">
+<Data Format="L5K">
+<![CDATA[42]]>
+</Data>
+<Data Format="Decorated">
+<DataValue DataType="DINT" Radix="Decimal" Value="42"/>
+</Data>
+</Tag>
+<Tag Name="Ctl_Scale" TagType="Base" DataType="ScaleCfg" Constant="false" ExternalAccess="Read/Write">
+<Data Format="L5K">
+<![CDATA[[4.0,20.0]]]>
+</Data>
+<Data Format="Decorated">
+<Structure DataType="ScaleCfg">
+<DataValueMember Name="Min" DataType="REAL" Radix="Float" Value="4.0"/>
+<DataValueMember Name="Max" DataType="REAL" Radix="Float" Value="20.0"/>
+</Structure>
+</Data>
+</Tag>
+<Tag Name="Ctl_Alias_Temp" TagType="Alias" Radix="Float" AliasFor="Local:1:I.Ch03.Data" ExternalAccess="Read/Write"/>
+<Tag Name="Shared_Name" TagType="Base" DataType="INT" Radix="Decimal" Constant="false" ExternalAccess="Read/Write">
+<Data Format="Decorated">
+<DataValue DataType="INT" Radix="Decimal" Value="7"/>
+</Data>
+</Tag>
+</Tags>
+<Programs>
+<Program Name="Heater1" TestEdits="false" MainRoutineName="Logic" Disabled="false" UseAsFolder="false">
+<Tags>
+<Tag Name="Sleep_SP" TagType="Base" DataType="INT" Radix="Decimal" Constant="false" ExternalAccess="Read/Write">
+<Data Format="L5K">
+<![CDATA[12]]>
+</Data>
+<Data Format="Decorated">
+<DataValue DataType="INT" Radix="Decimal" Value="12"/>
+</Data>
+</Tag>
+<Tag Name="Pumped" TagType="Base" DataType="BOOL" Radix="Decimal" Constant="false" ExternalAccess="Read/Write">
+<Data Format="Decorated">
+<DataValue DataType="BOOL" Radix="Decimal" Value="1"/>
+</Data>
+</Tag>
+<Tag Name="Trip_Points" TagType="Base" DataType="REAL" Radix="Float" Constant="false" Dimensions="3" ExternalAccess="Read/Write">
+<Data Format="L5K">
+<![CDATA[[10.0,20.0,30.0]]]>
+</Data>
+<Data Format="Decorated">
+<Array DataType="REAL" Dimensions="3" Radix="Float">
+<Element Index="[0]" Value="10.0"/>
+<Element Index="[1]" Value="20.0"/>
+<Element Index="[2]" Value="30.0"/>
+</Array>
+</Data>
+</Tag>
+<Tag Name="NoData_Tag" TagType="Base" DataType="DINT" Radix="Decimal" Constant="false" ExternalAccess="Read/Write">
+<Data Format="L5K">
+<![CDATA[0]]>
+</Data>
+</Tag>
+<Tag Name="Shared_Name" TagType="Base" DataType="DINT" Radix="Decimal" Constant="false" ExternalAccess="Read/Write">
+<Data Format="Decorated">
+<DataValue DataType="DINT" Radix="Decimal" Value="99"/>
+</Data>
+</Tag>
+</Tags>
+<Routines>
+<Routine Name="Logic" Type="RLL">
+<RLLContent>
+<Rung Number="0" Type="N">
+<Text><![CDATA[PScale(Scaler1,Raw_In,NA,Sp_Tag,Result_Out) [XIC(Enable_A),XIC(Enable_B)] OTE(Done);]]></Text>
+</Rung>
+<Rung Number="1" Type="N">
+<Text><![CDATA[PScale(Scaler2,Raw_In2,En2,Sp2,Out2) PScale(Scaler3,Raw_In3,En3,Sp3,Out3);]]></Text>
+</Rung>
+<Rung Number="2" Type="N">
+<Text><![CDATA[PScale(Scaler4,Raw_In4,En4);]]></Text>
+</Rung>
+<Rung Number="3" Type="N">
+<Text><![CDATA[XIC(Pumped)OTE(Done);]]></Text>
+</Rung>
+</RLLContent>
+</Routine>
+</Routines>
+</Program>
+<Program Name="Heater2" TestEdits="false" MainRoutineName="Logic" Disabled="false" UseAsFolder="false">
+<Routines>
+<Routine Name="Logic" Type="RLL">
+<RLLContent>
+<Rung Number="0" Type="N">
+<Text><![CDATA[NOP();]]></Text>
+</Rung>
+</RLLContent>
+</Routine>
+</Routines>
+</Program>
+</Programs>
+</Controller>
+</RSLogix5000Content>

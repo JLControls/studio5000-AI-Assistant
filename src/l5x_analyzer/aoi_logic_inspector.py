@@ -7,7 +7,39 @@ from inputs and local tags before making assumptions.
 
 import xml.etree.ElementTree as ET
 import re
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
+
+
+def extract_ordered_parameters(aoi_elem: ET.Element) -> List[Dict[str, Any]]:
+    """Return an AOI's parameters as ordered structural facts.
+
+    Document order is preserved because AOI invocation binds operands
+    positionally, so the ``<Parameter>`` order is part of the calling contract.
+    Each entry carries the facts needed to interpret an invocation:
+    ``{position, name, usage, data_type, required, visible, dimensions,
+    description}``. This is the single shared parser reused by the deeper
+    scaling/SCADA heuristics below and by the issue #28 fact accessors.
+    """
+    params: List[Dict[str, Any]] = []
+    for position, p in enumerate(aoi_elem.findall("Parameters/Parameter")):
+        desc_el = p.find("Description")
+        description = desc_el.text.strip() if desc_el is not None and desc_el.text else ""
+        try:
+            dimensions = int(p.attrib.get("Dimensions", "0") or "0")
+        except (TypeError, ValueError):
+            dimensions = 0
+        params.append({
+            "position": position,
+            "name": p.attrib.get("Name", ""),
+            "usage": p.attrib.get("Usage", "Input"),
+            "data_type": p.attrib.get("DataType", ""),
+            "required": str(p.attrib.get("Required", "false")).lower() == "true",
+            "visible": str(p.attrib.get("Visible", "false")).lower() == "true",
+            "dimensions": dimensions,
+            "description": description,
+        })
+    return params
+
 
 class AOIScalingProfile:
     def __init__(self, aoi_name: str):
@@ -65,13 +97,12 @@ def inspect_aoi_definition(aoi_elem: ET.Element) -> AOILogicProfile:
 
     profile = AOILogicProfile(aoi_name, desc)
 
-    # 1. Inspect Parameter definitions
-    for p in aoi_elem.findall("Parameters/Parameter"):
-        p_name = p.attrib.get("Name", "")
-        p_type = p.attrib.get("DataType", "")
-        p_usage = p.attrib.get("Usage", "Input")
-        p_desc_el = p.find("Description")
-        p_desc = p_desc_el.text.strip() if p_desc_el is not None and p_desc_el.text else ""
+    # 1. Inspect Parameter definitions (via the shared ordered-parameter parser)
+    for param in extract_ordered_parameters(aoi_elem):
+        p_name = param["name"]
+        p_type = param["data_type"]
+        p_usage = param["usage"]
+        p_desc = param["description"]
 
         param_role = AOIParameterRole(p_name, p_type, p_usage, p_desc)
         if p_usage in ("Output", "InOut"):
