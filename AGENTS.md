@@ -5,7 +5,7 @@ This file provides guidance to Claude Code, AGY, and other AI assistants working
 ## Project Summary & Structure
 
 Production code lives in `src/`, split by responsibility:
-- `mcp_server/` (`src/mcp_server/studio5000_mcp_server.py`, ~2100 lines) — Minimal hand-rolled MCP server exposing ~40 tools for PLC programming assistance over stdio JSON-RPC (`mcp_config.json`).
+- `mcp_server/` (`src/mcp_server/studio5000_mcp_server.py`, ~2400 lines) — Minimal hand-rolled MCP server exposing 52 tools for PLC programming assistance over stdio JSON-RPC (`mcp_config.json`).
 - `documentation/` + `sdk_documentation/` — Studio 5000 instruction & SDK docs, semantic search (FAISS + sentence-transformers). Backs `search_instructions`, `get_instruction*`, `list_categories`.
 - `code_generator/` — Natural language → ladder logic → L5X (`L5XGenerator`, `L5XProject/Program/Routine/LadderRung`). Backs `generate_ladder_logic`, `create_l5x_project`, `create_l5x_routine`.
 - `l5x_analyzer/` — Semantic search / surgical rung insertion / structure analysis over large exported L5X. Backs `search_l5x_content`, `find_insertion_point`, `smart_insert_logic`, `analyze_routine_structure`.

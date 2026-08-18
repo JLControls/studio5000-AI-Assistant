@@ -127,13 +127,23 @@ class L5XGenerator:
 {rungs_xml}
                         </RLLContent>'''
         elif routine.type == "ST":  # Structured Text
-            # For structured text, combine all rung logic
-            st_code = "\\n".join([rung.logic for rung in routine.rungs])
+            # For structured text, emit each line with proper line numbering
+            all_lines = []
+            for rung in routine.rungs:
+                if rung.comment:
+                    all_lines.append(f"// {rung.comment}")
+                all_lines.extend(rung.logic.splitlines())
+            
+            if not all_lines:
+                all_lines = [""]
+            
+            st_lines_xml = "\n".join(
+                f'                            <Line Number="{i}">\n                                <![CDATA[{line}]]>\n                            </Line>'
+                for i, line in enumerate(all_lines)
+            )
             routine_xml += f'''
                         <STContent>
-                            <Line Number="0">
-                                <![CDATA[{st_code}]]>
-                            </Line>
+{st_lines_xml}
                         </STContent>'''
         
         routine_xml += '''

@@ -9,7 +9,9 @@ Lives in ``scripts/``; ``sourceRepo/src`` is resolved relative to the repo root
 import sys
 from pathlib import Path
 
-src_dir = Path(__file__).resolve().parent.parent / "sourceRepo" / "src"
+src_dir = Path(__file__).resolve().parent.parent / "src"
+if not src_dir.exists():
+    src_dir = Path(__file__).resolve().parent.parent / "sourceRepo" / "src"
 if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 

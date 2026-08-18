@@ -960,7 +960,7 @@ Studio5000_MCP_Server/
 ```
 
 ### Key Files
-- **Main Server**: `src/mcp_server/studio5000_mcp_server.py` (main MCP server with 15+ tools)
+- **Main Server**: `src/mcp_server/studio5000_mcp_server.py` (main MCP server with 52 tools)
 - **AI Assistant**: `src/ai_assistant/enhanced_main_assistant.py` (production-ready AI assistant)
 - **L5X Generator**: `src/code_generator/l5x_generator.py` (creates importable L5X files)
 - **L5X Analyzer**: `src/l5x_analyzer/l5x_vector_db.py` (semantic search through L5X files)

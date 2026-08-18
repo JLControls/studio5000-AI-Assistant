@@ -473,7 +473,7 @@ class L5XSDKMCPIntegration:
             }
     
     async def extract_routine_content(self, acd_path: str, routine_name: str,
-                                    program_name: str = "MainProgram", 
+                                    program_name: Optional[str] = None, 
                                     output_format: str = "summary") -> Dict[str, Any]:
         """
         Extract specific routine content for analysis using vector database
@@ -481,7 +481,7 @@ class L5XSDKMCPIntegration:
         Args:
             acd_path: Path to ACD/L5K file (for context, not opened)
             routine_name: Routine to extract
-            program_name: Parent program name  
+            program_name: Optional parent program name to disambiguate identical routine names
             output_format: 'summary', 'full', or 'rungs_only'
             
         Returns:
@@ -490,10 +490,17 @@ class L5XSDKMCPIntegration:
         try:
             logger.info(f"Extracting routine content for {routine_name} using vector database")
             
+            def _is_match(result):
+                if result.location.parent_routine != routine_name and result.name != routine_name:
+                    return False
+                if program_name and result.location.parent_program != program_name:
+                    return False
+                return True
+
             # Search for the specific routine in the vector database
             routine_query = f"routine {routine_name}"
             search_results = self.vector_db.search_l5x_content(
-                routine_query, limit=50, 
+                routine_query, limit=100, 
                 chunk_types=[L5XChunkType.ROUTINE, L5XChunkType.LADDER_RUNG]
             )
             
@@ -502,10 +509,7 @@ class L5XSDKMCPIntegration:
             rung_chunks = []
             
             for result in search_results:
-                # Check if this is the exact routine we want
-                if (result.location.parent_routine == routine_name or 
-                    result.name == routine_name):
-                    
+                if _is_match(result):
                     if result.chunk_type == L5XChunkType.ROUTINE:
                         routine_chunks.append(result)
                     elif result.chunk_type == L5XChunkType.LADDER_RUNG:
@@ -519,31 +523,36 @@ class L5XSDKMCPIntegration:
                     logger.info(f"Routine {routine_name} not found in index. Auto-indexing L5X files from {l5x_dir}...")
                     self.index_exported_l5x_files(str(l5x_dir))
                     search_results = self.vector_db.search_l5x_content(
-                        routine_query, limit=50, 
+                        routine_query, limit=100, 
                         chunk_types=[L5XChunkType.ROUTINE, L5XChunkType.LADDER_RUNG]
                     )
                     for result in search_results:
-                        if (result.location.parent_routine == routine_name or result.name == routine_name):
+                        if _is_match(result):
                             if result.chunk_type == L5XChunkType.ROUTINE:
                                 routine_chunks.append(result)
                             elif result.chunk_type == L5XChunkType.LADDER_RUNG:
                                 rung_chunks.append(result)
 
             if not routine_chunks and not rung_chunks:
+                scope_info = f" in program {program_name}" if program_name else ""
                 return {
                     'success': False,
-                    'error': f'Routine {routine_name} not found in indexed content after scanning {acd_path}.'
+                    'error': f'Routine {routine_name}{scope_info} not found in indexed content after scanning {acd_path}.'
                 }
             
             # Sort rungs by rung number
             rung_chunks.sort(key=lambda x: x.location.rung_number or 0)
+            resolved_program = (
+                routine_chunks[0].location.parent_program if routine_chunks
+                else (rung_chunks[0].location.parent_program if rung_chunks else (program_name or "MainProgram"))
+            )
             
             # Format output based on requested format
             if output_format == "summary":
                 return {
                     'success': True,
                     'routine_name': routine_name,
-                    'program_name': program_name,
+                    'program_name': resolved_program,
                     'rung_count': len(rung_chunks),
                     'description': routine_chunks[0].description if routine_chunks else 'No description available',
                     'dependencies': list(set().union(*[result.dependencies for result in routine_chunks + rung_chunks if hasattr(result, 'dependencies')])),
@@ -569,6 +578,7 @@ class L5XSDKMCPIntegration:
                 return {
                     'success': True,
                     'routine_name': routine_name,
+                    'program_name': resolved_program,
                     'rungs': rungs,
                     'total_rungs': len(rungs)
                 }
@@ -597,6 +607,7 @@ class L5XSDKMCPIntegration:
                 return {
                     'success': True,
                     'routine_name': routine_name,
+                    'program_name': resolved_program,
                     'chunks': chunks_data,
                     'total_chunks': len(chunks_data)
                 }
@@ -608,18 +619,19 @@ class L5XSDKMCPIntegration:
                 'error': f'Extraction failed: {str(e)}'
             }
     
-    async def analyze_routine_structure(self, routine_name: str) -> Dict[str, Any]:
+    async def analyze_routine_structure(self, routine_name: str, program_name: Optional[str] = None) -> Dict[str, Any]:
         """
         Analyze structure and complexity of an indexed routine
         
         Args:
             routine_name: Name of routine to analyze
+            program_name: Optional program scope to disambiguate routines
             
         Returns:
             Dictionary with analysis results
         """
         try:
-            analysis = self.vector_db.get_routine_analysis(routine_name)
+            analysis = self.vector_db.get_routine_analysis(routine_name, program_name)
             
             if 'error' in analysis:
                 return {

@@ -54,6 +54,20 @@ def top_level_descriptions(path: Path):
     return result
 
 
+def _default_fixtures():
+    acd = os.environ.get("THAWROOM_ACD")
+    native = os.environ.get("THAWROOM_NATIVE_L5X")
+    if not acd or not Path(acd).exists():
+        cand = Path(__file__).parent / "acd" / "ModernTHAWROOM021722" / "ModernTHAWROOM021722.ACD"
+        if cand.exists():
+            acd = str(cand)
+    if not native or not Path(native).exists():
+        cand = Path(__file__).parent / "acd" / "ModernTHAWROOM021722" / "ModernTHAWROOM021722.L5X"
+        if cand.exists():
+            native = str(cand)
+    return acd, native
+
+
 class AcdL5xFidelityTest(unittest.TestCase):
     def test_semantic_report_identifies_losses_and_changes(self):
         reference = """<RSLogix5000Content><Controller><Tags><Tag Name="A" TagType="Base" DataType="DINT"><Description>kept</Description></Tag></Tags><Programs><Program Name="P"><Routines><Routine Name="R" Type="RLL"><RLLContent><Rung Number="0" Type="N"><Text>XIC(A);</Text></Rung></RLLContent></Routine></Routines></Program></Programs></Controller></RSLogix5000Content>"""
@@ -72,8 +86,7 @@ class AcdL5xFidelityTest(unittest.TestCase):
 
     def test_preserves_native_rung_comments(self):
         """Removing Comments.Dat ingestion or comment serialization must fail this test."""
-        acd_path = os.environ.get("THAWROOM_ACD")
-        native_path = os.environ.get("THAWROOM_NATIVE_L5X")
+        acd_path, native_path = _default_fixtures()
         if not acd_path or not native_path:
             self.skipTest("Set THAWROOM_ACD and THAWROOM_NATIVE_L5X for integration regression")
 
@@ -91,8 +104,7 @@ class AcdL5xFidelityTest(unittest.TestCase):
 
     def test_preserves_native_tag_operand_comments(self):
         """Removing operand-comment serialization must fail this test."""
-        acd_path = os.environ.get("THAWROOM_ACD")
-        native_path = os.environ.get("THAWROOM_NATIVE_L5X")
+        acd_path, native_path = _default_fixtures()
         if not acd_path or not native_path:
             self.skipTest("Set THAWROOM_ACD and THAWROOM_NATIVE_L5X for integration regression")
 
@@ -106,8 +118,7 @@ class AcdL5xFidelityTest(unittest.TestCase):
             )
 
     def test_preserves_controller_tag_and_module_descriptions(self):
-        acd_path = os.environ.get("THAWROOM_ACD")
-        native_path = os.environ.get("THAWROOM_NATIVE_L5X")
+        acd_path, native_path = _default_fixtures()
         if not acd_path or not native_path:
             self.skipTest("Set THAWROOM_ACD and THAWROOM_NATIVE_L5X for integration regression")
 

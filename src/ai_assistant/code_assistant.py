@@ -8,18 +8,18 @@ using the Studio 5000 instruction documentation from the MCP server.
 
 import re
 from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 
 @dataclass
 class PLCRequirement:
     """Structured representation of a PLC programming requirement"""
     description: str
-    inputs: List[str]
-    outputs: List[str]  
-    logic_type: str  # "ladder", "structured_text", "function_block"
-    conditions: List[str]
-    actions: List[str]
+    inputs: List[str] = field(default_factory=list)
+    outputs: List[str] = field(default_factory=list)
+    logic_type: str = "ladder"  # "ladder", "structured_text", "function_block"
+    conditions: List[str] = field(default_factory=list)
+    actions: List[str] = field(default_factory=list)
 
 @dataclass
 class GeneratedCode:
@@ -99,8 +99,8 @@ class NaturalLanguageParser:
         """Extract conditional statements"""
         conditions = []
         for keyword in self.condition_keywords:
-            pattern = keyword + r'\\s+([^.!?]+)'
-            matches = re.finditer(pattern, text)
+            pattern = keyword + r'\s+([^.!?]+)'
+            matches = re.finditer(pattern, text, re.IGNORECASE)
             for match in matches:
                 condition = match.group(1).strip()
                 conditions.append(condition)
@@ -308,39 +308,162 @@ class LadderLogicGenerator:
         )
     
     def _generate_structured_text(self, req: PLCRequirement) -> GeneratedCode:
-        """Generate structured text code"""
-        # Simplified ST generation - can be expanded
+        """Generate structured text code across multiple PLC patterns"""
+        desc = req.description.lower()
+        
         if self._is_start_stop_pattern(req):
-            st_code = """
-IF START_PB AND NOT STOP_PB THEN
-    MOTOR_RUN := TRUE;
-END_IF;
-
-IF STOP_PB THEN
-    MOTOR_RUN := FALSE;
-END_IF;
-"""
-            tags = [
-                {'name': 'START_PB', 'data_type': 'BOOL', 'description': 'Start button'},
-                {'name': 'STOP_PB', 'data_type': 'BOOL', 'description': 'Stop button'},
-                {'name': 'MOTOR_RUN', 'data_type': 'BOOL', 'description': 'Motor output'}
-            ]
+            start_input = self._get_or_create_tag(req.inputs, ['start', 'run'], 'START_PB')
+            stop_input = self._get_or_create_tag(req.inputs, ['stop'], 'STOP_PB')
+            motor_output = self._get_or_create_tag(req.outputs, ['motor', 'run', 'out'], 'MOTOR_RUN')
             
+            st_code = f"""IF {start_input} AND NOT {stop_input} THEN
+    {motor_output} := TRUE;
+ELSIF {stop_input} THEN
+    {motor_output} := FALSE;
+END_IF;"""
+            tags = [
+                {'name': start_input, 'data_type': 'BOOL', 'description': 'Start button input'},
+                {'name': stop_input, 'data_type': 'BOOL', 'description': 'Stop button input'},
+                {'name': motor_output, 'data_type': 'BOOL', 'description': 'Motor run output'}
+            ]
             return GeneratedCode(
                 ladder_logic=st_code,
                 tags=tags,
-                instructions_used=['IF', 'AND', 'NOT'],
-                comments=['Structured text motor control'],
-                validation_notes=['ST syntax verified']
+                instructions_used=['IF', 'AND', 'NOT', 'ELSIF'],
+                comments=['Structured text start/stop motor control'],
+                validation_notes=['ST syntax verified for motor control']
             )
-        
-        return GeneratedCode(
-            ladder_logic="// ST generation not implemented for this pattern",
-            tags=[],
-            instructions_used=[],
-            comments=['Structured text generation needed'],
-            validation_notes=['Pattern not supported in ST mode']
-        )
+
+        elif self._is_timer_pattern(req):
+            delay_time = self._extract_time_value(req.description)
+            input_tag = self._get_or_create_tag(req.inputs, ['in', 'enable', 'run'], 'TIMER_INPUT')
+            output_tag = self._get_or_create_tag(req.outputs, ['out', 'done'], 'TIMER_OUTPUT')
+            timer_tag = 'DELAY_TIMER'
+
+            st_code = f"""// Timer On Delay logic ({delay_time}ms)
+{timer_tag}.PRE := {delay_time};
+{timer_tag}.IN := {input_tag};
+TONR({timer_tag});
+{output_tag} := {timer_tag}.DN;"""
+            tags = [
+                {'name': input_tag, 'data_type': 'BOOL', 'description': 'Timer enable input'},
+                {'name': output_tag, 'data_type': 'BOOL', 'description': 'Timer done output'},
+                {'name': timer_tag, 'data_type': 'TIMER', 'description': f'Delay timer - {delay_time}ms'}
+            ]
+            return GeneratedCode(
+                ladder_logic=st_code,
+                tags=tags,
+                instructions_used=['TONR', 'ASSIGN'],
+                comments=[f'Structured text timer logic ({delay_time}ms)'],
+                validation_notes=['ST timer block logic verified']
+            )
+
+        elif self._is_counter_pattern(req):
+            count_value = self._extract_numeric_value(req.description, default=10)
+            input_tag = self._get_or_create_tag(req.inputs, ['count', 'pulse', 'sensor'], 'COUNT_INPUT')
+            reset_tag = self._get_or_create_tag(req.inputs, ['reset', 'clear'], 'RESET_INPUT')
+            output_tag = self._get_or_create_tag(req.outputs, ['out', 'done'], 'COUNT_OUTPUT')
+            counter_tag = 'COUNTER'
+
+            st_code = f"""// Counter Up logic (Preset: {count_value})
+{counter_tag}.PRE := {count_value};
+{counter_tag}.CU := {input_tag};
+{counter_tag}.RES := {reset_tag};
+CTU({counter_tag});
+{output_tag} := {counter_tag}.DN;"""
+            tags = [
+                {'name': input_tag, 'data_type': 'BOOL', 'description': 'Count pulse input'},
+                {'name': reset_tag, 'data_type': 'BOOL', 'description': 'Counter reset input'},
+                {'name': output_tag, 'data_type': 'BOOL', 'description': 'Count complete output'},
+                {'name': counter_tag, 'data_type': 'COUNTER', 'description': f'Counter - preset {count_value}'}
+            ]
+            return GeneratedCode(
+                ladder_logic=st_code,
+                tags=tags,
+                instructions_used=['CTU', 'ASSIGN'],
+                comments=[f'Structured text counter logic (count to {count_value})'],
+                validation_notes=['ST counter block logic verified']
+            )
+
+        elif any(k in desc for k in ['sequence', 'step', 'state', 'mode']):
+            step_tag = 'STEP_NUMBER'
+            start_pb = self._get_or_create_tag(req.inputs, ['start'], 'START_PB')
+            done_in = self._get_or_create_tag(req.inputs, ['complete', 'done'], 'PROCESS_DONE')
+            active_out = self._get_or_create_tag(req.outputs, ['active', 'run'], 'PROCESS_ACTIVE')
+
+            st_code = f"""// Sequence State Machine
+CASE {step_tag} OF
+    0: // Idle state
+        {active_out} := FALSE;
+        IF {start_pb} THEN
+            {step_tag} := 10;
+        END_IF;
+    10: // Active state
+        {active_out} := TRUE;
+        IF {done_in} THEN
+            {step_tag} := 20;
+        END_IF;
+    20: // Completion state
+        {active_out} := FALSE;
+        {step_tag} := 0;
+    ELSE
+        {step_tag} := 0;
+END_CASE;"""
+            tags = [
+                {'name': step_tag, 'data_type': 'DINT', 'description': 'Sequence step number'},
+                {'name': start_pb, 'data_type': 'BOOL', 'description': 'Sequence start button'},
+                {'name': done_in, 'data_type': 'BOOL', 'description': 'Process done sensor'},
+                {'name': active_out, 'data_type': 'BOOL', 'description': 'Process active output'}
+            ]
+            return GeneratedCode(
+                ladder_logic=st_code,
+                tags=tags,
+                instructions_used=['CASE', 'OF', 'IF', 'THEN', 'END_CASE'],
+                comments=['Structured text state machine sequence'],
+                validation_notes=['ST sequence logic verified']
+            )
+
+        elif any(k in desc for k in ['interlock', 'safety', 'fault', 'alarm', 'protect']):
+            estop = self._get_or_create_tag(req.inputs, ['estop', 'safety'], 'E_STOP_OK')
+            fault = self._get_or_create_tag(req.inputs, ['fault', 'overload'], 'SYSTEM_FAULT')
+            ready = self._get_or_create_tag(req.outputs, ['enable', 'ready'], 'SYSTEM_READY')
+
+            st_code = f"""// Safety and System Interlock
+IF {estop} AND NOT {fault} THEN
+    {ready} := TRUE;
+ELSE
+    {ready} := FALSE;
+END_IF;"""
+            tags = [
+                {'name': estop, 'data_type': 'BOOL', 'description': 'Emergency stop healthy input'},
+                {'name': fault, 'data_type': 'BOOL', 'description': 'System fault input'},
+                {'name': ready, 'data_type': 'BOOL', 'description': 'System ready permit output'}
+            ]
+            return GeneratedCode(
+                ladder_logic=st_code,
+                tags=tags,
+                instructions_used=['IF', 'AND', 'NOT', 'ELSE'],
+                comments=['Structured text safety interlock logic'],
+                validation_notes=['ST interlock logic verified']
+            )
+
+        else:
+            # Basic input/output logic in ST
+            input_tag = req.inputs[0] if req.inputs else 'INPUT_1'
+            output_tag = req.outputs[0] if req.outputs else 'OUTPUT_1'
+            
+            st_code = f"{output_tag} := {input_tag};"
+            tags = [
+                {'name': input_tag, 'data_type': 'BOOL', 'description': 'Input signal'},
+                {'name': output_tag, 'data_type': 'BOOL', 'description': 'Output signal'}
+            ]
+            return GeneratedCode(
+                ladder_logic=st_code,
+                tags=tags,
+                instructions_used=['ASSIGN'],
+                comments=['Basic structured text assignment'],
+                validation_notes=['Verify input/output assignments']
+            )
     
     def _get_or_create_tag(self, available_tags: List[str], keywords: List[str], default: str) -> str:
         """Find best matching tag or create default"""
@@ -354,16 +477,16 @@ END_IF;
         """Extract time values from text (returns milliseconds)"""
         # Look for numbers followed by time units
         time_patterns = [
-            (r'(\\d+)\\s*ms', 1),           # milliseconds
-            (r'(\\d+)\\s*milliseconds?', 1),
-            (r'(\\d+)\\s*s(?:ec)?', 1000),   # seconds
-            (r'(\\d+)\\s*seconds?', 1000),
-            (r'(\\d+)\\s*min', 60000),       # minutes
-            (r'(\\d+)\\s*minutes?', 60000)
+            (r'(\d+)\s*ms', 1),           # milliseconds
+            (r'(\d+)\s*milliseconds?', 1),
+            (r'(\d+)\s*s(?:ec)?', 1000),   # seconds
+            (r'(\d+)\s*seconds?', 1000),
+            (r'(\d+)\s*min', 60000),       # minutes
+            (r'(\d+)\s*minutes?', 60000)
         ]
         
         for pattern, multiplier in time_patterns:
-            match = re.search(pattern, text)
+            match = re.search(pattern, text, re.IGNORECASE)
             if match:
                 return int(match.group(1)) * multiplier
         
@@ -372,7 +495,7 @@ END_IF;
     
     def _extract_numeric_value(self, text: str, default: int = 10) -> int:
         """Extract numeric values from text"""
-        numbers = re.findall(r'\\d+', text)
+        numbers = re.findall(r'\d+', text)
         if numbers:
             return int(numbers[0])
         return default

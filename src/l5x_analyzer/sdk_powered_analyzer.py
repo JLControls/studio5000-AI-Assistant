@@ -305,28 +305,24 @@ class SDKPoweredL5XAnalyzer:
             tree = ET.parse(l5x_file_path)
             root = tree.getroot()
             
-            # Find routine elements
-            routines = root.findall(".//Routine")
-            
-            for routine in routines:
-                routine_name = routine.get('Name', 'Unknown')
-                routine_type = routine.get('Type', 'RLL')
-                
-                # Find parent program
-                program_elem = routine.find("../../../../..")
-                program_name = program_elem.get('Name', 'MainProgram') if program_elem is not None else 'MainProgram'
+            def _process_routine(routine_elem, program_name):
+                routine_name = routine_elem.get('Name', 'Unknown')
+                routine_type = routine_elem.get('Type', 'RLL')
+                routine_desc_elem = routine_elem.find('./Description')
+                routine_desc = routine_desc_elem.text if routine_desc_elem is not None else None
                 
                 # Create routine chunk
-                routine_content = ET.tostring(routine, encoding='unicode')
+                routine_content = ET.tostring(routine_elem, encoding='unicode')
                 routine_chunk = create_routine_chunk(
                     routine_name, program_name, routine_type, 
-                    routine_content, file_path=l5x_file_path
+                    routine_content, routine_description=routine_desc,
+                    file_path=l5x_file_path
                 )
                 chunks.append(routine_chunk)
                 
                 # Parse individual rungs if it's ladder logic
                 if routine_type == 'RLL':
-                    rll_content = routine.find('RLLContent')
+                    rll_content = routine_elem.find('RLLContent')
                     if rll_content is not None:
                         rungs = rll_content.findall('Rung')
                         
@@ -347,6 +343,21 @@ class SDKPoweredL5XAnalyzer:
                                 rung_logic, rung_comment, l5x_file_path
                             )
                             chunks.append(rung_chunk)
+
+            # Find routine elements under their parent program
+            programs = root.findall(".//Programs/Program")
+            found_program_routines = False
+            if programs:
+                for program in programs:
+                    prog_name = program.get('Name', 'MainProgram')
+                    for routine in program.findall("./Routines/Routine"):
+                        found_program_routines = True
+                        _process_routine(routine, prog_name)
+
+            # If no programs or standalone Routine export (e.g. TargetType="Routine")
+            if not found_program_routines:
+                for routine in root.findall(".//Routine"):
+                    _process_routine(routine, "MainProgram")
             
             logger.info(f"Parsed {len(chunks)} chunks from {l5x_file_path}")
             

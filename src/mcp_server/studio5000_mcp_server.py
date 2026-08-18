@@ -1495,9 +1495,9 @@ class Studio5000MCPServer:
             acd_path, routine_name, program_name, output_format
         )
     
-    async def analyze_routine_structure(self, routine_name: str) -> Dict[str, Any]:
+    async def analyze_routine_structure(self, routine_name: str, program_name: Optional[str] = None) -> Dict[str, Any]:
         """Analyze structure and complexity of an indexed routine"""
-        return await self.l5x_integration.analyze_routine_structure(routine_name)
+        return await self.l5x_integration.analyze_routine_structure(routine_name, program_name)
     
     async def find_related_components(self, component_name: str, project_filter: Optional[str] = None,
                                     relationship_type: str = "usage") -> Dict[str, Any]:
@@ -1973,7 +1973,8 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                 required = ['acd_path', 'routine_name']
             elif name == 'analyze_routine_structure':
                 properties = {
-                    'routine_name': {'type': 'string', 'description': 'Name of routine to analyze'}
+                    'routine_name': {'type': 'string', 'description': 'Name of routine to analyze'},
+                    'program_name': {'type': 'string', 'description': 'Optional program scope to disambiguate routines'}
                 }
                 required = ['routine_name']
             elif name == 'find_related_components':
@@ -2368,6 +2369,8 @@ async def main():
         print(f"\n6. Testing iterative comment graph analysis (analyze_comment_graph):")
         repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
         native_fixture = os.path.join(repo_root, 'tests', 'acd', 'ModernTHAWROOM021722.L5X')
+        if not os.path.exists(native_fixture):
+            native_fixture = os.path.join(repo_root, 'tests', 'acd', 'ModernTHAWROOM021722', 'ModernTHAWROOM021722.L5X')
         if os.path.exists(native_fixture):
             cg_result = await mcp_server.analyze_comment_graph(native_fixture)
             if cg_result.get('success'):

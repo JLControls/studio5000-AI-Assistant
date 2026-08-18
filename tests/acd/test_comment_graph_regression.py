@@ -16,7 +16,16 @@ from comment_graph.config import AnalysisRequest, ConvergenceStatus
 from comment_graph.orchestrator import analyze_comment_graph
 
 FIXTURE = Path(__file__).parent / "ModernTHAWROOM021722.L5X"
+if not FIXTURE.exists():
+    _nested = Path(__file__).parent / "ModernTHAWROOM021722" / "ModernTHAWROOM021722.L5X"
+    if _nested.exists():
+        FIXTURE = _nested
+
 ACD_FIXTURE = Path(__file__).parent / "ModernTHAWROOM021722.ACD"
+if not ACD_FIXTURE.exists():
+    _nested_acd = Path(__file__).parent / "ModernTHAWROOM021722" / "ModernTHAWROOM021722.ACD"
+    if _nested_acd.exists():
+        ACD_FIXTURE = _nested_acd
 
 
 @unittest.skipUnless(FIXTURE.exists(), "native L5X fixture not present")

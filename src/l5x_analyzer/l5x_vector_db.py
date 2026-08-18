@@ -443,13 +443,17 @@ class L5XVectorDatabase:
         
         return unique_results[:20]  # Limit results
     
-    def get_routine_analysis(self, routine_name: str) -> Dict[str, Any]:
-        """Get comprehensive analysis of a routine"""
-        routine_chunks = [chunk for chunk in self.chunks_data 
-                         if chunk.location.parent_routine == routine_name]
+    def get_routine_analysis(self, routine_name: str, program_name: Optional[str] = None) -> Dict[str, Any]:
+        """Get comprehensive analysis of a routine, optionally scoped to a program"""
+        routine_chunks = [
+            chunk for chunk in self.chunks_data 
+            if chunk.location.parent_routine == routine_name
+            and (program_name is None or chunk.location.parent_program == program_name)
+        ]
         
         if not routine_chunks:
-            return {'error': f'No data found for routine {routine_name}'}
+            scope_str = f" in program {program_name}" if program_name else ""
+            return {'error': f'No data found for routine {routine_name}{scope_str}'}
         
         # Analyze rung distribution
         rung_chunks = [c for c in routine_chunks if c.chunk_type == L5XChunkType.LADDER_RUNG]
@@ -462,12 +466,13 @@ class L5XVectorDatabase:
         
         analysis = {
             'routine_name': routine_name,
+            'program_name': routine_chunks[0].location.parent_program if routine_chunks else program_name,
             'total_chunks': len(routine_chunks),
             'rung_count': len(rung_chunks),
             'rung_range': (min(rung_numbers), max(rung_numbers)) if rung_numbers else (0, 0),
-            'dependencies': list(all_dependencies),
+            'dependencies': sorted(list(all_dependencies)),
             'complexity_score': self._calculate_complexity_score(routine_chunks),
-            'available_insertion_points': [r + 1 for r in rung_numbers] if rung_numbers else [0]
+            'available_insertion_points': sorted(list(set([r + 1 for r in rung_numbers] + [0]))) if rung_numbers else [0]
         }
         
         return analysis

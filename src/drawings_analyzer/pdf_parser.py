@@ -23,11 +23,15 @@ from .pdf_chunk import PDFChunk, PDFChunkType, PDFLocation
 
 # PyMuPDF import with error handling
 try:
-    import fitz  # PyMuPDF
+    import pymupdf as fitz
     PYMUPDF_AVAILABLE = True
 except ImportError:
-    PYMUPDF_AVAILABLE = False
-    logging.warning("PyMuPDF not available - PDF parsing disabled")
+    try:
+        import fitz  # PyMuPDF legacy alias
+        PYMUPDF_AVAILABLE = True
+    except ImportError:
+        PYMUPDF_AVAILABLE = False
+        logging.warning("PyMuPDF not available - PDF parsing disabled")
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

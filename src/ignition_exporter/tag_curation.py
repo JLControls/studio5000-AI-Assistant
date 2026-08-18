@@ -152,9 +152,9 @@ def is_export_relevant(entry: TagEntry, write_map: Optional[TagWriteMap] = None)
     cat = classify_category(entry)
     if cat not in KEY_CATEGORIES:
         return False
-    if cat in ("analog_pv", "setpoint", "field_io"):
+    if cat in ("analog_pv", "setpoint", "field_io", "alarm"):
         return True
-    # alarm / status / command
+    # status / command
     if write_map is None:
         return True  # no logic available -> keep (back-compat)
     if write_map.is_written(entry.name):
