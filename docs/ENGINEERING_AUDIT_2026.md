@@ -36,6 +36,53 @@ This engineering audit evaluated the repository as an **AI-assisted industrial c
 
 ---
 
+## 1.1 Agent Quick-Start & Sprint 1 Execution Plan
+
+> [!IMPORTANT]
+> This section replaces the former standalone `docs/AGENT_HANDOFF_PROMPT.md`. Copy the block below into a new agent session to bootstrap execution of the audit backlog.
+
+### Mandatory Reading (Before Touching Code)
+
+1. **`AGENTS.md`** — Pay special attention to the `src`-on-path convention (packages are imported bare, e.g. `from l5x_analyzer import ...`, **NOT** `from src.l5x_analyzer import ...`).
+2. **This document (`docs/ENGINEERING_AUDIT_2026.md`)** — The complete authoritative engineering review with line citations, reproduction scenarios, root-cause analyses, and the implementation backlog.
+
+### Environment Verification
+
+```bash
+# Verify Python version (CPython 3.12 is required)
+python --version   # or ./venv/bin/python --version
+
+# Run full test suite (must show 238 passed)
+python -m pytest   # or ./venv/bin/python -m pytest
+
+# Run server smoke test
+python src/mcp_server/studio5000_mcp_server.py --test
+```
+
+### Sprint 1 — P0/P1 Fixes & Core Primitives
+
+Work on the following tasks in priority order. For each task, create focused commits, write/update pytest unit tests under `tests/`, and verify that the full test suite passes.
+
+| Priority | Task | Bug/Issue | Key Files | Section |
+| :---: | :--- | :--- | :--- | :--- |
+| **1** | Fix `patch_rungs` `@HEX@` substitution for new tags | BUG-01 / [#34](https://github.com/JLControls/studio5000-AI-Assistant/issues/34) | `src/acd/zip/write_dat.py` (`_restore_tag_refs`) | [§6 BUG-01](#bug-01-p0-patch_rungs-fails-to-substitute-hex-object-ids-for-newly-added-tags) |
+| **2** | Build deterministic AST tag cross-reference engine | [#26](https://github.com/JLControls/studio5000-AI-Assistant/issues/26), BUG-03 / [#12](https://github.com/JLControls/studio5000-AI-Assistant/issues/12) | `src/l5x_analyzer/tag_cross_reference.py` (new) | [§13 Cross-Reference](#13-cross-reference--where-used-audit-issue-26) |
+| **3** | Add GitHub Actions CI workflow | BUG-10 / [#35](https://github.com/JLControls/studio5000-AI-Assistant/issues/35) | `.github/workflows/ci.yml` (new) | [§23 CI](#23-ci--build-infrastructure-audit) |
+| **4** | Fix `get_project_overview` wrong-project fallback | BUG-04 / [#37](https://github.com/JLControls/studio5000-AI-Assistant/issues/37) | `src/l5x_analyzer/l5x_mcp_integration.py:744–754` | [§6 BUG-04](#bug-04) |
+| **5** | Redirect stray `print()` to stderr | BUG-06 / [#38](https://github.com/JLControls/studio5000-AI-Assistant/issues/38) | `src/code_generator/l5x_generator.py:326,393,469–474` | [§6 BUG-06](#bug-06) |
+| **6** | Support target program context in `generate_routine_export` | BUG-07 / [#39](https://github.com/JLControls/studio5000-AI-Assistant/issues/39) | `src/code_generator/l5x_generator.py:329–372` | [§6 BUG-07](#bug-07) |
+| **7** | Retain isolated raw analog aliases in Ignition exporter | [#10](https://github.com/JLControls/studio5000-AI-Assistant/issues/10) | `src/ignition_exporter/ignition_mcp_integration.py` | [§15 Ignition](#15-ignition-exporter-audit) |
+| **8** | Replace `pickle.load()` with secure deserializers | BUG-05 / [#36](https://github.com/JLControls/studio5000-AI-Assistant/issues/36) | 6 vector DB modules (see §20) | [§20 Security](#20-security--confidentiality-audit) |
+
+### Engineering Guidelines & Quality Standards
+
+- **Strict Import Convention:** Always use bare imports (`from l5x_analyzer import ...`, `from comment_graph import ...`), never `from src.l5x_analyzer ...`.
+- **Zero Regression Tolerance:** Run `python -m pytest` and `python src/mcp_server/studio5000_mcp_server.py --test` after every tool or subsystem modification.
+- **GitHub Issue Updates:** When you complete a task, use `gh issue comment <id>` and `gh issue close <id>` to keep the project backlog synchronized.
+- **Code Style:** 4-space indentation, clear type annotations, small focused functions, no unvalidated heuristics masquerading as deterministic facts.
+
+---
+
 ## 2. Current System Architecture
 
 ```mermaid
