@@ -5,7 +5,7 @@
 ### **Day 1: Basic Setup**
 - [ ] **Read** [TEAM_USAGE_GUIDE.md](TEAM_USAGE_GUIDE.md) for complete workflow understanding
 - [ ] **Install** Python 3.12 from [python.org](https://python.org/downloads/) 
-- [ ] **Clone** the Studio5000_MCP_Server repository
+- [ ] **Clone** the [JLControls/studio5000-AI-Assistant repository](https://github.com/JLControls/studio5000-AI-Assistant): `git clone https://github.com/JLControls/studio5000-AI-Assistant.git`
 - [ ] **Install** dependencies: `pip install -r requirements.txt`
 - [ ] **Install** Studio 5000 SDK wheel file (critical for .ACD creation)
 - [ ] **Test** installation: `python src/mcp_server/studio5000_mcp_server.py --test`

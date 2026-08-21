@@ -1,5 +1,5 @@
 # NOTICE:
-Please note that this repo is strictly a prototype that will probably not be maintained. You are welcome to work on this if you like, just make a fork and do your own thing.
+Please note that this repo is strictly a prototype that will probably not be maintained. You are welcome to work on this if you like, just use your own fork and do your own thing.
 
 # 🤖 Studio 5000 AI-Powered PLC Programming Assistant
 
@@ -11,15 +11,31 @@ This revolutionary MCP (Model Context Protocol) server transforms PLC programmin
 python --version  # Must show 3.12.x
 
 # 2. Clone and install
-git clone <repository-url>
-cd Studio5000_MCP_Server
-pip install -r requirements.txt
+git clone https://github.com/JLControls/studio5000-AI-Assistant.git
+cd studio5000-AI-Assistant
+
+# Create and activate an isolated environment (required by Debian/Ubuntu/WSL)
+python -m venv .venv
+# Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# Linux/macOS/WSL instead:
+# source .venv/bin/activate
+
+python -m pip install -r requirements.txt
 
 # 3. Install SDK (CRITICAL for .ACD files!)
-pip install "C:\Users\Public\Documents\Studio 5000\Logix Designer SDK\python\logix_designer_sdk-*-py3-none-any.whl"
+python -m pip install "C:\Users\Public\Documents\Studio 5000\Logix Designer SDK\python\logix_designer_sdk-*-py3-none-any.whl"
 
 # 4. Test it works
 python src/mcp_server/studio5000_mcp_server.py --test
+```
+
+The JLControls repository is the canonical clone target for this project, so
+the command above creates `origin` pointing at the fork. If you also need to
+pull changes from the original repository, add it separately as `upstream`:
+
+```bash
+git remote add upstream https://github.com/rivie13/studio5000-AI-Assistant.git
 ```
 **That's it!** ✅ Skip to [Claude Desktop setup](#configuration-for-claude-desktop) if tests pass.
 
@@ -49,14 +65,26 @@ python src/mcp_server/studio5000_mcp_server.py --test
 
 2. **Clone and Install**:
    ```bash
-   git clone <repository-url>
-   cd Studio5000_MCP_Server
-   pip install -r requirements.txt
+   git clone https://github.com/JLControls/studio5000-AI-Assistant.git
+   cd studio5000-AI-Assistant
+   python -m venv .venv
+   ```
+   Windows PowerShell:
+   ```sh
+   .venv\Scripts\Activate.ps1
+   ```
+   Linux/macOS/WSL:
+   ```bash
+   source .venv/bin/activate
+   ```
+   Install Requirements
+   ```bash
+   python -m pip install -r requirements.txt
    ```
 
 3. **Install Studio 5000 SDK** (for .ACD files):
    ```bash
-   pip install "C:\Users\Public\Documents\Studio 5000\Logix Designer SDK\python\logix_designer_sdk-*-py3-none-any.whl"
+   python -m pip install "C:\Users\Public\Documents\Studio 5000\Logix Designer SDK\python\logix_designer_sdk-*-py3-none-any.whl"
    ```
 
 4. **Test the Installation**:
@@ -135,7 +163,7 @@ python src/mcp_server/studio5000_mcp_server.py --test
 **System Requirements:**
 - **Python 3.12.x** (Download from [python.org](https://www.python.org/downloads/))
 - **Studio 5000 Logix Designer v36 or later** installed
-- **Windows Operating System** (Studio 5000 SDK is Windows-only)
+- **Windows Operating System** for Studio 5000 SDK features; Linux/macOS/WSL can use the offline tooling without that SDK
 - **Administrator privileges** may be required for initial setup
 
 ### Step-by-Step Setup
@@ -152,14 +180,17 @@ python src/mcp_server/studio5000_mcp_server.py --test
 #### Step 2: Get the Project
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
-   cd Studio5000_MCP_Server
+   git clone https://github.com/JLControls/studio5000-AI-Assistant.git
+   cd studio5000-AI-Assistant
    ```
 
 #### Step 3: Install Dependencies (CRITICAL!)
 1. **Install all required packages**:
    ```bash
-   pip install -r requirements.txt
+   python -m venv .venv
+   # Windows PowerShell: .venv\Scripts\Activate.ps1
+   # Linux/macOS/WSL:   source .venv/bin/activate
+   python -m pip install -r requirements.txt
    ```
    **This installs**: 
    - **Core Components**: BeautifulSoup, XML processing, async support
@@ -170,7 +201,7 @@ python src/mcp_server/studio5000_mcp_server.py --test
    **If you get errors**, try:
    ```bash
    python -m pip install --upgrade pip
-   pip install -r requirements.txt
+   python -m pip install -r requirements.txt
    ```
    
    **Note**: Vector database components (torch, sentence-transformers, faiss-cpu) are included for semantic search capabilities. These enable advanced L5X analysis and instruction search features.
@@ -823,10 +854,27 @@ C:\Users\YourUsername\AppData\Local\Programs\Python\Python312\python.exe src/mcp
 # Or create virtual environment with Python 3.12
 py -3.12 -m venv studio5000_env
 studio5000_env\Scripts\activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-#### 8. **Corporate/Network Restrictions**
+#### 8. **`externally-managed-environment` (PEP 668)**
+On Debian, Ubuntu, and WSL, the system Python may reject `pip install` to
+protect OS-managed packages. Do not install the project requirements into the
+system interpreter. Create and activate a virtual environment from the
+repository root, then install through that environment:
+
+```bash
+python3.12 -m venv .venv  # use python3 if it is Python 3.12 on your system
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+If `venv` is unavailable, install the OS package that provides it (for
+example, `sudo apt install python3.12-venv`), then repeat the commands above.
+The `.venv` directory is local to the checkout and should not be committed.
+
+#### 9. **Corporate/Network Restrictions**
 **Problem**: Cannot access documentation files due to permissions.
 
 **Solutions**:
@@ -834,7 +882,7 @@ pip install -r requirements.txt
 - **Check antivirus exclusions** for Python and Studio 5000 directories  
 - **Verify network drive access** if Studio 5000 is on network share
 
-#### 9. **Studio 5000 Version Compatibility**
+#### 10. **Studio 5000 Version Compatibility**
 **Problem**: Different Studio 5000 version than v36.
 
 **Solutions**:
