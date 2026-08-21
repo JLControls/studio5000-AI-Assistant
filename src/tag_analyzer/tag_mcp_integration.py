@@ -9,7 +9,7 @@ and analysis of Studio 5000 tag CSV exports.
 import asyncio
 import json
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Callable, Dict, List, Optional, Any, Awaitable
 from pathlib import Path
 from enum import Enum
 
@@ -52,6 +52,16 @@ class TagMCPIntegration:
         
         # Index status
         self.indexed_files = {}
+        self._cross_reference_provider: Optional[
+            Callable[[str, str], Awaitable[Dict[str, Any]]]
+        ] = None
+
+    def set_cross_reference_provider(
+        self,
+        provider: Callable[[str, str], Awaitable[Dict[str, Any]]],
+    ) -> None:
+        """Inject the structural L5X where-used provider used by relationship tools."""
+        self._cross_reference_provider = provider
     
     async def initialize(self, force_rebuild: bool = False):
         """Initialize the tag analysis system"""
@@ -395,6 +405,27 @@ class TagMCPIntegration:
             Dictionary with related tags
         """
         try:
+            if self._cross_reference_provider is not None:
+                cross_reference = await self._cross_reference_provider(
+                    tag_name, relationship_type
+                )
+                if not cross_reference.get("success"):
+                    return cross_reference
+                references = list(cross_reference.get("references", []))
+                # The deterministic engine returns evidence rows, not semantic
+                # similarity scores. Keep the legacy key while exposing the full
+                # rows so callers can inspect exact location and role.
+                return {
+                    "success": True,
+                    "source_tag": tag_name,
+                    "relationship_type": relationship_type,
+                    "related_count": len(references),
+                    "related_tags": references,
+                    "references": references,
+                    "summary": cross_reference.get("summary", {}),
+                    "coverage": cross_reference.get("coverage", {}),
+                }
+
             results = self.vector_db.find_related_tags(tag_name, relationship_type)
             
             related_tags = []
