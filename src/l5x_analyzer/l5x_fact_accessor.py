@@ -23,6 +23,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from .aoi_logic_inspector import extract_ordered_parameters
+from .rll_parser import find_calls as _find_calls
+from .rll_parser import split_operands as _split_operands
 
 # Operands that stand in for an unwired parameter position rather than a real
 # tag/immediate. Kept narrow so real tags are never misread as placeholders.
@@ -297,73 +299,6 @@ def describe_aoi(l5x_path: str | Path, aoi_name: str) -> Dict[str, Any]:
                 "parameters": extract_ordered_parameters(aoi),
             }
     return {"success": False, "error": f"Add-On Instruction '{aoi_name}' not found."}
-
-
-def _split_operands(inner: str) -> List[str]:
-    """Split an instruction operand list on top-level commas.
-
-    Respects nested parentheses and brackets so comma-bearing sub-expressions do
-    not corrupt operand positions.
-    """
-    if not inner.strip():
-        return []
-    operands: List[str] = []
-    depth = 0
-    cur: List[str] = []
-    for ch in inner:
-        if ch in "([":
-            depth += 1
-            cur.append(ch)
-        elif ch in ")]":
-            depth -= 1
-            cur.append(ch)
-        elif ch == "," and depth == 0:
-            operands.append("".join(cur).strip())
-            cur = []
-        else:
-            cur.append(ch)
-    operands.append("".join(cur).strip())
-    return operands
-
-
-def _find_calls(text: str) -> List[Tuple[str, List[str], str]]:
-    """Find ``MNEMONIC(operands)`` calls via a balanced-parenthesis scan.
-
-    Returns ``(mnemonic, operands, source_span)`` for each call. A naive
-    ``split(',')`` would mis-tokenize nested expressions and branch legs, so the
-    scan tracks parenthesis depth explicitly.
-    """
-    calls: List[Tuple[str, List[str], str]] = []
-    i, n = 0, len(text)
-    while i < n:
-        ch = text[i]
-        if ch.isalpha() or ch == "_":
-            j = i
-            while j < n and (text[j].isalnum() or text[j] == "_"):
-                j += 1
-            name = text[i:j]
-            k = j
-            while k < n and text[k] in " \t":
-                k += 1
-            if k < n and text[k] == "(":
-                depth = 0
-                m = k
-                while m < n:
-                    if text[m] == "(":
-                        depth += 1
-                    elif text[m] == ")":
-                        depth -= 1
-                        if depth == 0:
-                            break
-                    m += 1
-                inner = text[k + 1:m]
-                calls.append((name, _split_operands(inner), text[i:m + 1]))
-                i = m + 1
-                continue
-            i = j
-        else:
-            i += 1
-    return calls
 
 
 def _resolve_routine(controller: ET.Element,

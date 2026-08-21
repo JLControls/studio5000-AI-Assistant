@@ -259,17 +259,29 @@ class Studio5000Parser:
     
     def build_instruction_index(self, force_rebuild: bool = False) -> Dict[str, Instruction]:
         """Build a comprehensive index of all instructions with disk caching and parallel processing"""
-        import pickle
         from concurrent.futures import ThreadPoolExecutor
 
         cache_dir = Path.home() / ".cache" / "studio5000"
         cache_dir.mkdir(parents=True, exist_ok=True)
-        cache_file = cache_dir / "instruction_index_cache.pkl"
+        cache_file = cache_dir / "instruction_index_cache.json"
 
         if not force_rebuild and cache_file.exists():
             try:
-                with open(cache_file, 'rb') as f:
-                    self.instructions = pickle.load(f)
+                with open(cache_file, 'r', encoding='utf-8') as f:
+                    cached = json.load(f)
+                self.instructions = {
+                    key: Instruction(
+                        name=value.get("name", ""),
+                        category=value.get("category", ""),
+                        description=value.get("description", ""),
+                        file_path=value.get("file_path", ""),
+                        languages=value.get("languages") or [],
+                        syntax=value.get("syntax"),
+                        parameters=value.get("parameters"),
+                        examples=value.get("examples"),
+                    )
+                    for key, value in cached.items()
+                }
                 return self.instructions
             except Exception as e:
                 import sys
@@ -314,8 +326,21 @@ class Studio5000Parser:
         self.instructions = instructions
 
         try:
-            with open(cache_file, 'wb') as f:
-                pickle.dump(instructions, f)
+            serializable = {
+                key: {
+                    "name": instruction.name,
+                    "category": instruction.category,
+                    "description": instruction.description,
+                    "file_path": instruction.file_path,
+                    "languages": instruction.languages,
+                    "syntax": instruction.syntax,
+                    "parameters": instruction.parameters,
+                    "examples": instruction.examples,
+                }
+                for key, instruction in instructions.items()
+            }
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(serializable, f, indent=2, ensure_ascii=False)
         except Exception as e:
             import sys
             print(f"Warning: Failed to save instruction cache: {e}", file=sys.stderr)
@@ -504,6 +529,15 @@ class Studio5000MCPServer:
                 if self._tag_integration is None:
                     print("🔄 Initializing tag analyzer system...", file=sys.stderr)
                     self._tag_integration = TagMCPIntegration()
+                    async def _cross_reference_provider(
+                        tag_name: str, _relationship_type: str = "all"
+                    ):
+                        return await self.l5x_integration.find_indexed_tag_references(
+                            tag_name
+                        )
+                    self._tag_integration.set_cross_reference_provider(
+                        _cross_reference_provider
+                    )
                     # Inject shared model and cache manager
                     if hasattr(self._tag_integration, 'vector_db'):
                         if hasattr(self._tag_integration.vector_db, 'model'):
@@ -703,6 +737,12 @@ class Studio5000MCPServer:
             "Decode a rung's AOI invocation into argument-position -> parameter bindings "
             "(backing tag + Input/Output/InOut roles), flagging NA placeholders and operand mismatches.",
             self.decode_aoi_call
+        )
+
+        self.server.add_tool(
+            "find_tag_references",
+            "Find deterministic read, write, and AOI-argument references for a tag in an exported L5X file",
+            self.find_tag_references
         )
 
         # Add PDF drawings tools
@@ -1176,6 +1216,7 @@ class Studio5000MCPServer:
             specification = routine_spec.get('specification', '')
             controller_name = routine_spec.get('controller_name', 'MTN6_MCM06')
             software_revision = routine_spec.get('software_revision', '36.02')
+            program_name = routine_spec.get('program_name', 'MainProgram')
             save_path = routine_spec.get('save_path')
             
             # Generate ladder logic using enhanced assistant
@@ -1270,7 +1311,8 @@ class Studio5000MCPServer:
                 routine=routine,
                 controller_name=controller_name,
                 tags=tags,
-                software_revision=software_revision
+                software_revision=software_revision,
+                program_name=program_name,
             )
             
             # Save to file if path provided
@@ -1281,7 +1323,8 @@ class Studio5000MCPServer:
                     file_path=save_path,
                     controller_name=controller_name,
                     tags=tags,
-                    software_revision=software_revision
+                    software_revision=software_revision,
+                    program_name=program_name,
                 )
             
             return {
@@ -1528,6 +1571,13 @@ class Studio5000MCPServer:
         """Decode a rung's AOI invocation(s) into operand->parameter bindings"""
         return await self.l5x_integration.decode_aoi_call(
             l5x_file_path, routine_name, rung_number, program_name, aoi_name
+        )
+
+    async def find_tag_references(self, l5x_file_path: str, tag_name: str,
+                                  program_scope: Optional[str] = None) -> Dict[str, Any]:
+        """Find deterministic read/write/AOI references for a tag."""
+        return await self.l5x_integration.find_tag_references(
+            l5x_file_path, tag_name, program_scope
         )
 
     # PDF Drawings Tool Handlers
@@ -1851,6 +1901,7 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                         'properties': {
                             'name': {'type': 'string', 'description': 'Routine name'},
                             'controller_name': {'type': 'string', 'description': 'Existing controller name (e.g., MTN6_MCM06)'},
+                            'program_name': {'type': 'string', 'description': 'Target Program context (default: MainProgram)'},
                             'specification': {'type': 'string', 'description': 'Natural language specification for routine logic'},
                             'software_revision': {'type': 'string', 'description': 'Studio 5000 software revision (default: 36.02)'},
                             'save_path': {'type': 'string', 'description': 'File path to save routine L5X export'}
@@ -2012,6 +2063,13 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'aoi_name': {'type': 'string', 'description': 'Optional AOI mnemonic filter when a rung has multiple AOI calls'}
                 }
                 required = ['l5x_file_path', 'routine_name', 'rung_number']
+            elif name == 'find_tag_references':
+                properties = {
+                    'l5x_file_path': {'type': 'string', 'description': 'Path to the exported L5X file'},
+                    'tag_name': {'type': 'string', 'description': 'Tag or tag member to cross-reference'},
+                    'program_scope': {'type': 'string', 'description': 'Optional program name; use Controller for controller-scope filtering'}
+                }
+                required = ['l5x_file_path', 'tag_name']
 
             # PDF Drawings Tool Parameters
             elif name == 'index_pdf_drawings':

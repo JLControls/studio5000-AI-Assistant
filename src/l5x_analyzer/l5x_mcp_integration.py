@@ -17,6 +17,7 @@ from .l5x_vector_db import L5XVectorDatabase, L5XSearchResult
 from .sdk_powered_analyzer import SDKPoweredL5XAnalyzer
 from .l5x_chunk import L5XChunkType
 from .l5x_fact_accessor import get_tag_value, describe_aoi, decode_aoi_call
+from .tag_cross_reference import find_tag_references as _find_tag_references
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ class L5XMCPTools(Enum):
     GET_TAG_VALUE = "get_tag_value"  # issue #28: configured L5X value accessor
     DESCRIBE_AOI = "describe_aoi"  # issue #28: ordered AOI parameter definition
     DECODE_AOI_CALL = "decode_aoi_call"  # issue #28: AOI-call operand bindings
+    FIND_TAG_REFERENCES = "find_tag_references"  # issue #26: deterministic where-used
 
 class L5XSDKMCPIntegration:
     """
@@ -665,55 +667,24 @@ class L5XSDKMCPIntegration:
             Dictionary with related components
         """
         try:
-            # Search for the component first
-            component_results = self.vector_db.search_l5x_content(
-                component_name, limit=5
+            # Relationship results must be based on exact operand references.
+            # The old implementation queried FAISS with "uses <tag>" and could
+            # report a confident empty result for a heavily used tag.
+            cross_reference = await self.find_indexed_tag_references(
+                component_name, project_filter
             )
-            
-            if not component_results:
-                return {
-                    'success': False,
-                    'error': f'Component {component_name} not found in indexed content'
-                }
-            
-            # Get the best match
-            primary_component = component_results[0]
-            
-            # Find related components
-            related_results = self.vector_db.find_related_components(
-                primary_component.chunk_id
-            )
-            
-            # Filter by project if requested
-            if project_filter:
-                related_results = [r for r in related_results 
-                                 if project_filter.lower() in r.file_path.lower()]
-            
-            # Format results
-            related_components = []
-            for result in related_results:
-                related_components.append({
-                    'name': result.name,
-                    'type': result.chunk_type.value,
-                    'description': result.description,
-                    'score': result.score,
-                    'location': {
-                        'file_path': result.location.file_path,
-                        'routine': result.location.parent_routine,
-                        'program': result.location.parent_program
-                    }
-                })
-            
+            if not cross_reference.get('success'):
+                return cross_reference
+
+            related_components = list(cross_reference.get('references', []))
             return {
                 'success': True,
-                'primary_component': {
-                    'name': primary_component.name,
-                    'type': primary_component.chunk_type.value,
-                    'description': primary_component.description
-                },
+                'primary_component': {'name': component_name, 'type': 'tag'},
                 'related_components': related_components,
                 'relationship_type': relationship_type,
-                'total_found': len(related_components)
+                'total_found': len(related_components),
+                'summary': cross_reference.get('summary', {}),
+                'coverage': cross_reference.get('coverage', {}),
             }
             
         except Exception as e:
@@ -742,16 +713,21 @@ class L5XSDKMCPIntegration:
             
             # Check if we have data for this project
             if project_name not in indexed_projects:
-                # Try to find any indexed project data
                 if not indexed_projects:
                     return {
                         'success': False,
-                        'error': 'No L5X data indexed. Use index_exported_l5x_files first to analyze project structure.'
+                        'error': (
+                            f"Project '{project_name}' is not indexed. No L5X data is "
+                            "available; run index_exported_l5x_files or index_acd_project first."
+                        )
                     }
-                
-                # Use first available indexed project if exact match not found
-                project_name = list(indexed_projects.keys())[0]
-                logger.info(f"Using indexed project data from: {project_name}")
+                return {
+                    'success': False,
+                    'error': (
+                        f"Project '{project_name}' is not indexed. Run "
+                        "index_exported_l5x_files or index_acd_project for this project first."
+                    )
+                }
             
             project_stats = indexed_projects[project_name]
 
@@ -851,6 +827,99 @@ class L5XSDKMCPIntegration:
         except Exception as e:
             logger.error(f"Error decoding AOI call: {e}")
             return {'success': False, 'error': f'Failed to decode AOI call: {str(e)}'}
+
+    async def find_tag_references(self, l5x_file_path: str, tag_name: str,
+                                  program_scope: Optional[str] = None) -> Dict[str, Any]:
+        """Return deterministic read/write/AOI references from an exported L5X."""
+        try:
+            return _find_tag_references(l5x_file_path, tag_name, program_scope)
+        except Exception as e:
+            logger.error("Error finding tag references: %s", e)
+            return {
+                'success': False,
+                'error': f'Failed to find tag references: {str(e)}'
+            }
+
+    def _indexed_l5x_paths(self, project_filter: Optional[str] = None) -> List[Path]:
+        """Return concrete exported L5X paths represented by index metadata."""
+        paths: List[Path] = []
+        for stats in self.vector_db.indexed_projects.values():
+            raw_path = stats.get('path')
+            if not raw_path:
+                continue
+            path = Path(raw_path)
+            if project_filter and project_filter.lower() not in str(path).lower():
+                continue
+            if path.is_file() and path.suffix.lower() == '.l5x':
+                paths.append(path)
+            elif path.is_dir():
+                paths.extend(sorted(path.glob('*.L5X')))
+                paths.extend(sorted(path.glob('*.l5x')))
+        return list(dict.fromkeys(paths))
+
+    async def find_indexed_tag_references(self, tag_name: str,
+                                          project_filter: Optional[str] = None) -> Dict[str, Any]:
+        """Aggregate exact references over exported L5X files in the index."""
+        paths = self._indexed_l5x_paths(project_filter)
+        if not paths:
+            return {
+                'success': False,
+                'error': (
+                    'No exported L5X file is available for deterministic cross-reference. '
+                    'Run index_exported_l5x_files first; ACD-only vector indexing does not '
+                    'retain an inspectable L5X path.'
+                )
+            }
+
+        results = [_find_tag_references(path, tag_name) for path in paths]
+        failures = [result for result in results if not result.get('success')]
+        successes = [result for result in results if result.get('success')]
+        if not successes:
+            return failures[0] if failures else {
+                'success': False,
+                'error': f"Tag '{tag_name}' was not found in indexed L5X files."
+            }
+
+        references: List[Dict[str, Any]] = []
+        warnings: List[str] = []
+        skipped: List[Dict[str, Any]] = []
+        complete = not failures
+        for path, result in zip(paths, results):
+            if not result.get('success'):
+                warnings.append(f"{path}: {result.get('error', 'cross-reference failed')}")
+                continue
+            for reference in result.get('references', []):
+                reference = dict(reference)
+                reference['file_path'] = str(path)
+                references.append(reference)
+            coverage = result.get('coverage', {})
+            complete = complete and bool(coverage.get('complete', False))
+            warnings.extend(f"{path}: {warning}" for warning in coverage.get('warnings', []))
+            skipped.extend(
+                {**item, 'file_path': str(path)}
+                for item in coverage.get('routines_skipped', [])
+            )
+
+        summary = {
+            'reads': sum(r['role'] == 'READ_SOURCE' for r in references),
+            'writes': sum(r['role'] == 'WRITE_DESTINATION' for r in references),
+            'read_write': sum(r['role'] == 'READ_WRITE' for r in references),
+            'aoi_args': sum(r['role'] == 'AOI_ARG' for r in references),
+            'unknown': sum(r['role'] == 'UNKNOWN' for r in references),
+            'total': len(references),
+        }
+        return {
+            'success': True,
+            'tag': tag_name,
+            'references': references,
+            'summary': summary,
+            'coverage': {
+                'complete': complete and not warnings and not skipped,
+                'files_scanned': len(paths),
+                'routines_skipped': skipped,
+                'warnings': warnings,
+            },
+        }
 
     def get_available_tools(self) -> Dict[str, str]:
         """Get list of available MCP tools"""

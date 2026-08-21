@@ -131,6 +131,26 @@ def test_stale_cache_without_structure_requires_reindex(tmp_path, monkeypatch):
     assert "re-index" in result["error"].lower()
 
 
+def test_overview_rejects_unindexed_project_instead_of_using_first_cache(tmp_path):
+    vdb = L5XVectorDatabase(cache_dir=str(tmp_path / "cache"))
+    vdb.indexed_projects["OtherProject"] = {
+        "structure": {
+            "controller": "OtherCtl",
+            "programs": [],
+            "routines": [],
+            "udts": [],
+        },
+    }
+    integration = L5XSDKMCPIntegration(vector_db=vdb)
+
+    result = asyncio.run(integration.get_project_overview("RequestedProject.L5X"))
+
+    assert result["success"] is False
+    assert "RequestedProject" in result["error"]
+    assert "index_exported_l5x_files" in result["error"]
+    assert "OtherCtl" not in result.get("controller", "")
+
+
 def test_acd_indexing_captures_same_structure_shape(tmp_path, monkeypatch):
     """The ACD path must persist the same structure blob as exported-L5X indexing."""
     vdb = L5XVectorDatabase(cache_dir=str(tmp_path / "cache"))
