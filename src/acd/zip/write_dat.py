@@ -77,29 +77,56 @@ def _encode_rung_text(text: str) -> bytes:
 def _restore_tag_refs(new_text: str, orig_text_with_refs: str, id_to_name: Dict[int, str]) -> str:
     """Replace tag names in new_text with @HEX_OBJECT_ID@ placeholders.
 
-    Only substitutes tags that appear as @HEX@ references in orig_text_with_refs
-    (the original raw rung text before name resolution).  This prevents false-positive
-    substitution of short names into instruction opcodes (e.g. 'X' inside 'XIC').
+    The original text argument is retained for API compatibility, but the
+    substitution map is intentionally global. An edited rung can introduce a
+    project tag that was not present in the original rung, and Studio 5000 still
+    requires that new reference to be encoded as an object ID.
 
-    Substitutions within the scoped set are done longest-name-first to handle
-    cases where one tag name is a prefix of another.
+    Replacement is token-based rather than a raw str.replace. In particular, an
+    object named X must not turn the X in XIC into an object reference, and an
+    existing @HEX@ token must remain untouched.
     """
-    # Identify which object IDs were referenced in the original rung
-    rung_ids = {int(m, 16) for m in re.findall(r"@([A-Za-z0-9]+)@", orig_text_with_refs)}
+    del orig_text_with_refs
 
-    # Build rung-scoped name → id map
-    scoped = {}
-    for oid in rung_ids:
-        name = id_to_name.get(oid)
-        if name:
-            scoped[name] = oid
+    # Invert the complete project map so newly introduced tags are included.
+    name_to_id = {
+        name: object_id
+        for object_id, name in id_to_name.items()
+        if isinstance(name, str) and name
+    }
+    if not name_to_id:
+        return new_text
 
-    # Apply longest-first replacement
-    for name in sorted(scoped, key=len, reverse=True):
-        if name in new_text:
-            new_text = new_text.replace(name, f"@{scoped[name]:X}@")
+    # Longest-first ensures a tag such as Pump cannot win over
+    # Pump_Discharge when both are project objects. The token alphabet is
+    # broad enough for scoped I/O names and array/member paths.
+    token_pattern = re.compile(
+        r"(?<![A-Za-z0-9_])(?:"
+        + "|".join(
+            re.escape(name)
+            for name in sorted(name_to_id, key=len, reverse=True)
+        )
+        + r")(?![A-Za-z0-9_])"
+    )
 
-    return new_text
+    def replace(match: re.Match[str]) -> str:
+        start, end = match.span()
+        # Do not rewrite the payload inside an already encoded @HEX@ token.
+        if (start > 0 and new_text[start - 1] == "@") or (
+            end < len(new_text) and new_text[end] == "@"
+        ):
+            return match.group(0)
+
+        # A mnemonic is the identifier immediately followed by its call
+        # delimiter. Only operands should be substituted.
+        cursor = end
+        while cursor < len(new_text) and new_text[cursor] in " \t":
+            cursor += 1
+        if cursor < len(new_text) and new_text[cursor] == "(":
+            return match.group(0)
+        return f"@{name_to_id[match.group(0)]:X}@"
+
+    return token_pattern.sub(replace, new_text)
 
 
 def _build_fafa_record(orig_payload: bytes, new_text_bytes: bytes) -> bytes:

@@ -101,6 +101,21 @@ class CodeAssistantRegexAndSTTest(unittest.TestCase):
         self.assertIn('<Line Number="2">', xml)
         self.assertIn('<![CDATA[MOTOR_RUN := TRUE;]]>', xml)
 
+    def test_routine_export_accepts_target_program_context(self):
+        gen = L5XGenerator()
+        routine = Routine(
+            name="BoilerLogic",
+            type="RLL",
+            rungs=[LadderRung(number=0, logic="XIC(Run)OTE(Heat);")],
+        )
+
+        xml = gen.generate_routine_export(
+            routine, controller_name="Ctl", program_name="Boiler"
+        )
+
+        self.assertIn('Name="Boiler"', xml)
+        self.assertNotIn('Name="MainProgram"', xml)
+
 
 if __name__ == "__main__":
     unittest.main()

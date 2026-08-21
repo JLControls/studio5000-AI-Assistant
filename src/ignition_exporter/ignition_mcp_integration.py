@@ -13,9 +13,15 @@ Ignition validation before use on a live control system.
 from __future__ import annotations
 
 import os
+import re
 from typing import Dict, List, Optional, Tuple
 
-from .analog_scaling import _guess_unit, detect_analog_scaling, extract_analog_scaling
+from .analog_scaling import (
+    _guess_unit,
+    _stem_of,
+    detect_analog_scaling,
+    extract_analog_scaling,
+)
 from .aoi_structure_parser import (
     expand_structure_members,
     find_member_rule,
@@ -36,7 +42,12 @@ from .ignition_tag_builder import (
 )
 from .l5x_tags import IgnitionTagDB, load_tag_db
 from .opc_audit import audit_opc_item_paths
-from .tag_curation import build_write_map, key_process_metric_names, list_ignition_tag_candidates
+from .tag_curation import (
+    build_write_map,
+    classify_category,
+    key_process_metric_names,
+    list_ignition_tag_candidates,
+)
 
 # Logix atomic data types -> Ignition data types.
 _IGNITION_DTYPE = {
@@ -57,6 +68,9 @@ _STRUCTLIKE_SKIP = set(_UDT_MEMBERS)
 # Folders with fewer than this many tags are merged into a single "System" folder to
 # avoid a tree fragmented into dozens of one-off folders.
 _MIN_FOLDER_SIZE = 2
+_RAW_ANALOG_ALIAS_RE = re.compile(
+    r"(?:^|_)AliasA(?:In|Out)(?:_|$)", re.IGNORECASE
+)
 
 
 def _ignition_dtype(logix_type: str) -> Optional[str]:
@@ -103,11 +117,11 @@ class _ExportItem:
     """One tag to export: a resolved PLC ref plus its Ignition metadata."""
 
     __slots__ = ("plc_ref", "base", "data_type", "comment", "scaling",
-                 "ign_dtype", "eng_unit")
+                 "ign_dtype", "eng_unit", "advisory")
 
     def __init__(self, plc_ref: str, base: str, data_type: str, comment: str,
                  scaling: Optional[Dict] = None, ign_dtype: Optional[str] = None,
-                 eng_unit: str = ""):
+                 eng_unit: str = "", advisory: Optional[str] = None):
         self.plc_ref = plc_ref
         self.base = base
         self.data_type = data_type
@@ -118,6 +132,9 @@ class _ExportItem:
         # whose type/unit are derived downstream.
         self.ign_dtype = ign_dtype
         self.eng_unit = eng_unit
+        # Keep advisory metadata out of the Ignition payload; arbitrary tag keys
+        # are not accepted by the importer.  It is reported in the manifest.
+        self.advisory = advisory
 
 
 def _scaling_by_ref(points: List[Dict]) -> Dict[str, Dict]:
@@ -130,14 +147,66 @@ def _scaling_by_ref(points: List[Dict]) -> Dict[str, Dict]:
     return out
 
 
+def _is_raw_analog_alias(entry) -> bool:
+    """Return whether a tag follows the conventional raw analog alias form."""
+    return bool(_RAW_ANALOG_ALIAS_RE.search(entry.name))
+
+
+def _scaled_counterpart_name(db: IgnitionTagDB, entry,
+                             scaling_points: List[Dict]) -> Optional[str]:
+    """Find an engineering-valued counterpart for a raw analog alias.
+
+    Rockwell projects commonly use ``Com_AliasAIn_<stem>`` for the channel value
+    and ``Com_<stem>`` (or a similarly named PV) for the calculated engineering
+    value.  The alias is not itself proof that a scaled value exists, so this
+    checks the tag database and detected scaling points instead of pruning by
+    name alone.
+    """
+    alias_target = (entry.alias_for or "").split(".", 1)[0]
+    if alias_target:
+        target = db.get(alias_target)
+        if target is not None and target.data_type.upper() in {"REAL", "LREAL"}:
+            return target.name
+
+    alias_stem = _stem_of(entry.name)
+    if not alias_stem:
+        return None
+
+    for point in scaling_points:
+        recommended = str(point.get("recommended_opc_tag") or "")
+        recommended_base = recommended.split(".", 1)[0]
+        if recommended_base == entry.name:
+            # This alias is the point's actual OPC source, including the raw
+            # hardware fallback.  It is not an engineering counterpart.
+            continue
+        if point.get("is_engineering_units") and _stem_of(recommended_base) == alias_stem:
+            return recommended_base
+
+    for candidate in db.opc_addressable_tags():
+        if candidate.name == entry.name or candidate.data_type.upper() not in {"REAL", "LREAL"}:
+            continue
+        if _stem_of(candidate.name) != alias_stem:
+            continue
+        category = classify_category(candidate)
+        # A scale-range register can share the same stem, but it is not the
+        # engineering process reading we are looking for.
+        if category not in {"setpoint", "internal", "comms", "config"}:
+            return candidate.name
+    return None
+
+
 def _collect_export_items(db: IgnitionTagDB, scaling_points: List[Dict],
-                          selected: Optional[set] = None) -> Tuple[List[_ExportItem], List[str]]:
+                          selected: Optional[set] = None,
+                          prune_scaled_raw_aliases: bool = False) -> Tuple[List[_ExportItem], List[str]]:
     """Decide which PLC refs become Ignition tags.
 
     Analog points contribute their recommended engineering tag (with scaling info);
     COUNTER/TIMER tags expand to atomic members; other atomic tags export directly.
     ``ExternalAccess="None"`` tags are excluded and reported. When ``selected`` is
-    given, only tags whose base name is in that set are exported (curation).
+    given, only tags whose base name is in that set are exported (curation). In the
+    curated default, ``prune_scaled_raw_aliases`` removes a raw analog alias only
+    when a verified engineering counterpart is also selected. An isolated raw alias
+    is retained and marked ``unscaled_analog_point`` for the export manifest.
     """
     def _wanted(base: str) -> bool:
         return selected is None or base in selected
@@ -167,6 +236,17 @@ def _collect_export_items(db: IgnitionTagDB, scaling_points: List[Dict],
         if entry.external_access == "None":
             excluded.append(entry.name)
             continue
+        advisory = None
+        if _is_raw_analog_alias(entry):
+            counterpart = _scaled_counterpart_name(db, entry, scaling_points)
+            if (prune_scaled_raw_aliases and counterpart
+                    and (selected is None or counterpart in selected)):
+                # The engineering tag is the operator-facing point; exporting
+                # the raw alias as a second unscaled point would create a
+                # duplicate/misleading SCADA reading.
+                continue
+            if counterpart is None:
+                advisory = "unscaled_analog_point"
         dtype = entry.data_type.upper()
         if dtype in _UDT_MEMBERS:
             for member, ign in _UDT_MEMBERS[dtype].items():
@@ -185,7 +265,8 @@ def _collect_export_items(db: IgnitionTagDB, scaling_points: List[Dict],
         if _ignition_dtype(dtype) is None:
             # Unknown struct / scaling-block instance -> not atomically addressable.
             continue
-        items.append(_ExportItem(entry.name, entry.name, entry.data_type, entry.comment))
+        items.append(_ExportItem(entry.name, entry.name, entry.data_type, entry.comment,
+                                 advisory=advisory))
 
     return items, excluded
 
@@ -486,7 +567,12 @@ class IgnitionMCPIntegration:
                 write_map = build_write_map(l5x_file_path)
                 selected = set(key_process_metric_names(db, write_map))
                 selection_mode = "key_process_metrics"
-            items, excluded = _collect_export_items(db, scaling_points, selected)
+            items, excluded = _collect_export_items(
+                db,
+                scaling_points,
+                selected,
+                prune_scaled_raw_aliases=selection_mode == "key_process_metrics",
+            )
 
         tags_by_ref: Dict[str, Dict] = {}
         for item in items:
@@ -520,6 +606,19 @@ class IgnitionMCPIntegration:
             "folders_created": len(folders),
             "excluded_external_access_none": sorted(set(excluded)),
             "excluded_count": len(set(excluded)),
+            "unscaled_analog_points": [
+                {
+                    "plc_tag": item.plc_ref,
+                    "advisory": item.advisory,
+                    "message": (
+                        f"Raw analog alias '{item.plc_ref}' has no detected engineering "
+                        "counterpart; expose it as an unscaled process point and verify "
+                        "the raw range in the PLC/IO configuration."
+                    ),
+                }
+                for item in items
+                if item.advisory == "unscaled_analog_point"
+            ],
             "inaccessible_reported": builder.inaccessible_tags,
             "note": ("Generated SCADA tags require engineering review and Ignition "
                      "validation before deployment."),

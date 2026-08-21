@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from datetime import datetime
 import uuid
+import sys
 
 @dataclass
 class LadderRung:
@@ -323,12 +324,13 @@ class L5XGenerator:
                 f.write(l5x_content)
             return True
         except Exception as e:
-            print(f"Error saving L5X file: {e}")
+            print(f"Error saving L5X file: {e}", file=sys.stderr)
             return False
     
     def generate_routine_export(self, routine: Routine, controller_name: str = "MTN6_MCM06", 
                                tags: Optional[List[Dict]] = None, 
-                               software_revision: str = "36.02") -> str:
+                               software_revision: str = "36.02",
+                               program_name: str = "MainProgram") -> str:
         """Generate L5X routine export (not full project) that can be imported into existing ACD"""
         timestamp = datetime.now().strftime("%a %b %d %H:%M:%S %Y")
         
@@ -353,7 +355,7 @@ class L5XGenerator:
 {tags_xml}
 </Tags>
 <Programs Use="Context">
-<Program Use="Context" Name="MainProgram" Class="Standard">
+<Program Use="Context" Name="{program_name}" Class="Standard">
 <Tags Use="Context">
 </Tags>
 <Routines Use="Context">
@@ -382,15 +384,18 @@ class L5XGenerator:
             return routine_export_template
     
     def save_routine_export(self, routine: Routine, file_path: str, controller_name: str = "MTN6_MCM06", 
-                           tags: Optional[List[Dict]] = None, software_revision: str = "36.02") -> bool:
+                           tags: Optional[List[Dict]] = None, software_revision: str = "36.02",
+                           program_name: str = "MainProgram") -> bool:
         """Save routine export L5X file"""
         try:
-            l5x_content = self.generate_routine_export(routine, controller_name, tags, software_revision)
+            l5x_content = self.generate_routine_export(
+                routine, controller_name, tags, software_revision, program_name
+            )
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(l5x_content)
             return True
         except Exception as e:
-            print(f"Error saving routine export L5X file: {e}")
+            print(f"Error saving routine export L5X file: {e}", file=sys.stderr)
             return False
 
 # Example usage and templates

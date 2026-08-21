@@ -2,6 +2,7 @@ import struct
 import unittest
 
 from acd.l5x import export_l5x
+from acd.zip.write_dat import _restore_tag_refs
 
 
 def link_record(key, ordinal, routine_id, current_rung_id, next_rung_id, tail):
@@ -17,6 +18,20 @@ def link_record(key, ordinal, routine_id, current_rung_id, next_rung_id, tail):
 
 
 class RegnLinkParserTest(unittest.TestCase):
+    def test_restore_tag_refs_encodes_new_project_tag_without_rewriting_opcodes(self):
+        """A changed rung may reference a tag absent from the original rung."""
+        restored = _restore_tag_refs(
+            "XIC(Existing_Tag)XIO(New_Interlock)OTE(New_Interlock);",
+            "XIC(@10@);",
+            {0x10: "Existing_Tag", 0x20: "New_Interlock", 0x30: "X"},
+        )
+
+        self.assertEqual(
+            "XIC(@10@)XIO(@20@)OTE(@20@);",
+            restored,
+        )
+        self.assertNotIn("New_Interlock", restored)
+
     def test_recovers_v38_comment_key_and_rung_chain(self):
         """Dropping or misaligning RegnLink records must lose this mapping."""
         routine_id = 0x2E3EA47B

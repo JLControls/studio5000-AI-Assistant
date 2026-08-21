@@ -55,7 +55,9 @@ instruction_vector_cache/
 sdk_vector_cache/
 test_sdk_cache/
 *_vector_cache/
+pdf_drawings_cache/
 *.pkl
+*.npy
 *.faiss
 
 # Test Files and Generated Projects

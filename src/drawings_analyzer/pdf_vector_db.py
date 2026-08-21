@@ -10,7 +10,6 @@ Handles production-scale technical drawings with intelligent content processing.
 
 import json
 import os
-import pickle
 import numpy as np
 import time
 from pathlib import Path
@@ -32,6 +31,51 @@ except ImportError:
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def _pdf_chunk_to_dict(chunk: PDFChunk) -> Dict[str, Any]:
+    """Serialize PDF chunk metadata as JSON-compatible primitives."""
+    location = chunk.location
+    return {
+        "id": chunk.id,
+        "chunk_type": chunk.chunk_type.value,
+        "page_number": chunk.page_number,
+        "drawing_number": chunk.drawing_number,
+        "title": chunk.title,
+        "content": chunk.content,
+        "vision_description": chunk.vision_description,
+        "equipment_tags": chunk.equipment_tags,
+        "location": {
+            "page_number": location.page_number,
+            "drawing_number": location.drawing_number,
+            "zone": location.zone,
+            "coordinates": location.coordinates,
+        },
+        "metadata": chunk.metadata,
+    }
+
+
+def _pdf_chunk_from_dict(data: Dict[str, Any]) -> PDFChunk:
+    """Reconstruct PDF chunk metadata from JSON."""
+    location_data = data.get("location") or {}
+    location = PDFLocation(
+        page_number=location_data.get("page_number", data.get("page_number", 0)),
+        drawing_number=location_data.get("drawing_number"),
+        zone=location_data.get("zone"),
+        coordinates=location_data.get("coordinates"),
+    )
+    return PDFChunk(
+        id=data.get("id", ""),
+        chunk_type=PDFChunkType(data.get("chunk_type", PDFChunkType.GENERAL.value)),
+        page_number=data.get("page_number", 0),
+        drawing_number=data.get("drawing_number"),
+        title=data.get("title"),
+        content=data.get("content", ""),
+        vision_description=data.get("vision_description", ""),
+        equipment_tags=data.get("equipment_tags") or [],
+        location=location,
+        metadata=data.get("metadata") or {},
+    )
 
 @dataclass
 class PDFSearchResult:
@@ -78,8 +122,8 @@ class PDFVectorDatabase:
         
         # Cache file paths (following existing pattern)
         self.index_cache = self.cache_dir / "pdf_index.faiss"
-        self.embeddings_cache = self.cache_dir / "pdf_embeddings.pkl"
-        self.data_cache = self.cache_dir / "pdf_chunks.pkl"
+        self.embeddings_cache = self.cache_dir / "pdf_embeddings.npy"
+        self.data_cache = self.cache_dir / "pdf_chunks.json"
         self.metadata_cache = self.cache_dir / "pdf_metadata.json"
         
         # Indexed files tracking
@@ -413,8 +457,9 @@ class PDFVectorDatabase:
         """Save vector database to cache files"""
         try:
             # Save chunks data
-            with open(self.data_cache, 'wb') as f:
-                pickle.dump(self.chunks_data, f)
+            with open(self.data_cache, 'w', encoding='utf-8') as f:
+                json.dump([_pdf_chunk_to_dict(chunk) for chunk in self.chunks_data],
+                          f, indent=2, ensure_ascii=False)
             
             # Save metadata
             metadata = {
@@ -430,8 +475,7 @@ class PDFVectorDatabase:
                 faiss.write_index(self.index, str(self.index_cache))
                 
             if self.embeddings is not None:
-                with open(self.embeddings_cache, 'wb') as f:
-                    pickle.dump(self.embeddings, f)
+                np.save(self.embeddings_cache, self.embeddings, allow_pickle=False)
                     
             logger.info("PDF vector database cached successfully")
         except Exception as e:
@@ -441,8 +485,8 @@ class PDFVectorDatabase:
         """Load vector database from cache files"""
         try:
             # Load chunks data
-            with open(self.data_cache, 'rb') as f:
-                self.chunks_data = pickle.load(f)
+            with open(self.data_cache, 'r', encoding='utf-8') as f:
+                self.chunks_data = [_pdf_chunk_from_dict(item) for item in json.load(f)]
             
             # Load metadata
             with open(self.metadata_cache, 'r') as f:
@@ -455,8 +499,7 @@ class PDFVectorDatabase:
                 
             # Load embeddings if available
             if self.embeddings_cache.exists():
-                with open(self.embeddings_cache, 'rb') as f:
-                    self.embeddings = pickle.load(f)
+                self.embeddings = np.load(self.embeddings_cache, allow_pickle=False)
             
             # Initialize model for future searches
             self.initialize_model()

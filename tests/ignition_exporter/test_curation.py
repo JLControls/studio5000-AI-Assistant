@@ -117,3 +117,34 @@ def test_target_tags_curates_explicitly(synthetic_l5x, tmp_path):
     refs = _opc_refs(out)
     bases = {r.split("]")[-1].split(".")[0] for r in refs}
     assert bases == {"Com_Sump_Lvl", "DIn_Pump_Aux"}
+
+
+def test_scaled_counterpart_prunes_raw_alias_from_curated_export(synthetic_l5x, tmp_path):
+    out = tmp_path / "curated_alias.json"
+    engine = IgnitionMCPIntegration()
+    result = _run(engine.generate_ignition_tags(synthetic_l5x, "DeviceA", str(out)))
+
+    raw = out.read_text(encoding="utf-8")
+    assert "Com_Sump_Lvl" in raw
+    assert "Com_AliasAIn_Sump_Lvl" not in raw
+    assert result["unscaled_analog_points"] == []
+
+
+def test_isolated_raw_alias_is_retained_with_manifest_advisory():
+    from ignition_exporter.ignition_mcp_integration import _collect_export_items
+    from ignition_exporter.l5x_tags import IgnitionTagDB, TagEntry
+
+    db = IgnitionTagDB("isolated.L5X", "Controller")
+    db.tags["Com_AliasAIn_Isolated_Temp"] = TagEntry(
+        "Com_AliasAIn_Isolated_Temp", "Controller", "", "INT",
+        comment="Raw isolated temperature input",
+    )
+
+    items, _ = _collect_export_items(
+        db,
+        [],
+        {"Com_AliasAIn_Isolated_Temp"},
+        prune_scaled_raw_aliases=True,
+    )
+    assert [item.plc_ref for item in items] == ["Com_AliasAIn_Isolated_Temp"]
+    assert items[0].advisory == "unscaled_analog_point"

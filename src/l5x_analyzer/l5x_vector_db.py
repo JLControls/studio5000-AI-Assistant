@@ -9,7 +9,6 @@ indexing only relevant extracted sections.
 
 import json
 import os
-import pickle
 import numpy as np
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
@@ -33,6 +32,63 @@ except ImportError:
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def _chunk_to_dict(chunk: L5XChunk) -> Dict[str, Any]:
+    """Serialize an L5X chunk without executable object deserialization."""
+    location = chunk.location
+    return {
+        "id": chunk.id,
+        "chunk_type": chunk.chunk_type.value,
+        "name": chunk.name,
+        "content": chunk.content,
+        "description": chunk.description,
+        "comment": chunk.comment,
+        "location": {
+            "file_path": location.file_path,
+            "xpath": location.xpath,
+            "line_start": location.line_start,
+            "line_end": location.line_end,
+            "parent_program": location.parent_program,
+            "parent_routine": location.parent_routine,
+            "rung_number": location.rung_number,
+            "insertion_points": location.insertion_points,
+        },
+        "dependencies": chunk.dependencies,
+        "references": chunk.references,
+        "metadata": chunk.metadata,
+        "sdk_extractable": chunk.sdk_extractable,
+        "sdk_modifiable": chunk.sdk_modifiable,
+    }
+
+
+def _chunk_from_dict(data: Dict[str, Any]) -> L5XChunk:
+    """Reconstruct an L5X chunk from validated JSON-compatible data."""
+    location_data = data.get("location") or {}
+    location = L5XLocation(
+        file_path=location_data.get("file_path", ""),
+        xpath=location_data.get("xpath", ""),
+        line_start=location_data.get("line_start"),
+        line_end=location_data.get("line_end"),
+        parent_program=location_data.get("parent_program"),
+        parent_routine=location_data.get("parent_routine"),
+        rung_number=location_data.get("rung_number"),
+        insertion_points=location_data.get("insertion_points") or [],
+    )
+    return L5XChunk(
+        id=data.get("id", ""),
+        chunk_type=L5XChunkType(data.get("chunk_type", L5XChunkType.ROUTINE.value)),
+        name=data.get("name", ""),
+        content=data.get("content", ""),
+        description=data.get("description", ""),
+        comment=data.get("comment"),
+        location=location,
+        dependencies=data.get("dependencies") or [],
+        references=data.get("references") or [],
+        metadata=data.get("metadata") or {},
+        sdk_extractable=bool(data.get("sdk_extractable", True)),
+        sdk_modifiable=bool(data.get("sdk_modifiable", True)),
+    )
 
 @dataclass
 class L5XSearchResult:
@@ -69,8 +125,8 @@ class L5XVectorDatabase:
         
         # Cache file paths
         self.index_cache = self.cache_dir / "l5x_index.faiss"
-        self.embeddings_cache = self.cache_dir / "l5x_embeddings.pkl"
-        self.data_cache = self.cache_dir / "l5x_chunks.pkl"
+        self.embeddings_cache = self.cache_dir / "l5x_embeddings.npy"
+        self.data_cache = self.cache_dir / "l5x_chunks.json"
         self.metadata_cache = self.cache_dir / "l5x_metadata.json"
         
         # Project indexing status
@@ -598,16 +654,17 @@ class L5XVectorDatabase:
         """Save vector database to cache files"""
         try:
             # Save chunks data
-            with open(self.data_cache, 'wb') as f:
-                pickle.dump(self.chunks_data, f)
+            with open(self.data_cache, 'w', encoding='utf-8') as f:
+                json.dump([_chunk_to_dict(chunk) for chunk in self.chunks_data],
+                          f, indent=2, ensure_ascii=False)
             
             if FAISS_AVAILABLE and self.index is not None:
                 # Save FAISS index
                 faiss.write_index(self.index, str(self.index_cache))
                 
                 # Save embeddings
-                with open(self.embeddings_cache, 'wb') as f:
-                    pickle.dump(self.embeddings, f)
+                if self.embeddings is not None:
+                    np.save(self.embeddings_cache, self.embeddings, allow_pickle=False)
             
             logger.info("Vector database cached successfully")
             
@@ -618,8 +675,8 @@ class L5XVectorDatabase:
         """Load vector database from cache files"""
         try:
             # Load chunks data
-            with open(self.data_cache, 'rb') as f:
-                self.chunks_data = pickle.load(f)
+            with open(self.data_cache, 'r', encoding='utf-8') as f:
+                self.chunks_data = [_chunk_from_dict(item) for item in json.load(f)]
             
             if FAISS_AVAILABLE and self.index_cache.exists():
                 # Load FAISS index
@@ -627,8 +684,7 @@ class L5XVectorDatabase:
                 
                 # Load embeddings
                 if self.embeddings_cache.exists():
-                    with open(self.embeddings_cache, 'rb') as f:
-                        self.embeddings = pickle.load(f)
+                    self.embeddings = np.load(self.embeddings_cache, allow_pickle=False)
             
             # Initialize model for new searches
             self.initialize_model()

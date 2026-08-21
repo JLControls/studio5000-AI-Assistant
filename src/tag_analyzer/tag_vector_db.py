@@ -8,7 +8,6 @@ enabling intelligent search through thousands of I/O points and device mappings.
 
 import json
 import os
-import pickle
 import numpy as np
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
@@ -29,6 +28,54 @@ except ImportError:
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def _tag_chunk_to_dict(chunk: TagChunk) -> Dict[str, Any]:
+    """Serialize tag metadata as JSON-compatible primitives."""
+    device = chunk.device_info
+    return {
+        "id": chunk.id,
+        "chunk_type": chunk.chunk_type.value,
+        "tag_name": chunk.tag_name,
+        "description": chunk.description,
+        "function": chunk.function,
+        "category": chunk.category,
+        "data_type": chunk.data_type,
+        "alias": chunk.alias,
+        "engineering_units": chunk.engineering_units,
+        "device_info": {
+            "module_type": device.module_type,
+            "rack": device.rack,
+            "slot": device.slot,
+            "channel": device.channel,
+            "local_address": device.local_address,
+            "device_category": device.device_category,
+            "connection_type": device.connection_type,
+        },
+        "related_tags": chunk.related_tags,
+        "dependencies": chunk.dependencies,
+        "metadata": chunk.metadata,
+    }
+
+
+def _tag_chunk_from_dict(data: Dict[str, Any]) -> TagChunk:
+    """Reconstruct tag metadata from JSON without executable deserialization."""
+    device = DeviceInfo(**(data.get("device_info") or {}))
+    return TagChunk(
+        id=data.get("id", ""),
+        chunk_type=TagChunkType(data.get("chunk_type", TagChunkType.TAG_DEFINITION.value)),
+        tag_name=data.get("tag_name", ""),
+        description=data.get("description", ""),
+        function=data.get("function", ""),
+        category=data.get("category", ""),
+        data_type=data.get("data_type", ""),
+        alias=data.get("alias"),
+        engineering_units=data.get("engineering_units", ""),
+        device_info=device,
+        related_tags=data.get("related_tags") or [],
+        dependencies=data.get("dependencies") or [],
+        metadata=data.get("metadata") or {},
+    )
 
 @dataclass
 class TagSearchResult:
@@ -65,8 +112,8 @@ class TagVectorDatabase:
         
         # Cache file paths
         self.index_cache = self.cache_dir / "tag_index.faiss"
-        self.embeddings_cache = self.cache_dir / "tag_embeddings.pkl"
-        self.data_cache = self.cache_dir / "tag_chunks.pkl"
+        self.embeddings_cache = self.cache_dir / "tag_embeddings.npy"
+        self.data_cache = self.cache_dir / "tag_chunks.json"
         self.metadata_cache = self.cache_dir / "tag_metadata.json"
         
         # Indexing status
@@ -517,16 +564,17 @@ class TagVectorDatabase:
         """Save vector database to cache files"""
         try:
             # Save tag chunks
-            with open(self.data_cache, 'wb') as f:
-                pickle.dump(self.tag_chunks, f)
+            with open(self.data_cache, 'w', encoding='utf-8') as f:
+                json.dump([_tag_chunk_to_dict(chunk) for chunk in self.tag_chunks],
+                          f, indent=2, ensure_ascii=False)
             
             if FAISS_AVAILABLE and self.index is not None:
                 # Save FAISS index
                 faiss.write_index(self.index, str(self.index_cache))
                 
                 # Save embeddings
-                with open(self.embeddings_cache, 'wb') as f:
-                    pickle.dump(self.embeddings, f)
+                if self.embeddings is not None:
+                    np.save(self.embeddings_cache, self.embeddings, allow_pickle=False)
             
             logger.info("Tag vector database cached successfully")
             
@@ -537,8 +585,8 @@ class TagVectorDatabase:
         """Load vector database from cache files"""
         try:
             # Load tag chunks
-            with open(self.data_cache, 'rb') as f:
-                self.tag_chunks = pickle.load(f)
+            with open(self.data_cache, 'r', encoding='utf-8') as f:
+                self.tag_chunks = [_tag_chunk_from_dict(item) for item in json.load(f)]
             
             if FAISS_AVAILABLE and self.index_cache.exists():
                 # Load FAISS index
@@ -546,8 +594,7 @@ class TagVectorDatabase:
                 
                 # Load embeddings
                 if self.embeddings_cache.exists():
-                    with open(self.embeddings_cache, 'rb') as f:
-                        self.embeddings = pickle.load(f)
+                    self.embeddings = np.load(self.embeddings_cache, allow_pickle=False)
             
             # Initialize model for new searches
             self.initialize_model()

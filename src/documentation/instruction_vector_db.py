@@ -8,7 +8,6 @@ documentation including syntax, parameters, examples, and usage patterns.
 
 import json
 import os
-import pickle
 import numpy as np
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
@@ -49,8 +48,8 @@ class InstructionVectorDatabase:
         
         # Cache file paths
         self.index_cache = self.cache_dir / "instruction_index.faiss"
-        self.embeddings_cache = self.cache_dir / "instruction_embeddings.pkl"
-        self.data_cache = self.cache_dir / "instruction_data.pkl"
+        self.embeddings_cache = self.cache_dir / "instruction_embeddings.npy"
+        self.data_cache = self.cache_dir / "instruction_data.json"
     
     def initialize_model(self):
         """Initialize the sentence transformer model"""
@@ -329,13 +328,12 @@ class InstructionVectorDatabase:
         """Save vector database to cache files"""
         try:
             # Save instruction data
-            with open(self.data_cache, 'wb') as f:
-                pickle.dump(self.instructions_data, f)
+            with open(self.data_cache, 'w', encoding='utf-8') as f:
+                json.dump(self.instructions_data, f, indent=2, ensure_ascii=False)
             
             if self.embeddings is not None:
                 # Save embeddings
-                with open(self.embeddings_cache, 'wb') as f:
-                    pickle.dump(self.embeddings, f)
+                np.save(self.embeddings_cache, self.embeddings, allow_pickle=False)
             
             if self.index is not None:
                 # Save FAISS index
@@ -350,15 +348,14 @@ class InstructionVectorDatabase:
         """Load vector database from cache files"""
         try:
             # Load instruction data
-            with open(self.data_cache, 'rb') as f:
-                self.instructions_data = pickle.load(f)
+            with open(self.data_cache, 'r', encoding='utf-8') as f:
+                self.instructions_data = json.load(f)
             
             self.initialize_model()
             
             # Load embeddings if available
             if self.embeddings_cache.exists():
-                with open(self.embeddings_cache, 'rb') as f:
-                    self.embeddings = pickle.load(f)
+                self.embeddings = np.load(self.embeddings_cache, allow_pickle=False)
             
             # Load FAISS index if available
             if self.index_cache.exists():

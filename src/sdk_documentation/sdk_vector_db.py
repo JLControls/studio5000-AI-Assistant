@@ -8,7 +8,6 @@ methods, classes, enums, and examples.
 
 import json
 import os
-import pickle
 import numpy as np
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
@@ -47,8 +46,8 @@ class SDKVectorDatabase:
         
         # Cache file paths
         self.index_cache = self.cache_dir / "sdk_index.faiss"
-        self.embeddings_cache = self.cache_dir / "sdk_embeddings.pkl"
-        self.data_cache = self.cache_dir / "sdk_operations.pkl"
+        self.embeddings_cache = self.cache_dir / "sdk_embeddings.npy"
+        self.data_cache = self.cache_dir / "sdk_operations.json"
         
     def initialize_model(self):
         """Initialize the sentence transformer model"""
@@ -321,8 +320,8 @@ class SDKVectorDatabase:
         """Save vector database to cache files"""
         try:
             # Save operations data
-            with open(self.data_cache, 'wb') as f:
-                pickle.dump(self.operations_data, f)
+            with open(self.data_cache, 'w', encoding='utf-8') as f:
+                json.dump(self.operations_data, f, indent=2, ensure_ascii=False)
             
             if self.model is not None:
                 # Save FAISS index
@@ -331,8 +330,7 @@ class SDKVectorDatabase:
                 
                 # Save embeddings
                 if self.embeddings is not None:
-                    with open(self.embeddings_cache, 'wb') as f:
-                        pickle.dump(self.embeddings, f)
+                    np.save(self.embeddings_cache, self.embeddings, allow_pickle=False)
             
             logger.info("Vector database cached successfully")
         except Exception as e:
@@ -342,8 +340,8 @@ class SDKVectorDatabase:
         """Load vector database from cache files"""
         try:
             # Load operations data
-            with open(self.data_cache, 'rb') as f:
-                self.operations_data = pickle.load(f)
+            with open(self.data_cache, 'r', encoding='utf-8') as f:
+                self.operations_data = json.load(f)
             
             # Initialize model if we have vector cache
             if self.index_cache.exists() and self.embeddings_cache.exists():
@@ -354,8 +352,7 @@ class SDKVectorDatabase:
                     self.index = faiss.read_index(str(self.index_cache))
                     
                     # Load embeddings
-                    with open(self.embeddings_cache, 'rb') as f:
-                        self.embeddings = pickle.load(f)
+                    self.embeddings = np.load(self.embeddings_cache, allow_pickle=False)
             
             logger.info(f"Loaded {len(self.operations_data)} operations from cache")
         except Exception as e:
