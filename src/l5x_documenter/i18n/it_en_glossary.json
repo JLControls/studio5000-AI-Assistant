@@ -1,0 +1,1018 @@
+{
+  "abilita": {
+    "en": "enable",
+    "confidence": 0.99
+  },
+  "abilitazione": {
+    "en": "enable",
+    "confidence": 0.99
+  },
+  "abordo": {
+    "en": "aboard",
+    "confidence": 0.86
+  },
+  "acceso": {
+    "en": "on",
+    "confidence": 0.99
+  },
+  "affettatura": {
+    "en": "slicing",
+    "confidence": 0.99
+  },
+  "agv": {
+    "en": "LGV",
+    "confidence": 1.0
+  },
+  "allarme": {
+    "en": "alarm",
+    "confidence": 0.99
+  },
+  "alto": {
+    "en": "high",
+    "confidence": 0.99
+  },
+  "annulla": {
+    "en": "cancel",
+    "confidence": 0.99
+  },
+  "aperto": {
+    "en": "open",
+    "confidence": 0.99
+  },
+  "area": {
+    "en": "area",
+    "confidence": 0.99
+  },
+  "arresto": {
+    "en": "stop",
+    "confidence": 0.99
+  },
+  "attesa": {
+    "en": "waiting",
+    "confidence": 0.9
+  },
+  "auto": {
+    "en": "auto",
+    "confidence": 0.99
+  },
+  "automatico": {
+    "en": "automatic",
+    "confidence": 0.99
+  },
+  "avanzamento": {
+    "en": "Advance",
+    "confidence": 0.95
+  },
+  "avvia": {
+    "en": "start",
+    "confidence": 0.99
+  },
+  "avviato": {
+    "en": "started",
+    "confidence": 0.99
+  },
+  "avvio": {
+    "en": "start",
+    "confidence": 0.99
+  },
+  "azionamento": {
+    "en": "drive",
+    "confidence": 0.9
+  },
+  "azzeramento": {
+    "en": "reset",
+    "confidence": 0.99
+  },
+  "barriera sicurezza accesso stazione 1": {
+    "en": "Access Safety Barrier - Station 1",
+    "confidence": 0.95
+  },
+  "barriera sicurezza accesso stazione 2": {
+    "en": "Access Safety Barrier - Station 2",
+    "confidence": 0.95
+  },
+  "barriera sicurezza accesso stazione 3": {
+    "en": "Access Safety Barrier - Station 3",
+    "confidence": 0.95
+  },
+  "basso": {
+    "en": "low",
+    "confidence": 0.99
+  },
+  "bastoni": {
+    "en": "rod",
+    "confidence": 0.85
+  },
+  "bit": {
+    "en": "bit",
+    "confidence": 1.0
+  },
+  "bit conferme": {
+    "en": "Confirmation Bit",
+    "confidence": 0.99
+  },
+  "bloccaggi": {
+    "en": "Locks",
+    "confidence": 0.93
+  },
+  "carico": {
+    "en": "load",
+    "confidence": 0.99
+  },
+  "carrello": {
+    "en": "cart",
+    "confidence": 0.9
+  },
+  "catenaria": {
+    "en": "Chain Conveyor",
+    "confidence": 0.95
+  },
+  "chiuso": {
+    "en": "closed",
+    "confidence": 0.99
+  },
+  "chiusura": {
+    "en": "closure",
+    "confidence": 0.87
+  },
+  "ciclo": {
+    "en": "cycle",
+    "confidence": 0.99
+  },
+  "cilindro": {
+    "en": "cylinder",
+    "confidence": 0.99
+  },
+  "comunicazione": {
+    "en": "communication",
+    "confidence": 0.99
+  },
+  "conferma": {
+    "en": "confirm",
+    "confidence": 0.99
+  },
+  "conferme": {
+    "en": "confirmations",
+    "confidence": 0.88
+  },
+  "confezionamento": {
+    "en": "packaging",
+    "confidence": 0.99
+  },
+  "consensi": {
+    "en": "permissives",
+    "confidence": 0.92
+  },
+  "consensi agv vemac - bit conferme": {
+    "en": "VEMAC AGV Permissives - Confirmation Bit",
+    "confidence": 0.99
+  },
+  "consenso 1 da taglierina": {
+    "en": "Cutter Permissive 1 (In Phase)",
+    "confidence": 0.95
+  },
+  "consenso 2 da taglierina": {
+    "en": "Cutter Permissive 2 (Ready)",
+    "confidence": 0.95
+  },
+  "contatore": {
+    "en": "counter",
+    "confidence": 0.99
+  },
+  "controllo": {
+    "en": "control",
+    "confidence": 0.99
+  },
+  "controllore": {
+    "en": "controller",
+    "confidence": 0.9
+  },
+  "diagnostica": {
+    "en": "diagnostic",
+    "confidence": 0.99
+  },
+  "disabilita": {
+    "en": "disable",
+    "confidence": 0.99
+  },
+  "discesa": {
+    "en": "Down",
+    "confidence": 0.95
+  },
+  "disponibile": {
+    "en": "Available",
+    "confidence": 0.95
+  },
+  "dosaggio": {
+    "en": "dosing",
+    "confidence": 0.99
+  },
+  "emergenza": {
+    "en": "emergency",
+    "confidence": 0.95
+  },
+  "emergenza pulsantiera 1 premuta zona catenaria bastoni vuoti": {
+    "en": "Local Panel 1 (Empty Rod Chains Zone) Emergency Button Pressed",
+    "confidence": 0.95
+  },
+  "emergenza pulsantiera 2 premuta zona robot": {
+    "en": "Local Panel 2 (Robot Zone) Emergency Button Pressed",
+    "confidence": 0.95
+  },
+  "emergenza quadro generale premuta": {
+    "en": "Main Electrical Cabinet Emergency Button Pressed",
+    "confidence": 0.95
+  },
+  "encoder": {
+    "en": "encoder",
+    "confidence": 0.99
+  },
+  "errore": {
+    "en": "error",
+    "confidence": 0.99
+  },
+  "ev": {
+    "en": "SV",
+    "confidence": 0.95
+  },
+  "ev abilitazione generale aria": {
+    "en": "General Air Enable Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev alzata pioli blocca product durante sfilo bastone": {
+    "en": "Lift Pegs to Lock Product during Rod Pull-out Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev apertura bloccaggi bastone": {
+    "en": "Rod Locking Bar Opening Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev apertura bloccaggi telai postazione 1": {
+    "en": "Station 1 Locks Opening Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev apertura blocco bastone per immissione su catenaria": {
+    "en": "Open Rod Lock for Catenary Entry Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev apertura cilindretti ammortizzo arrivo bastoni su trappola": {
+    "en": "Trap Rod Arrival Damper Cylinder Open Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev apertura mani per rilascio product su taglierina": {
+    "en": "Open Clamps for Product Release on Cutter Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev apertura paletta riscontro product": {
+    "en": "Open Product Feedback Vane Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev apertura pinza sfilo bastoni": {
+    "en": "Rod Pull-out Gripper Opening Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev apertura supporto struttura a sbalzo": {
+    "en": "Cantilever Structure Support Opening Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev apertura tensionamento nastri a facchini": {
+    "en": "Carrier Belt Tension Opening Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev avanzamento riscontro bastone per blocco da pinza": {
+    "en": "Rod Advance for Gripper Lock Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev bloccaggi bastoni a bordo pinza": {
+    "en": "Onboard Gripper Rod Lock Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev chiusura bloccaggi bastone": {
+    "en": "Rod Locking Bar Closing Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev chiusura bloccaggi telai postazione 1": {
+    "en": "Station 1 Locks Closing Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev chiusura blocco bastone per immissione su catenaria": {
+    "en": "Close Rod Lock for Catenary Entry Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev chiusura cilindretti ammortizzo arrivo bastoni su trappola": {
+    "en": "Trap Rod Arrival Damper Cylinder Close Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev chiusura mani per rilascio product su taglierina": {
+    "en": "Close Clamps for Product Release on Cutter Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev chiusura paletta riscontro product": {
+    "en": "Close Product Feedback Vane Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev chiusura pinza sfilo bastoni": {
+    "en": "Rod Pull-out Gripper Closing Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev chiusura supporto struttura a sbalzo": {
+    "en": "Cantilever Structure Support Closing Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev chiusura tensionamento nastro a facchini": {
+    "en": "Carrier Belt Tension Closing Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev discesa disp. sollevamento bastoni vuoti per prelievo da robot": {
+    "en": "Empty Rod Lift Down (For Robot Pick-up) Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev discesa parallelogramma": {
+    "en": "Parallelogram Down Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev discesa riscontro bastone per blocco da pinza": {
+    "en": "Rod Lower for Gripper Lock Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev salita disp. sollevamento bastoni vuoti per prelievo da robot": {
+    "en": "Empty Rod Lift Up (For Robot Pick-up) Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev salita parallelogramma": {
+    "en": "Parallelogram Up Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev salita riscontro bastone per blocco da pinza": {
+    "en": "Rod Lift for Gripper Lock Solenoid Valve",
+    "confidence": 0.95
+  },
+  "ev uscita ftc fuori sagoma bastoni": {
+    "en": "Oversized Rod FTC Output Solenoid Valve",
+    "confidence": 0.95
+  },
+  "facchini": {
+    "en": "Carriers",
+    "confidence": 0.95
+  },
+  "fase": {
+    "en": "phase",
+    "confidence": 0.99
+  },
+  "feedback teleruttori": {
+    "en": "Contactor Feedback",
+    "confidence": 0.95
+  },
+  "ferma": {
+    "en": "stop",
+    "confidence": 0.99
+  },
+  "fermato": {
+    "en": "stopped",
+    "confidence": 0.99
+  },
+  "fermo": {
+    "en": "stopped",
+    "confidence": 0.99
+  },
+  "finecorsa": {
+    "en": "limit switch",
+    "confidence": 0.99
+  },
+  "flusso": {
+    "en": "flow",
+    "confidence": 0.99
+  },
+  "fotocellula": {
+    "en": "photocell",
+    "confidence": 0.99
+  },
+  "ftc 1 allineamento bastone zona pre-imm. catenaria": {
+    "en": "Rod Alignment Photocell 1 - Catenary Pre-entry Zone",
+    "confidence": 0.95
+  },
+  "ftc 2 allineamento bastone zona pre-imm. catenaria": {
+    "en": "Rod Alignment Photocell 2 - Catenary Pre-entry Zone",
+    "confidence": 0.95
+  },
+  "ftc a abilita muting barriera accesso postazione 1": {
+    "en": "Station 1 Access Barrier Muting Enable Photocell A",
+    "confidence": 0.95
+  },
+  "ftc accumulo pieno su scivoli": {
+    "en": "Full Storage on Slides Photocell",
+    "confidence": 0.95
+  },
+  "ftc b abilita muting barriera accesso postazione 1": {
+    "en": "Station 1 Access Barrier Muting Enable Photocell B",
+    "confidence": 0.95
+  },
+  "ftc controllo fuori sagoma bastoni dx": {
+    "en": "Oversized Rod Photocell - Right",
+    "confidence": 0.95
+  },
+  "ftc controllo fuori sagoma bastoni sx": {
+    "en": "Oversized Rod Photocell - Left",
+    "confidence": 0.95
+  },
+  "ftc corretto inforcamento bastone dx": {
+    "en": "Correct Rod Forking Photocell - Right",
+    "confidence": 0.95
+  },
+  "ftc corretto inforcamento bastone sx": {
+    "en": "Correct Rod Forking Photocell - Left",
+    "confidence": 0.95
+  },
+  "ftc presenza bastone nel vano": {
+    "en": "Rod Presence in Compartment Photocell",
+    "confidence": 0.95
+  },
+  "ftc telaio panconi vuoti in postazione 1": {
+    "en": "Empty Frame Present Photocell - Station 1",
+    "confidence": 0.95
+  },
+  "ftc traguardo sopra ai facchini per product fuori pos.": {
+    "en": "Product Out of Position Photocell above Carriers",
+    "confidence": 0.95
+  },
+  "gestione": {
+    "en": "management",
+    "confidence": 0.99
+  },
+  "guasto": {
+    "en": "fault",
+    "confidence": 0.99
+  },
+  "hmi": {
+    "en": "HMI",
+    "confidence": 1.0
+  },
+  "in marcia": {
+    "en": "running",
+    "confidence": 0.99
+  },
+  "indietro": {
+    "en": "Backward",
+    "confidence": 0.95
+  },
+  "ingombro": {
+    "en": "obstruction",
+    "confidence": 0.89
+  },
+  "ingresso": {
+    "en": "input",
+    "confidence": 0.99
+  },
+  "inizializzazione": {
+    "en": "initialization",
+    "confidence": 0.99
+  },
+  "isola": {
+    "en": "island",
+    "confidence": 0.99
+  },
+  "lampada pulsante di marcia": {
+    "en": "Start Cycle Illuminated Pushbutton",
+    "confidence": 0.95
+  },
+  "lampada pulsante di ripristino sicurezze": {
+    "en": "Safety Reset Illuminated Pushbutton",
+    "confidence": 0.95
+  },
+  "lgv": {
+    "en": "LGV",
+    "confidence": 1.0
+  },
+  "libero": {
+    "en": "free",
+    "confidence": 0.99
+  },
+  "linea": {
+    "en": "line",
+    "confidence": 0.99
+  },
+  "livello": {
+    "en": "level",
+    "confidence": 0.99
+  },
+  "locale": {
+    "en": "local",
+    "confidence": 0.99
+  },
+  "macchina": {
+    "en": "machine",
+    "confidence": 0.99
+  },
+  "manuale": {
+    "en": "manual",
+    "confidence": 0.99
+  },
+  "messa in servizio": {
+    "en": "commissioning",
+    "confidence": 0.88
+  },
+  "missione": {
+    "en": "mission",
+    "confidence": 0.85
+  },
+  "modulo alimentazione": {
+    "en": "Power Supply Module",
+    "confidence": 0.95
+  },
+  "modulo alimentazione con separazione tensione": {
+    "en": "Power Supply Module with Voltage Separation",
+    "confidence": 0.95
+  },
+  "motore": {
+    "en": "motor",
+    "confidence": 0.99
+  },
+  "nastro": {
+    "en": "conveyor",
+    "confidence": 0.99
+  },
+  "nr": {
+    "en": "No.",
+    "confidence": 0.95
+  },
+  "occupato": {
+    "en": "busy",
+    "confidence": 0.99
+  },
+  "offs": {
+    "en": "Offset",
+    "confidence": 0.95
+  },
+  "pannello": {
+    "en": "panel",
+    "confidence": 0.99
+  },
+  "parallelogramma": {
+    "en": "Parallelogram",
+    "confidence": 0.95
+  },
+  "passo": {
+    "en": "step",
+    "confidence": 0.99
+  },
+  "pb": {
+    "en": "PB",
+    "confidence": 1.0
+  },
+  "pesatura": {
+    "en": "weighing",
+    "confidence": 0.99
+  },
+  "pieno": {
+    "en": "Full",
+    "confidence": 0.95
+  },
+  "pinza": {
+    "en": "gripper",
+    "confidence": 0.95
+  },
+  "plc": {
+    "en": "PLC",
+    "confidence": 1.0
+  },
+  "pompa": {
+    "en": "pump",
+    "confidence": 0.99
+  },
+  "pos": {
+    "en": "Pos.",
+    "confidence": 0.95
+  },
+  "posizione": {
+    "en": "position",
+    "confidence": 0.99
+  },
+  "postazione": {
+    "en": "Station",
+    "confidence": 0.92
+  },
+  "pressione": {
+    "en": "pressure",
+    "confidence": 0.99
+  },
+  "pressostato generale": {
+    "en": "General Pressure Switch",
+    "confidence": 0.95
+  },
+  "pressostato presenza aria ok": {
+    "en": "Air Pressure OK Pressure Switch",
+    "confidence": 0.95
+  },
+  "principale": {
+    "en": "main",
+    "confidence": 0.99
+  },
+  "product": {
+    "en": "product",
+    "confidence": 1.0
+  },
+  "pronto": {
+    "en": "ready",
+    "confidence": 0.99
+  },
+  "prossimità": {
+    "en": "proximity",
+    "confidence": 0.99
+  },
+  "puls. lum. richiesta accesso zona catene bastoni vuoti p1": {
+    "en": "Empty Rod Chains Zone 1 Access Request Illuminated Pushbutton",
+    "confidence": 0.95
+  },
+  "puls. luminoso di marcia": {
+    "en": "Illuminated Run Pushbutton",
+    "confidence": 0.95
+  },
+  "puls. luminoso richiesta accesso zona robot p2": {
+    "en": "Robot Zone 2 Access Request Illuminated Pushbutton",
+    "confidence": 0.95
+  },
+  "puls. ripristino sicurezze": {
+    "en": "Safety Reset Button",
+    "confidence": 0.95
+  },
+  "pulsante": {
+    "en": "button",
+    "confidence": 0.95
+  },
+  "pulsante di arresto": {
+    "en": "Stop Pushbutton",
+    "confidence": 0.95
+  },
+  "px": {
+    "en": "PX",
+    "confidence": 1.0
+  },
+  "quadro": {
+    "en": "cabinet",
+    "confidence": 0.99
+  },
+  "quadro elettrico": {
+    "en": "electrical panel",
+    "confidence": 0.95
+  },
+  "remoto": {
+    "en": "remote",
+    "confidence": 0.99
+  },
+  "reset": {
+    "en": "reset",
+    "confidence": 0.99
+  },
+  "retroazione km robot": {
+    "en": "KM Robot Feedback",
+    "confidence": 0.95
+  },
+  "riavvio": {
+    "en": "restart",
+    "confidence": 0.9
+  },
+  "ricetta": {
+    "en": "Recipe",
+    "confidence": 0.95
+  },
+  "richiesta": {
+    "en": "request",
+    "confidence": 0.91
+  },
+  "ritardo": {
+    "en": "delay",
+    "confidence": 0.99
+  },
+  "rullo": {
+    "en": "roller",
+    "confidence": 0.99
+  },
+  "rx": {
+    "en": "RX",
+    "confidence": 1.0
+  },
+  "salame": {
+    "en": "salami",
+    "confidence": 0.99
+  },
+  "salami": {
+    "en": "salami",
+    "confidence": 0.99
+  },
+  "salita": {
+    "en": "Up",
+    "confidence": 0.95
+  },
+  "scada": {
+    "en": "SCADA",
+    "confidence": 1.0
+  },
+  "scarico": {
+    "en": "unload",
+    "confidence": 0.99
+  },
+  "scatto termico alimentaz. generale inverter": {
+    "en": "General Inverter Supply Thermal Trip",
+    "confidence": 0.95
+  },
+  "selettore esclusione sicurezze": {
+    "en": "Safety Bypass Selector",
+    "confidence": 0.95
+  },
+  "seleziona": {
+    "en": "select",
+    "confidence": 0.99
+  },
+  "sensore": {
+    "en": "sensor",
+    "confidence": 0.99
+  },
+  "sensore alto presenza telaio in postazione 1": {
+    "en": "Station 1 High Frame Presence Sensor",
+    "confidence": 0.95
+  },
+  "sensore azzeramento posiz. facchini trasporto 1": {
+    "en": "Transport 1 Carrier Position Reset Sensor",
+    "confidence": 0.95
+  },
+  "sensore azzeramento posiz. facchini trasporto 2": {
+    "en": "Transport 2 Carrier Position Reset Sensor",
+    "confidence": 0.95
+  },
+  "sensore basso presenza telaio in postazione 1": {
+    "en": "Station 1 Low Frame Presence Sensor",
+    "confidence": 0.95
+  },
+  "sensore bloccaggi telai postazione 1 aperti": {
+    "en": "Station 1 Frame Locks Open Sensor",
+    "confidence": 0.95
+  },
+  "sensore bloccaggi telai postazione 1 chiusi": {
+    "en": "Station 1 Frame Locks Closed Sensor",
+    "confidence": 0.95
+  },
+  "sensore controllo mani aperte": {
+    "en": "Open Clamps Sensor",
+    "confidence": 0.95
+  },
+  "sensore controllo mani chiuse": {
+    "en": "Closed Clamps Sensor",
+    "confidence": 0.95
+  },
+  "sensore controllo posizione parallelogramma alto": {
+    "en": "Parallelogram High Position Control Sensor",
+    "confidence": 0.95
+  },
+  "sensore controllo posizione parallelogramma basso": {
+    "en": "Parallelogram Low Position Control Sensor",
+    "confidence": 0.95
+  },
+  "sensore controllo posizione trappola": {
+    "en": "Trap Position Control Sensor",
+    "confidence": 0.95
+  },
+  "sensore dispositivo in posizione di lavoro": {
+    "en": "Device in Working Position Sensor",
+    "confidence": 0.95
+  },
+  "sensore paletta riscontro product alta": {
+    "en": "High Product Feedback Vane Sensor",
+    "confidence": 0.95
+  },
+  "sensore paletta riscontro product bassa": {
+    "en": "Low Product Feedback Vane Sensor",
+    "confidence": 0.95
+  },
+  "sensore pinza montata": {
+    "en": "Gripper Assembled Sensor",
+    "confidence": 0.95
+  },
+  "sensore pinza sfilo bastoni aperta": {
+    "en": "Rod Pull-out Gripper Open Sensor",
+    "confidence": 0.95
+  },
+  "sensore pinza sfilo bastoni in posizione di attesa": {
+    "en": "Rod Pull-out Gripper in Midway Position Sensor",
+    "confidence": 0.95
+  },
+  "sensore pinza sfilo bastoni in posizione di presa": {
+    "en": "Rod Pull-out Gripper in Forward Position Sensor",
+    "confidence": 0.95
+  },
+  "sensore pinza sfilo bastoni in posizione di rilascio": {
+    "en": "Rod Pull-out Gripper in Back Position Sensor",
+    "confidence": 0.95
+  },
+  "sensore pioli sfilo bastoni pos. bassa": {
+    "en": "Rod Pull-out Pegs Low Position Sensor",
+    "confidence": 0.95
+  },
+  "sensore presenza barra in pinza sfilo bastoni": {
+    "en": "Rod Present in Pull-out Gripper Sensor",
+    "confidence": 0.95
+  },
+  "sensore riscontro in posizione arretrata": {
+    "en": "Feedback Sensor in Backward Position",
+    "confidence": 0.95
+  },
+  "sensore ruota fonica contapassi": {
+    "en": "Step Counter Phonic Wheel Sensor",
+    "confidence": 0.95
+  },
+  "sensore ruota fonica controllo pos. vani catenaria": {
+    "en": "Catenary Compartment Position Step Counter Sensor",
+    "confidence": 0.95
+  },
+  "sensore sicurezza su carter verso taglierina": {
+    "en": "Cutter Area Guard Safety Sensor",
+    "confidence": 0.95
+  },
+  "sensore sicurezza su porta 1 accesso zona robot": {
+    "en": "Robot Zone Access Door 1 Safety Sensor",
+    "confidence": 0.95
+  },
+  "sensore sicurezza su porta 2 accesso zona robot": {
+    "en": "Robot Zone Access Door 2 Safety Sensor",
+    "confidence": 0.95
+  },
+  "sensore sicurezza su porta accesso zona catene bastoni vuoti": {
+    "en": "Empty Rod Chains Zone Access Door Safety Sensor",
+    "confidence": 0.95
+  },
+  "sensori bloccaggi parallelogrammi aperti": {
+    "en": "Parallelogram Locks Open Sensor",
+    "confidence": 0.95
+  },
+  "sensori bloccaggi parallelogrammi chiusi": {
+    "en": "Parallelogram Locks Closed Sensor",
+    "confidence": 0.95
+  },
+  "sensori cilindri supporto struttura a sbalzo arretrati": {
+    "en": "Cantilever Structure Support Cylinders Retracted Sensor",
+    "confidence": 0.95
+  },
+  "sensori cilindri tensionatori arretrati": {
+    "en": "Tensioner Cylinders Retracted Sensor",
+    "confidence": 0.95
+  },
+  "sensori sollevatore bastoni alto": {
+    "en": "Rod Lifter High Sensor",
+    "confidence": 0.95
+  },
+  "sensori sollevatore bastoni basso": {
+    "en": "Rod Lifter Low Sensor",
+    "confidence": 0.95
+  },
+  "sequenza": {
+    "en": "sequence",
+    "confidence": 0.99
+  },
+  "serie pulsanti di emergenza": {
+    "en": "Emergency Pushbutton Series",
+    "confidence": 0.95
+  },
+  "serie scatti termici alimentazione inverter": {
+    "en": "Inverter Supply Thermal Trip Series",
+    "confidence": 0.95
+  },
+  "sfilo": {
+    "en": "Pull-out",
+    "confidence": 0.95
+  },
+  "sicurezza": {
+    "en": "safety",
+    "confidence": 0.99
+  },
+  "sicurezze ripristinate": {
+    "en": "Safety Reset",
+    "confidence": 0.95
+  },
+  "sicurezze ripristinate da qe principale a qe robot": {
+    "en": "Safety Reset from Main Panel to Robot Panel",
+    "confidence": 0.95
+  },
+  "sirena torretta luminosa": {
+    "en": "Light Tower Siren",
+    "confidence": 0.95
+  },
+  "spare": {
+    "en": "spare",
+    "confidence": 1.0
+  },
+  "spento": {
+    "en": "off",
+    "confidence": 0.99
+  },
+  "spia bianca torretta luminosa": {
+    "en": "White Tower Light",
+    "confidence": 0.95
+  },
+  "spia giallo postazione 1 telai": {
+    "en": "Yellow Light - Station 1",
+    "confidence": 0.95
+  },
+  "spia rossa postazione 1 telai": {
+    "en": "Red Light - Station 1",
+    "confidence": 0.95
+  },
+  "spia rossa torretta luminosa": {
+    "en": "Red Tower Light",
+    "confidence": 0.95
+  },
+  "spia verde postazione 1 telai": {
+    "en": "Green Light - Station 1",
+    "confidence": 0.95
+  },
+  "stazione": {
+    "en": "station",
+    "confidence": 0.99
+  },
+  "taglierina": {
+    "en": "Cutter",
+    "confidence": 0.95
+  },
+  "taglio": {
+    "en": "cut",
+    "confidence": 0.99
+  },
+  "taglio emergenza 24v": {
+    "en": "24V Emergency Cut",
+    "confidence": 0.95
+  },
+  "telai": {
+    "en": "frames",
+    "confidence": 0.95
+  },
+  "telaio": {
+    "en": "frame",
+    "confidence": 0.95
+  },
+  "teleruttore 1 emergenza": {
+    "en": "Emergency Contactor 1",
+    "confidence": 0.95
+  },
+  "teleruttore 2 emergenza": {
+    "en": "Emergency Contactor 2",
+    "confidence": 0.95
+  },
+  "temperatura": {
+    "en": "temperature",
+    "confidence": 0.99
+  },
+  "tempo": {
+    "en": "time",
+    "confidence": 0.99
+  },
+  "timer": {
+    "en": "timer",
+    "confidence": 0.99
+  },
+  "tipo": {
+    "en": "type",
+    "confidence": 0.95
+  },
+  "trasportatore": {
+    "en": "conveyor",
+    "confidence": 0.99
+  },
+  "trigger ripristino": {
+    "en": "Reset Trigger",
+    "confidence": 0.95
+  },
+  "trigger serie emergenze": {
+    "en": "Emergency Pushbutton Series Trigger",
+    "confidence": 0.95
+  },
+  "tx": {
+    "en": "TX",
+    "confidence": 1.0
+  },
+  "uscita": {
+    "en": "output",
+    "confidence": 0.99
+  },
+  "valvola": {
+    "en": "valve",
+    "confidence": 0.99
+  },
+  "vel": {
+    "en": "speed",
+    "confidence": 0.95
+  },
+  "velocità": {
+    "en": "speed",
+    "confidence": 0.99
+  },
+  "vemac": {
+    "en": "VEMAC",
+    "confidence": 1.0
+  },
+  "vuoti": {
+    "en": "empty",
+    "confidence": 0.92
+  },
+  "zona": {
+    "en": "zone",
+    "confidence": 0.99
+  }
+}
