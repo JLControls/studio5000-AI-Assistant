@@ -15,6 +15,9 @@ xml-utils>=1.0.0
 kaitaistruct>=0.11
 loguru>=0.7.3
 
+# Documentation pipeline (l5x_documenter) — full list in requirements-docs.txt
+-r requirements-docs.txt
+
 # Test tooling
 pytest>=8.0.0
 

@@ -1,0 +1,10 @@
+# Documentation-pipeline dependencies (mirrors [project.dependencies] in
+# pyproject.toml — pyproject is the source of truth). Kept separate so the
+# docs pipeline can be installed without the MCP server's heavy stack.
+lxml>=4.9.0
+Jinja2>=3.1
+deep-translator>=1.11
+click>=8.1
+tqdm>=4.66
+kaitaistruct>=0.11
+loguru>=0.7.3

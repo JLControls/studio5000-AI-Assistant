@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plc-docgen"
+version = "0.1.0"
+description = "Offline ACD -> L5X -> HTML PLC documentation pipeline (procedural, no LLM), shared by CLI, git hooks, and the studio5000-ai-assistant MCP server"
+requires-python = ">=3.11"
+# Docs-pipeline dependencies ONLY. The MCP server's heavy dependencies
+# (torch, faiss, sentence-transformers, PDF stack) intentionally stay in
+# requirements.txt — a workstation installing plc-docgen for git hooks must
+# not download them. l5x_analyzer imports its vector-DB stack lazily
+# (PEP 562 __getattr__) so the converter works without it.
+dependencies = [
+    "lxml>=4.9.0",
+    "Jinja2>=3.1",
+    "deep-translator>=1.11",
+    "click>=8.1",
+    "tqdm>=4.66",
+    "kaitaistruct>=0.11",
+    "loguru>=0.7.3",
+]
+
+[project.scripts]
+# l5x_documenter arrives in the documenter-migration phase; the entry point
+# resolves at run time, so declaring it early is harmless.
+plc-docgen = "l5x_documenter.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["l5x_documenter*", "l5x_analyzer*", "acd*"]
+
+[tool.setuptools.package-data]
+l5x_documenter = ["assets/**", "i18n/*.json"]
+acd = ["**/*.ksy"]
