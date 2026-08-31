@@ -21,6 +21,7 @@ get_translator(use_online=False) -> Translator
 from __future__ import annotations
 
 import json
+import os
 import re
 import warnings
 from pathlib import Path
@@ -39,7 +40,34 @@ from .i18n.lang_detect import looks_italian
 # ---------------------------------------------------------------------------
 
 _GLOSSARY_PATH: Path = _HERE / "i18n" / "it_en_glossary.json"
-_DEFAULT_CACHE_PATH: Path = _HERE / "i18n" / "translation_cache.json"
+
+# The MT cache is a *runtime* artifact — an installed package must not write
+# into its own package directory. It lives in an OS-conventional per-user
+# cache location instead: $PLC_DOCGEN_CACHE_DIR if set, else
+# %LOCALAPPDATA%\plc-docgen\cache on Windows, else ~/.cache/plc-docgen
+# (POSIX fallback). The directory is created on first write.
+#
+# A read-only, packaged seed cache may still ship at i18n/translation_cache.json
+# inside the package (a curated snapshot committed to source) — when present
+# and the user cache file doesn't exist yet, it seeds the new cache on first
+# load (see Translator.__init__). The packaged file itself is never written to.
+
+
+def _default_cache_dir() -> Path:
+    """Resolve the per-user MT cache directory (see module docstring above)."""
+    env = os.environ.get("PLC_DOCGEN_CACHE_DIR")
+    if env:
+        return Path(env)
+
+    local_appdata = os.environ.get("LOCALAPPDATA")
+    if local_appdata:
+        return Path(local_appdata) / "plc-docgen" / "cache"
+
+    return Path.home() / ".cache" / "plc-docgen"
+
+
+_DEFAULT_CACHE_PATH: Path = _default_cache_dir() / "translation_cache.json"
+_PACKAGED_SEED_CACHE_PATH: Path = _HERE / "i18n" / "translation_cache.json"
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -121,10 +149,19 @@ class Translator:
             )
             for key in self._sorted_keys
         ]
+        using_default_cache = cache_path is None
         self._cache_path: Path = (
             Path(cache_path) if cache_path is not None else _DEFAULT_CACHE_PATH
         )
-        self._cache: dict[str, str] = _load_cache(self._cache_path)
+        if using_default_cache and not self._cache_path.exists() and _PACKAGED_SEED_CACHE_PATH.exists():
+            # First run on this machine: no per-user cache yet, but a
+            # curated, read-only cache ships inside the package — seed the
+            # new user cache from it. The packaged file itself is never
+            # written to; the first _save_cache() call below writes the
+            # seeded content out to _cache_path.
+            self._cache: dict[str, str] = _load_cache(_PACKAGED_SEED_CACHE_PATH)
+        else:
+            self._cache: dict[str, str] = _load_cache(self._cache_path)
 
     # ------------------------------------------------------------------
     # Public methods
