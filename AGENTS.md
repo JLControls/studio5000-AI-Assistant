@@ -5,7 +5,7 @@ This file provides guidance to Claude Code, AGY, and other AI assistants working
 ## Project Summary & Structure
 
 Production code lives in `src/`, split by responsibility:
-- `mcp_server/` (`src/mcp_server/studio5000_mcp_server.py`, ~2400 lines) — Minimal hand-rolled MCP server exposing 52 tools for PLC programming assistance over stdio JSON-RPC (`mcp_config.json`).
+- `mcp_server/` (`src/mcp_server/studio5000_mcp_server.py`, ~2400 lines) — Minimal hand-rolled MCP server exposing 54 tools for PLC programming assistance over stdio JSON-RPC (`mcp_config.json`).
 - `documentation/` + `sdk_documentation/` — Studio 5000 instruction & SDK docs, semantic search (FAISS + sentence-transformers). Backs `search_instructions`, `get_instruction*`, `list_categories`.
 - `code_generator/` — Natural language → ladder logic → L5X (`L5XGenerator`, `L5XProject/Program/Routine/LadderRung`). Backs `generate_ladder_logic`, `create_l5x_project`, `create_l5x_routine`.
 - `l5x_analyzer/` — Semantic search / surgical rung insertion / structure analysis over large exported L5X. Backs `search_l5x_content`, `find_insertion_point`, `smart_insert_logic`, `analyze_routine_structure`.
@@ -15,6 +15,7 @@ Production code lives in `src/`, split by responsibility:
 - `acd/` — Vendored patched ACD parser/exporter (Kaitai-based). `api.py` is the entry point (`load_acd`, `save_acd`, `patch_rungs`, `ExportProjectToFile`). Used for offline analysis targeting Studio 5000 v38 L5X semantics.
 - `sdk_interface/` — Live Studio 5000 SDK bindings, **gated off by default**.
 - `comment_graph/` (`src/comment_graph/`) — Iterative PLC comment analysis engine: builds a typed dependency graph (`builder.py`, `edges.py`, `graph_adapter.py`, `facts.py`, `scheduler.py`, `worker.py`, `orchestrator.py`, `deliverables_bridge.py`) and runs a monotonic fact-propagation loop to propose comments. Pure library backing the `analyze_comment_graph` tool. See `docs/superpowers/plans/2026-08-05-iterative-comment-analysis-plan.md`.
+- `l5x_documenter/` (`src/l5x_documenter/`) — Offline ACD -> L5X -> HTML PLC documentation pipeline (`pipeline.py`: `convert`/`split`/`document`/`run_full`/`regenerate_changed`), with optional bilingual (Italian/English) output for Colussi/Vemac machines. Procedural, no LLM. Backs the `generate_plc_documentation` and `split_l5x` MCP tools and the standalone `plc-docgen` CLI (`cli.py`); these tools are standalone and do not chain to the `comment_graph` comment-authoring workflow.
 
 Automated tests belong under `tests/` (including ACD regression tests under `tests/acd/`). Design notes belong in `docs/superpowers/`; user-facing workflows are documented in root-level guides.
 
@@ -89,3 +90,7 @@ Packages are imported bare (`from l5x_analyzer... import ...`, `from comment_gra
 - **Config Review**: Review `mcp_config.json` before staging (contains local path examples).
 - **Parity Fixtures**: Root L5X files (`upstream-patched-test.L5X`, `v38-fixed-test.L5X`) are for v38 parity work; canonical regression fixtures belong under `tests/acd/`.
 - **Engineering Review**: Treat generated PLC logic as requiring engineering review and Studio 5000 validation before deployment to live control systems.
+
+## Future Work
+
+- **Consolidate the two ladder renderers**: `src/ladder_renderer/` and `src/l5x_documenter/ladder_to_dot.py` are two renderers of shared lineage; the documenter's `ladder_to_dot.py` is the more featureful of the two. Merge/retire the older `ladder_renderer/` in favor of it once callers are confirmed to only need the documenter's rendering path.
