@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RSLogix5000Content SchemaRevision="1.0" SoftwareRevision="20.01" TargetType="Controller">
+  <Controller Name="AlkarDetectController" ProcessorType="1756-L71" MajorRev="20" MinorRev="1">
+    <Programs>
+      <Program Name="SafetyManagement" TestEdits="false" MainRoutineName="Main" Use="Target">
+        <Routines>
+          <Routine Name="MotorControl" Type="RLL" Use="Target">
+            <RLLContent>
+              <Rung Number="0" Type="N">
+                <Comment>
+                  <LocalizedComment Lang="en-US"><![CDATA[Start control sequence]]></LocalizedComment>
+                </Comment>
+                <Text><![CDATA[XIC(Start)OTE(Running);]]></Text>
+              </Rung>
+            </RLLContent>
+          </Routine>
+        </Routines>
+      </Program>
+    </Programs>
+    <Tags>
+      <Tag Name="MainConveyor" TagType="Base" DataType="BOOL" Use="Target">
+        <Description><![CDATA[Main conveyor belt]]></Description>
+      </Tag>
+      <!-- One Italian-origin description on an otherwise-English machine:
+           not a Colussi/Vemac path, so auto-detect must stay English; a
+           manual translate override on this file must still bilingualize it. -->
+      <Tag Name="PompaAusiliaria" TagType="Base" DataType="BOOL" Use="Target">
+        <Description><![CDATA[Pompa ausiliaria di lubrificazione]]></Description>
+      </Tag>
+    </Tags>
+  </Controller>
+</RSLogix5000Content>

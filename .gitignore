@@ -70,6 +70,11 @@ test_sdk_cache/
 # Hand-authored, project-agnostic fixture for the tag/AOI fact-accessor tests
 # (issue #28) — no proprietary data; tracked for clean-checkout runs.
 !tests/l5x_analyzer/fixtures/fact_accessor.L5X
+# Hand-authored, project-agnostic l5x_documenter fixtures (bilingual detection +
+# i18n harvest tests) — no proprietary data; tracked for clean-checkout runs.
+!tests/l5x_documenter/fixtures/Detect-Alkar/mini.l5x
+!tests/l5x_documenter/fixtures/Detect-Vemac/mini.l5x
+!tests/l5x_documenter/fixtures/italian_snippet.l5x
 # Scratch scripts at the repo root only — do NOT ignore the pytest suite under tests/.
 /test_*.py
 /debug_*.py
