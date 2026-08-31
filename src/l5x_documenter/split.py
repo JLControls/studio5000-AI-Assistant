@@ -25,6 +25,7 @@ import sys
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 from xml.etree import ElementTree as ET
 
 # ---------------------------------------------------------------------------
@@ -273,8 +274,19 @@ def process_rung_xref(rung_text, rung_num, filename, prog_name, rtn_name,
 # Main processing
 # ---------------------------------------------------------------------------
 
-def process_l5x(l5x_path: Path, verbose: bool = False):
-    """Process a single L5X file and generate the split output."""
+def process_l5x(l5x_path: Path, verbose: bool = False, out_dir: Optional[Path] = None):
+    """Process a single L5X file and generate the split output.
+
+    Args:
+        l5x_path: Path to the source .L5X file.
+        verbose: Print progress.
+        out_dir: Output directory for the split artifacts. Defaults to
+            ``l5x_individual/`` next to the source L5X.
+
+    Returns:
+        The output directory Path on success, or None if the file has no
+        <Controller> element.
+    """
     if verbose:
         print(f'Processing: {l5x_path}')
 
@@ -284,17 +296,18 @@ def process_l5x(l5x_path: Path, verbose: bool = False):
     controller_elem = root.find('.//Controller')
     if controller_elem is None:
         print(f'  ERROR: No Controller element in {l5x_path}')
-        return
+        return None
 
     controller_name = controller_elem.get('Name', '')
     processor_type = controller_elem.get('ProcessorType', '')
     source_filename = l5x_path.name
 
     # Output directory
-    out_dir = l5x_path.parent / 'l5x_individual'
+    if out_dir is None:
+        out_dir = l5x_path.parent / 'l5x_individual'
     if out_dir.exists():
         shutil.rmtree(out_dir)
-    out_dir.mkdir()
+    out_dir.mkdir(parents=True)
 
     tag_index = build_tag_index(controller_elem)
 
@@ -485,6 +498,8 @@ def process_l5x(l5x_path: Path, verbose: bool = False):
         print(f'  Xref tags: {len(xref)}')
     else:
         print(f'  {routine_count} routines -> {out_dir}')
+
+    return out_dir
 
 
 def main():
