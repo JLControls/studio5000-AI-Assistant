@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RSLogix5000Content SchemaRevision="1.0" SoftwareRevision="20.01" TargetType="Controller">
+  <Controller Name="VemacDetectController" ProcessorType="1756-L71" MajorRev="20" MinorRev="1">
+    <Programs>
+      <Program Name="GestioneSicurezza" TestEdits="false" MainRoutineName="Main" Use="Target">
+        <Routines>
+          <Routine Name="ControlloMotori" Type="RLL" Use="Target">
+            <RLLContent>
+              <Rung Number="0" Type="N">
+                <Comment>
+                  <LocalizedComment Lang="en-US"><![CDATA[Avvio sequenza di controllo]]></LocalizedComment>
+                </Comment>
+                <Text><![CDATA[XIC(Start)OTE(Running);]]></Text>
+              </Rung>
+            </RLLContent>
+          </Routine>
+        </Routines>
+      </Program>
+    </Programs>
+    <Tags>
+      <Tag Name="NastroPrincipale" TagType="Base" DataType="BOOL" Use="Target">
+        <Description><![CDATA[Nastro trasportatore principale]]></Description>
+      </Tag>
+    </Tags>
+  </Controller>
+</RSLogix5000Content>
