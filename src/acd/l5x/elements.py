@@ -1601,9 +1601,23 @@ class TagBuilder(L5xElementBuilder):
             data_type_results = self._cur.fetchall()
             data_type = data_type_results[0][0]
 
+        # Documentation rows for this tag:
+        #  - v38 stores the description as record_type=1 with object_id=1.
+        #  - pre-v38 ACDs store descriptions in attribute slot 67841
+        #    (object_id=67841) as record_type=1 rows with an empty
+        #    tag_reference and rung_content=0; other record_type=1 slots
+        #    (e.g. slot 4 HMI attributes) are not documentation.
+        #  - provider/ACM metadata rows carry XML payloads (record_string
+        #    starting with '<') and must not leak into operand comments.
         self._cur.execute(
             "SELECT tag_reference, record_string FROM comments "
-            "WHERE parent=? AND (record_type<>1 OR object_id=1)",
+            "WHERE parent=? AND ("
+            "  (record_type<>1"
+            "   AND NOT (record_type=14 AND record_string LIKE '<%'))"
+            "  OR object_id=1"
+            "  OR (record_type=1 AND object_id=67841"
+            "      AND tag_reference='' AND rung_content=0)"
+            ")",
             ((r.comment_id * 0x10000) + r.cip_type,),
         )
         comment_results = self._cur.fetchall()
@@ -2346,8 +2360,12 @@ class TaskBuilder(L5xElementBuilder):
 @dataclass
 class ControllerBuilder(L5xElementBuilder):
     def build(self) -> Controller:
+        # comp_name != '' guards against stray/garbage records that decode
+        # with parent_id=0 and record_type=256 (seen in the wild with an
+        # empty name and seq 0xFFFF); a real controller always has a name.
         self._cur.execute(
-            "SELECT comp_name, object_id, parent_id, record_type, record FROM comps WHERE parent_id=0 AND record_type=256"
+            "SELECT comp_name, object_id, parent_id, record_type, record FROM comps "
+            "WHERE parent_id=0 AND record_type=256 AND comp_name != ''"
         )
         results = self._cur.fetchall()
         if len(results) != 1:
