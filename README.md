@@ -515,6 +515,34 @@ Once configured, these powerful tools will be available in your AI conversations
 
 **Features**: Find all drawings and documentation related to specific equipment
 
+### 📄 **L5X Documentation Pipeline Tools**
+
+Offline, procedural (no LLM) tools over `src/l5x_documenter/` — the ACD -> L5X -> HTML
+documentation pipeline. Standalone: they don't reference or chain to the comment-graph
+comment-authoring tools (`analyze_comment_graph`, `generate_program_comments`).
+
+#### Generate PLC Documentation
+**Tool**: `generate_plc_documentation`
+**Parameters**:
+- `input_path` (string): An `.l5x` file, a directory of L5X files, or (with `full_pipeline=True`) an `.ACD` file
+- `output_dir` (optional string): Output directory (default: next to each source file)
+- `translate` (optional boolean): Tri-state bilingual (Italian/English) override — omit to auto-detect per file from its source path (Colussi/Vemac), or force `true`/`false`
+- `online_translate` (optional boolean): Enable the online (deep-translator) MT fallback (default: false)
+- `inline_assets` (optional boolean): Embed JS/CSS directly into each HTML file (default: false)
+- `full_pipeline` (optional boolean): Run the full offline ACD -> L5X -> HTML pipeline (convert, split, document) for an `.ACD` source, writing every artifact next to it
+
+**Output**: Interactive `*_Documentation.html` file(s) (+ `index.html` for a directory run) with generated-file paths and summary counts
+
+#### Split L5X
+**Tool**: `split_l5x`
+**Parameters**:
+- `l5x_path` (string): Path to the `.L5X` file to split
+- `output_dir` (optional string): Output directory for the split artifacts (default: `l5x_individual/` next to the source L5X)
+
+**Output**: Per-routine XML files plus `_index.json`, `_tags.csv`, and `_cross_references.json` under `l5x_individual/`, with program/routine/AOI/tag counts read back from the index
+
+**CLI**: The same pipeline is available outside the MCP server as the `plc-docgen` command (`src/l5x_documenter/cli.py`) for direct/scripted use (e.g. git hooks).
+
 ## 🎯 **Three Powerful Approaches for PLC Project Creation**
 
 Your MCP server supports **THREE different approaches** for PLC project creation, each optimized for different use cases:
@@ -960,7 +988,7 @@ Studio5000_MCP_Server/
 ```
 
 ### Key Files
-- **Main Server**: `src/mcp_server/studio5000_mcp_server.py` (main MCP server with 52 tools)
+- **Main Server**: `src/mcp_server/studio5000_mcp_server.py` (main MCP server with 54 tools)
 - **AI Assistant**: `src/ai_assistant/enhanced_main_assistant.py` (production-ready AI assistant)
 - **L5X Generator**: `src/code_generator/l5x_generator.py` (creates importable L5X files)
 - **L5X Analyzer**: `src/l5x_analyzer/l5x_vector_db.py` (semantic search through L5X files)
