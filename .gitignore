@@ -91,3 +91,9 @@ tests/acd/KemcoWaterHeater/Kemco_HA105-Tags.CSV
 kemco_out/all.json
 kemco_out/curated.json
 .worktrees/
+
+# l5x_documenter i18n: test-time harvest output, and any per-user MT cache
+# seed that might get dropped into the package dir by mistake (the real
+# cache lives outside the repo — see l5x_documenter/translator.py).
+src/l5x_documenter/i18n/glossary_candidates.json
+src/l5x_documenter/i18n/translation_cache.json
