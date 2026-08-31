@@ -63,6 +63,7 @@ from l5x_analyzer.l5x_mcp_integration import L5XSDKMCPIntegration, L5XMCPTools
 from drawings_analyzer.pdf_mcp_integration import PDFMCPIntegration, PDFMCPTools
 from tag_analyzer.tag_mcp_integration import TagMCPIntegration, TagMCPTools
 from ignition_exporter.ignition_mcp_integration import IgnitionMCPIntegration
+from l5x_documenter.l5x_documenter_mcp_integration import L5XDocumenterMCPIntegration
 
 # MCP imports (we'll implement a simplified version)
 class MCPServer:
@@ -354,6 +355,7 @@ class Studio5000MCPServer:
         self._tag_integration = None
         self._tag_tools = None
         self._ignition_integration = None
+        self._l5x_documenter_integration = None
 
         # Initialization locks for thread safety
         self._init_locks = {
@@ -362,7 +364,8 @@ class Studio5000MCPServer:
             'l5x': threading.Lock(),
             'pdf': threading.Lock(),
             'tag': threading.Lock(),
-            'ignition': threading.Lock()
+            'ignition': threading.Lock(),
+            'l5x_documenter': threading.Lock()
         }
         
         # Fast basic initialization only - vector DBs loaded on demand
@@ -530,7 +533,18 @@ class Studio5000MCPServer:
                     self._ignition_integration = IgnitionMCPIntegration()
                     print("✅ Ignition exporter ready", file=sys.stderr)
         return self._ignition_integration
-    
+
+    @property
+    def l5x_documenter_integration(self):
+        """Lazy-loaded l5x_documenter pipeline integration (pure/offline engine)"""
+        if self._l5x_documenter_integration is None:
+            with self._init_locks['l5x_documenter']:
+                if self._l5x_documenter_integration is None:
+                    print("🔄 Initializing l5x_documenter pipeline...", file=sys.stderr)
+                    self._l5x_documenter_integration = L5XDocumenterMCPIntegration()
+                    print("✅ l5x_documenter pipeline ready", file=sys.stderr)
+        return self._l5x_documenter_integration
+
     async def _ensure_instruction_db_ready(self):
         """Ensure the instruction vector database is fully initialized"""
         # Trigger lazy loading by accessing the property
@@ -926,6 +940,31 @@ class Studio5000MCPServer:
             "Preview Ignition node-name sanitization for a string or list of names (strips illegal "
             "characters that cause 'Error loading node' import failures).",
             self.sanitize_ignition_nodes
+        )
+
+        # l5x_documenter pipeline tools (offline, procedural -- no LLM). These are
+        # standalone and callable directly; they do not reference or chain to the
+        # comment_graph workflow tools (analyze_comment_graph / generate_program_comments).
+        self.server.add_tool(
+            "generate_plc_documentation",
+            "Generate interactive HTML PLC documentation from an L5X file/directory, or run the "
+            "full offline ACD -> L5X -> HTML pipeline for an .ACD source (full_pipeline=True). "
+            "Procedural, deterministic, no LLM involved -- purely a rendering pass over parsed L5X "
+            "data; call it directly whenever you need browsable documentation. Bilingual (Italian/"
+            "English) output auto-detects per file from its source path (Colussi/Vemac integrators) "
+            "unless translate explicitly forces it on/off. Not related to and does not chain to the "
+            "comment-graph comment-authoring tools (analyze_comment_graph, generate_program_comments) "
+            "-- use those instead when the goal is adding/reviewing rung and tag comments.",
+            self.generate_plc_documentation
+        )
+        self.server.add_tool(
+            "split_l5x",
+            "Split a monolithic L5X export into per-routine XML files plus an index, tag CSV, and "
+            "cross-reference JSON under an l5x_individual/ folder -- useful for browsing or diffing "
+            "one routine at a time on a large project. Procedural and deterministic, no LLM involved; "
+            "callable standalone. Not related to and does not chain to the comment-graph workflow "
+            "tools (analyze_comment_graph, generate_program_comments, get_uncommented_tags).",
+            self.split_l5x
         )
 
         # Performance monitoring tools
@@ -1729,6 +1768,23 @@ class Studio5000MCPServer:
         """Preview Ignition name sanitization for a string or list of names."""
         return await self.ignition_integration.sanitize_ignition_nodes(names)
 
+    # -- l5x_documenter pipeline handlers (procedural, no LLM) -------------
+    async def generate_plc_documentation(self, input_path: str, output_dir: Optional[str] = None,
+                                         translate: Optional[bool] = None, online_translate: bool = False,
+                                         inline_assets: bool = False, full_pipeline: bool = False) -> Dict[str, Any]:
+        """Generate HTML PLC documentation for an L5X file/directory, or run the full
+        offline ACD -> L5X -> HTML pipeline for an .ACD source. Long-running sync work
+        (parsing, HTML rendering, ACD conversion) runs off the event loop inside the adapter."""
+        return await self.l5x_documenter_integration.generate_plc_documentation(
+            input_path, output_dir=output_dir, translate=translate,
+            online_translate=online_translate, inline_assets=inline_assets,
+            full_pipeline=full_pipeline,
+        )
+
+    async def split_l5x(self, l5x_path: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+        """Split a monolithic L5X into per-routine XML files + index/xref/tag CSV."""
+        return await self.l5x_documenter_integration.split_l5x(l5x_path, output_dir=output_dir)
+
     async def get_cache_performance(self) -> Dict[str, Any]:
         """Get vector database cache performance statistics"""
         try:
@@ -2220,6 +2276,22 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'names': {'description': 'A single name (string) or a list of names to sanitize for Ignition'}
                 }
                 required = ['names']
+            elif name == 'generate_plc_documentation':
+                properties = {
+                    'input_path': {'type': 'string', 'description': 'Path to an .l5x file, a directory of L5X files, or (with full_pipeline=True) an .ACD file'},
+                    'output_dir': {'type': 'string', 'description': 'Optional output directory (default: next to each source file). Ignored when full_pipeline=True.'},
+                    'translate': {'type': 'boolean', 'description': 'Tri-state bilingual (Italian/English) override: omit/null to auto-detect per file from its source path (Colussi/Vemac), true/false to force on/off. Ignored when full_pipeline=True.'},
+                    'online_translate': {'type': 'boolean', 'description': 'Enable the online (deep-translator) machine-translation fallback (default: false). Ignored when full_pipeline=True.'},
+                    'inline_assets': {'type': 'boolean', 'description': 'Embed JS/CSS assets directly into each HTML file instead of referencing external files (default: false). Ignored when full_pipeline=True.'},
+                    'full_pipeline': {'type': 'boolean', 'description': 'Run the full offline ACD -> L5X -> HTML pipeline (convert, split, document); requires input_path to be an .ACD file. Writes all artifacts next to the source ACD (default: false).'}
+                }
+                required = ['input_path']
+            elif name == 'split_l5x':
+                properties = {
+                    'l5x_path': {'type': 'string', 'description': 'Path to the .L5X file to split'},
+                    'output_dir': {'type': 'string', 'description': 'Optional output directory for the split artifacts (default: l5x_individual/ next to the source L5X)'}
+                }
+                required = ['l5x_path']
 
             tools.append({
                 'name': name,
