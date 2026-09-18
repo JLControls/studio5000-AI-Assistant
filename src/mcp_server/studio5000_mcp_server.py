@@ -67,6 +67,25 @@ from tag_analyzer.tag_mcp_integration import TagMCPIntegration, TagMCPTools
 from ignition_exporter.ignition_mcp_integration import IgnitionMCPIntegration
 from l5x_documenter.l5x_documenter_mcp_integration import L5XDocumenterMCPIntegration
 
+
+def _require_python_312(version_info=None, executable=None) -> bool:
+    """Return whether the executable runtime is a supported Python 3.12.x."""
+    version_info = sys.version_info if version_info is None else version_info
+    executable = sys.executable if executable is None else executable
+    major, minor = version_info[:2]
+    if (major, minor) == (3, 12):
+        return True
+
+    patch = version_info[2] if len(version_info) > 2 else 0
+    print(
+        "ERROR: Studio 5000 MCP Server requires Python 3.12.x "
+        f"(current: {major}.{minor}.{patch}; executable: {executable}). "
+        "Create or activate the repository .venv with Python 3.12, then "
+        "run .venv/bin/python (or .venv\\Scripts\\python.exe on Windows).",
+        file=sys.stderr,
+    )
+    return False
+
 # MCP imports (we'll implement a simplified version)
 class MCPServer:
     def __init__(self, name: str, version: str = "1.0.0"):
@@ -1267,7 +1286,9 @@ class Studio5000MCPServer:
             specification = routine_spec.get('specification', '')
             controller_name = routine_spec.get('controller_name', 'MTN6_MCM06')
             software_revision = routine_spec.get('software_revision', '36.02')
-            program_name = routine_spec.get('program_name', 'MainProgram')
+            target_program = routine_spec.get('target_program') or routine_spec.get(
+                'program_name', 'MainProgram'
+            )
             save_path = routine_spec.get('save_path')
             
             # Generate ladder logic using enhanced assistant
@@ -1363,7 +1384,7 @@ class Studio5000MCPServer:
                 controller_name=controller_name,
                 tags=tags,
                 software_revision=software_revision,
-                program_name=program_name,
+                target_program=target_program,
             )
             
             # Save to file if path provided
@@ -1375,7 +1396,7 @@ class Studio5000MCPServer:
                     controller_name=controller_name,
                     tags=tags,
                     software_revision=software_revision,
-                    program_name=program_name,
+                    target_program=target_program,
                 )
             
             return {
@@ -1983,7 +2004,8 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                         'properties': {
                             'name': {'type': 'string', 'description': 'Routine name'},
                             'controller_name': {'type': 'string', 'description': 'Existing controller name (e.g., MTN6_MCM06)'},
-                            'program_name': {'type': 'string', 'description': 'Target Program context (default: MainProgram)'},
+                            'target_program': {'type': 'string', 'description': 'Target Program context (default: MainProgram)'},
+                            'program_name': {'type': 'string', 'description': 'Deprecated alias for target_program'},
                             'specification': {'type': 'string', 'description': 'Natural language specification for routine logic'},
                             'software_revision': {'type': 'string', 'description': 'Studio 5000 software revision (default: 36.02)'},
                             'save_path': {'type': 'string', 'description': 'File path to save routine L5X export'}
@@ -2449,6 +2471,9 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
 
 async def main():
     """Main server entry point"""
+    if not _require_python_312():
+        return 2
+
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     if hasattr(sys.stderr, 'reconfigure'):

@@ -489,8 +489,6 @@ class IndustrialInstructionMapper:
         # Communication Instructions
         self.comm_instructions = {
             'message': 'MSG',
-            'produce': 'PRODUCE',
-            'consume': 'CONSUME',
             'get_system_value': 'GSV',
             'set_system_value': 'SSV'
         }
@@ -570,4 +568,3 @@ class IndustrialInstructionMapper:
 
 # This is just the beginning - we need to continue with the enhanced generator classes
 # The file is getting long, so I'll create additional files for the other components
-

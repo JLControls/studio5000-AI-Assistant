@@ -724,8 +724,9 @@ class L5XSDKMCPIntegration:
                 return {
                     'success': False,
                     'error': (
-                        f"Project '{project_name}' is not indexed. Run "
-                        "index_exported_l5x_files or index_acd_project for this project first."
+                        f"Project '{project_name}' is not indexed. Available indexed projects: "
+                        f"{list(indexed_projects.keys())}. Run index_exported_l5x_files or "
+                        "index_acd_project for this project first."
                     )
                 }
             

@@ -10,6 +10,7 @@ Optimized for production-scale processing following existing architecture patter
 
 import os
 import re
+import sys
 import time
 import logging
 import signal
@@ -878,24 +879,24 @@ def test_parser_on_pdf(pdf_path: str, max_pages: int = 5):
     try:
         chunks, stats = parser.parse_pdf_file(pdf_path, max_pages=max_pages)
         
-        print(f"\n🎯 PDF Parser Test Results:")
-        print(f"   📄 Pages processed: {stats.pages_processed}")
-        print(f"   📦 Chunks created: {stats.total_chunks}")
-        print(f"   ⏱️  Processing time: {stats.processing_time:.2f}s")
-        print(f"   📝 Text extracted: {stats.text_chars_extracted:,} chars")
+        print(f"\n🎯 PDF Parser Test Results:", file=sys.stderr)
+        print(f"   📄 Pages processed: {stats.pages_processed}", file=sys.stderr)
+        print(f"   📦 Chunks created: {stats.total_chunks}", file=sys.stderr)
+        print(f"   ⏱️  Processing time: {stats.processing_time:.2f}s", file=sys.stderr)
+        print(f"   📝 Text extracted: {stats.text_chars_extracted:,} chars", file=sys.stderr)
         
         if chunks:
-            print(f"\n📋 Sample chunks:")
+            print(f"\n📋 Sample chunks:", file=sys.stderr)
             for i, chunk in enumerate(chunks[:3]):
-                print(f"   {i+1}. {chunk.display_name}")
-                print(f"      Type: {chunk.chunk_type.value}")
-                print(f"      Equipment: {chunk.equipment_tags}")
-                print(f"      Text: {chunk.content[:100]}...")
+                print(f"   {i+1}. {chunk.display_name}", file=sys.stderr)
+                print(f"      Type: {chunk.chunk_type.value}", file=sys.stderr)
+                print(f"      Equipment: {chunk.equipment_tags}", file=sys.stderr)
+                print(f"      Text: {chunk.content[:100]}...", file=sys.stderr)
                 
         return True
         
     except Exception as e:
-        print(f"❌ Test failed: {e}")
+        print(f"❌ Test failed: {e}", file=sys.stderr)
         return False
 
 if __name__ == "__main__":

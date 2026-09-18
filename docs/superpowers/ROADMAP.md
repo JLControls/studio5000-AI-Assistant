@@ -32,7 +32,7 @@ the project validation environment.
 | PLAN-08 | SCADA Ignition coverage, scaling, report | Partial | 45 | #10, #24, #25 | Task 1+2 done; 3/4 open; better with 04 |
 | PLAN-09 | Secure cache and deserialization | Mostly done | 80 | #36 | Fingerprint validity, bandit in CI (10) |
 | PLAN-10 | CI and build infrastructure | Partial | 25 | #35 | Baseline job exists |
-| PLAN-11 | Core bug fixes and MCP reliability | Partial | 35 | #37, #38, #39, #5 | Independent, small |
+| PLAN-11 | Core bug fixes and MCP reliability | Mostly done | 90 | #37, #38, #39, #5 | Broader #5 setup/bootstrap documentation remains |
 | SPEC-12 | Documentation versioning and drawings | Not started | 0 | #19 | Independent, P2 |
 | SPEC-13 | Interface audit engine | Not started (spec only) | 0 | — | Must be rebased on 01, 05, 07; no plan yet |
 
@@ -74,8 +74,9 @@ Dependency-ordered. Each phase leaves `main` releasable.
    `sdk_verifier.py` remains the compatibility entry point. The remaining
    PLAN-01 work is API completeness, richer operand coverage, ACD provenance,
    and synthetic fixture evidence.
-2. **PLAN-11 remainder.** Remaining fixes, each with a test in a new
-   `tests/test_core_bugfixes.py`:
+2. **PLAN-11 remainder — delivered (2026-09-18).** Added focused regression
+   coverage in `tests/test_core_bugfixes.py` and completed the remaining core
+   fixes:
    - BUG-04: list available indexed projects in the wrong-project error.
    - BUG-06: `file=sys.stderr` on the five `__main__` print runners; add a
      subprocess JSON-RPC framing test.
@@ -85,6 +86,9 @@ Dependency-ordered. Each phase leaves `main` releasable.
    - Remove fictitious `PRODUCE`/`CONSUME` mappings.
    - Python 3.12 guard inside `main()`.
    - Fix the `INPUT_ONLY` false warning in the verifier using the shared table.
+   The broader repo-local Python 3.12 setup/bootstrap documentation and
+   pytest pre-collection guard proposed on issue #5 remain outside this
+   roadmap item.
 3. **PLAN-10 remainder.** Add `--test` smoke step to the Linux job, a
    lint-and-security job (flake8 E9/F63/F7/F82 blocking, bandit advisory),
    `.flake8`, `.bandit.yaml`, README badge. Measure runtime before adding a

@@ -8,6 +8,7 @@ designed specifically for complex warehouse automation scenarios.
 
 import asyncio
 import json
+import sys
 from typing import Dict, List, Optional, Any
 from dataclasses import asdict
 
@@ -26,7 +27,7 @@ class EnhancedCodeAssistant:
         self.generator = EnhancedLadderLogicGenerator(mcp_server)
         self.warehouse_patterns = WarehouseAutomationPatterns()
         self.mcp_server = mcp_server
-        
+
         # Initialize conversation context for multi-turn interactions
         self.conversation_context = {
             'previous_requirements': [],
@@ -39,7 +40,7 @@ class EnhancedCodeAssistant:
                                            context: Optional[Dict] = None) -> Dict[str, Any]:
         """
         Main entry point - convert natural language description to PLC code
-        
+
         Args:
             description: Natural language description of automation requirements
             context: Optional context from previous conversations or user preferences
@@ -640,18 +641,23 @@ if __name__ == "__main__":
         
         result = await assistant.generate_code_from_description(description)
         
-        print("Generated Code:")
-        print("=" * 50)
-        print(result['generated_code']['ladder_logic'])
-        print("\nTags:")
-        print("=" * 50)
+        print("Generated Code:", file=sys.stderr)
+        print("=" * 50, file=sys.stderr)
+        print(result['generated_code']['ladder_logic'], file=sys.stderr)
+        print("\nTags:", file=sys.stderr)
+        print("=" * 50, file=sys.stderr)
         for tag in result['generated_code']['tags']:
-            print(f"{tag['name']}: {tag['data_type']} - {tag['description']}")
-        
-        print(f"\nComplexity: {result['requirements']['complexity']}")
-        print(f"Domain: {result['requirements']['domain']}")
-        print(f"Instructions Used: {', '.join(result['generated_code']['instructions_used'])}")
+            print(
+                f"{tag['name']}: {tag['data_type']} - {tag['description']}",
+                file=sys.stderr,
+            )
+
+        print(f"\nComplexity: {result['requirements']['complexity']}", file=sys.stderr)
+        print(f"Domain: {result['requirements']['domain']}", file=sys.stderr)
+        print(
+            f"Instructions Used: {', '.join(result['generated_code']['instructions_used'])}",
+            file=sys.stderr,
+        )
     
     # Run the test
     asyncio.run(test_enhanced_assistant())
-

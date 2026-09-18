@@ -8,6 +8,7 @@ documentation including syntax, parameters, examples, and usage patterns.
 
 import json
 import os
+import sys
 import numpy as np
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
@@ -377,8 +378,8 @@ class InstructionVectorDatabase:
 def main():
     """Test the instruction vector database"""
     # This would normally be called with real instruction data
-    print("Instruction Vector Database Test")
-    print("Note: This requires actual instruction data from the MCP server")
+    print("Instruction Vector Database Test", file=sys.stderr)
+    print("Note: This requires actual instruction data from the MCP server", file=sys.stderr)
     
     # Example of how it would be used:
     # vector_db = InstructionVectorDatabase()
@@ -396,11 +397,11 @@ def main():
         "array operations"
     ]
     
-    print("\n🔍 Example search queries that will work:")
+    print("\n🔍 Example search queries that will work:", file=sys.stderr)
     for query in test_queries:
-        print(f"  - '{query}'")
+        print(f"  - '{query}'", file=sys.stderr)
     
-    print("\n✅ Ready for integration with MCP server")
+    print("\n✅ Ready for integration with MCP server", file=sys.stderr)
 
 
 if __name__ == "__main__":

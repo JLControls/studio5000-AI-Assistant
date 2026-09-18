@@ -11,7 +11,7 @@ import sys
 import os
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
-from plc_instruction_semantics import COMMON_INSTRUCTIONS
+from plc_instruction_semantics import COMMON_INSTRUCTIONS, is_destructive
 
 @dataclass
 class VerificationError:
@@ -235,8 +235,17 @@ class SDKVerifier:
         """Validate basic ladder logic structure and patterns"""
         warnings = []
         
-        # Check for common patterns
-        if 'XIC(' in rung and 'OTE(' not in rung and 'OTL(' not in rung and 'OTU(' not in rung:
+        instruction_pattern = r'\b([A-Z][A-Z0-9_]*)\s*\('
+        instructions_found = re.findall(instruction_pattern, rung)
+        has_output_or_control = any(
+            is_destructive(instruction) or instruction in {"JSR", "MSG"}
+            for instruction in instructions_found
+        )
+
+        # A rung containing only contacts has no visible output. Stateful,
+        # data-movement, math, and control instructions derive their output
+        # capability from the shared instruction-semantics table.
+        if 'XIC(' in rung and not has_output_or_control:
             warnings.append(VerificationWarning(
                 code="INPUT_ONLY",
                 message=f"Rung {rung_number} has inputs but no outputs",

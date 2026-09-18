@@ -330,9 +330,11 @@ class L5XGenerator:
     def generate_routine_export(self, routine: Routine, controller_name: str = "MTN6_MCM06", 
                                tags: Optional[List[Dict]] = None, 
                                software_revision: str = "36.02",
-                               program_name: str = "MainProgram") -> str:
+                               program_name: str = "MainProgram",
+                               target_program: Optional[str] = None) -> str:
         """Generate L5X routine export (not full project) that can be imported into existing ACD"""
         timestamp = datetime.now().strftime("%a %b %d %H:%M:%S %Y")
+        effective_program = target_program or program_name
         
         # Generate rungs XML for the routine
         rungs_xml = ""
@@ -355,7 +357,7 @@ class L5XGenerator:
 {tags_xml}
 </Tags>
 <Programs Use="Context">
-<Program Use="Context" Name="{program_name}" Class="Standard">
+<Program Use="Context" Name="{effective_program}" Class="Standard">
 <Tags Use="Context">
 </Tags>
 <Routines Use="Context">
@@ -385,11 +387,17 @@ class L5XGenerator:
     
     def save_routine_export(self, routine: Routine, file_path: str, controller_name: str = "MTN6_MCM06", 
                            tags: Optional[List[Dict]] = None, software_revision: str = "36.02",
-                           program_name: str = "MainProgram") -> bool:
+                           program_name: str = "MainProgram",
+                           target_program: Optional[str] = None) -> bool:
         """Save routine export L5X file"""
         try:
             l5x_content = self.generate_routine_export(
-                routine, controller_name, tags, software_revision, program_name
+                routine=routine,
+                controller_name=controller_name,
+                tags=tags,
+                software_revision=software_revision,
+                program_name=program_name,
+                target_program=target_program,
             )
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(l5x_content)
@@ -405,7 +413,7 @@ def create_motor_control_example() -> L5XProject:
     # Define ladder logic rungs
     start_stop_rung = LadderRung(
         number=0,
-        logic="XIC(START_PB)XIO(STOP_PB)OTE(MOTOR_RUN);",
+        logic="[XIC(START_PB) , XIC(MOTOR_RUN) ]XIO(STOP_PB)OTE(MOTOR_RUN);",
         comment="Start/Stop motor control logic"
     )
     
@@ -471,9 +479,9 @@ if __name__ == "__main__":
     example_project = create_motor_control_example()
     
     l5x_content = generator.generate_l5x_project(example_project)
-    print("Generated L5X Content:")
-    print(l5x_content[:500] + "...")
+    print("Generated L5X Content:", file=sys.stderr)
+    print(l5x_content[:500] + "...", file=sys.stderr)
     
     # Save to file
     if generator.save_l5x_file(example_project, "test_motor_control.L5X"):
-        print("\\nL5X file saved successfully!")
+        print("\\nL5X file saved successfully!", file=sys.stderr)

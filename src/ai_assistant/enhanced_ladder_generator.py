@@ -74,8 +74,8 @@ class EnhancedLadderLogicGenerator:
         # Communication mappings for warehouse systems
         self.comm_mappings = {
             'barcode_scanner': 'MSG',     # Message instruction for scanner comm
-            'wms_interface': 'PRODUCE',   # Produce data to WMS
-            'hmi_update': 'CONSUME',      # Consume HMI commands
+            'wms_interface': 'MSG',       # Message instruction for WMS interface
+            'hmi_update': 'MSG',          # Message/data transfer for HMI
             'plc_to_plc': 'MSG'          # Inter-PLC communication
         }
     
@@ -1204,4 +1204,3 @@ XIC({ready_tag}) OTE({out_tag});"""
                 validation_notes.append(f"❌ {instruction}: Validation error - {str(e)}")
         
         return validation_notes
-

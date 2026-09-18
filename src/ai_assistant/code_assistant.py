@@ -7,6 +7,7 @@ using the Studio 5000 instruction documentation from the MCP server.
 """
 
 import re
+import sys
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 import json
@@ -184,8 +185,11 @@ class LadderLogicGenerator:
         stop_input = self._get_or_create_tag(req.inputs, ['stop'], 'STOP_PB') 
         motor_output = self._get_or_create_tag(req.outputs, ['motor'], 'MOTOR_RUN')
         
-        # Generate the classic start/stop logic
-        ladder_logic = f"XIC({start_input})XIO({stop_input})OTE({motor_output});"
+        # Generate a standard three-wire start/stop circuit with a seal-in branch.
+        ladder_logic = (
+            f"[XIC({start_input}) , XIC({motor_output}) ]"
+            f"XIO({stop_input})OTE({motor_output});"
+        )
         
         # Create tags
         tags = [
@@ -199,7 +203,7 @@ class LadderLogicGenerator:
             tags=tags,
             instructions_used=['XIC', 'XIO', 'OTE'],
             comments=['Start/stop motor control logic'],
-            validation_notes=['Standard three-wire control circuit']
+            validation_notes=['Standard three-wire seal-in latch motor control circuit']
         )
     
     def _is_timer_pattern(self, req: PLCRequirement) -> bool:
@@ -556,10 +560,13 @@ if __name__ == "__main__":
     import asyncio
     async def test():
         result = await assistant.generate_code_from_description(description)
-        print("Generated Code:")
-        print(result['generated_code'].ladder_logic)
-        print("\\nTags:")
+        print("Generated Code:", file=sys.stderr)
+        print(result['generated_code'].ladder_logic, file=sys.stderr)
+        print("\\nTags:", file=sys.stderr)
         for tag in result['generated_code'].tags:
-            print(f"  {tag['name']}: {tag['data_type']} - {tag['description']}")
+            print(
+                f"  {tag['name']}: {tag['data_type']} - {tag['description']}",
+                file=sys.stderr,
+            )
     
     asyncio.run(test())
