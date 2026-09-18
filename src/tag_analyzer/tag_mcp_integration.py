@@ -554,7 +554,7 @@ class TagMCPIntegration:
                 decisions_path=decisions_path,
                 work_packet_path=work_packet_path,
             )
-            res["success"] = True
+            res["success"] = not bool(res.get("updated_acd_error"))
             return res
         except Exception as e:
             logger.error(f"Error generating comment deliverables: {e}")

@@ -883,10 +883,11 @@ class Studio5000MCPServer:
             "deliverables in one folder — Comment_Delta.CSV (importable), comment_review_report.html, "
             "decisions.json, and comment_memory.json. Pass EVERY decision: the evidence-backed ones from "
             "analyze_comment_graph PLUS the one you authored for each assistance_request (do not drop any). "
-            "Decision dict = {TYPE: 'COMMENT' for an operand / 'Tag' for a tag description, SCOPE: <controller "
-            "name, e.g. THAWROOM>, NAME: <full operand path e.g. N101[20].1, or tag name>, "
+            "Decision dict = {TYPE: 'COMMENT' for an operand / 'TAG' for a tag description, SCOPE: <blank for controller "
+            "scope, actual program name for program tags>, NAME: <full operand path e.g. N101[20].1, or tag name>, "
             "PROPOSED_DESCRIPTION: <text; prefix with 'Candidate: ' when confidence is low>, CONFIDENCE, "
-            "STATUS, RATIONALE}. Set edit_acd=True only when you also need an updated .ACD written. "
+            "STATUS, RATIONALE}. Direct ACD comment writing is unsupported; leave edit_acd=False. "
+            "Import the CSV in Studio and verify a fresh export; generated files do not mean comments were applied. "
             "Pass file_path so decisions.json/comment_memory.json are emitted.",
             self.generate_comment_deliverables
         )
@@ -2262,7 +2263,7 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'output_dir': {'type': 'string', 'description': 'Output directory for deliverables (defaults to folder alongside target file)'},
                     'project_name': {'type': 'string', 'description': 'Project name for report header'},
                     'file_path': {'type': 'string', 'description': 'Path to reference target ACD or L5X file'},
-                    'edit_acd': {'type': 'boolean', 'description': 'Directly edit comments/rungs in the ACD file and output an updated .ACD deliverable'},
+                    'edit_acd': {'type': 'boolean', 'description': 'Legacy rung-text editing only; direct ACD comment writing is unsupported. Leave false for comments.'},
                     'target_acd': {'type': 'string', 'description': 'Explicit path to target ACD file to edit'}
                 }
                 required = []
@@ -2282,7 +2283,7 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'memory_file_path': {'type': 'string', 'description': 'Optional memory JSON path; record is extended with graph_digest and source_artifact_hash'},
                     'user_seeds': {'type': 'array', 'description': 'Optional user decision seeds (UPPERCASE NAME/PROPOSED_DESCRIPTION dicts), tier-2 precedence'},
                     'config': {'type': 'object', 'description': 'Optional AnalysisConfig overrides (max_passes, max_component_passes, max_workers, enable_instruction_doc, enable_vector_retrieval)'},
-                    'edit_acd': {'type': 'boolean', 'description': 'Directly edit comments/rungs in the ACD file and output an updated .ACD deliverable'},
+                    'edit_acd': {'type': 'boolean', 'description': 'Legacy rung-text editing only; direct ACD comment writing is unsupported. Leave false for comments.'},
                     'target_acd': {'type': 'string', 'description': 'Explicit path to target ACD file to edit'}
                 }
                 required = ['file_path']

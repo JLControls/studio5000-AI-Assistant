@@ -93,11 +93,9 @@ class TestDirectACDDeliverables(unittest.TestCase):
             edit_acd=True,
         )
 
-        self.assertIn("updated_acd", res)
-        updated_acd_path = Path(res["updated_acd"])
-        self.assertTrue(updated_acd_path.exists())
-        self.assertEqual(updated_acd_path.parent.resolve(), self.test_deliverables_dir)
-        self.assertGreater(updated_acd_path.stat().st_size, 1000000)
+        self.assertNotIn("updated_acd", res)
+        self.assertIn("not supported", res["updated_acd_error"])
+        self.assertFalse(res["acd_comments_applied"])
 
 
 if __name__ == "__main__":

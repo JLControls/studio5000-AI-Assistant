@@ -357,14 +357,56 @@ class PLCCommentPipeline:
                 text = text.replace(k, v)
             return text
 
+        controller_name = project_name
+        reference_root = None
+        known_tags = {}
+        routine_names = set()
+        if ref_file and ref_file.suffix.lower() in ('.l5x', '.acd'):
+            try:
+                reference_root = self.parse_l5x_tree(self.resolve_l5x_path(ref_file))
+            except (ValueError, FileNotFoundError) as exc:
+                logger.warning('CSV target validation unavailable: %s', exc)
+        if reference_root is not None:
+            controller = reference_root.find('Controller')
+            if controller is not None:
+                controller_name = controller.get('Name', controller_name)
+                known_tags.update({('', t.get('Name', '').casefold()): t
+                                   for t in controller.findall('Tags/Tag')})
+                for program in controller.findall('Programs/Program'):
+                    known_tags.update({(program.get('Name', '').casefold(), t.get('Name', '').casefold()): t
+                                       for t in program.findall('Tags/Tag')})
+                    routine_names.update(r.get('Name', '').casefold()
+                                         for r in program.findall('Routines/Routine'))
+
         csv_rows = []
+        csv_excluded = []
         for dec in decisions:
-            rec_type = dec.get("TYPE", "COMMENT")
+            rec_type = dec.get("TYPE", "COMMENT").upper()
             scope = _normalize_cp1252(dec.get("SCOPE", ""))
+            if scope.casefold() in ('controller', (controller_name or '').casefold()):
+                scope = ''
             name = dec.get("NAME", "")
+            base_name = re.split(r'[.\[]', name, maxsplit=1)[0]
+            if rec_type == 'TAG' and base_name != name:
+                rec_type = 'COMMENT'
+            if scope.casefold() == 'operand' and reference_root is not None:
+                candidates = [s for s, n in known_tags if n == base_name.casefold()]
+                # Legacy analysis used Operand as an entity category, not a scope.
+                if ':' in base_name and not candidates:
+                    candidates = ['']
+                if len(candidates) == 1:
+                    scope = candidates[0]
+            if (reference_root is not None and rec_type == 'TAG'
+                    and (scope.casefold(), base_name.casefold()) not in known_tags
+                    and base_name.casefold() in routine_names):
+                csv_excluded.append({'NAME': name, 'SCOPE': scope,
+                                     'reason': 'Routine name is not a tag; retained in review decisions.'})
+                continue
             raw_desc = _normalize_cp1252(dec.get("PROPOSED_DESCRIPTION", ""))
             # Convert python newline to literal $N for Studio 5000 CSV
-            formatted_desc = raw_desc.replace("\r\n", "$N").replace("\n", "$N")
+            formatted_desc = (raw_desc.replace('$', '$$').replace('"', '$Q')
+                              .replace('\t', '$T').replace("\r\n", "$N")
+                              .replace("\n", "$N").replace('\r', '$N'))
 
             # Studio 5000 operand comments are COMMENT rows whose member/operand
             # reference lives in the SPECIFIER column (col 6); tag/component
@@ -373,12 +415,15 @@ class PLCCommentPipeline:
             specifier = _normalize_cp1252(dec.get("SPECIFIER", ""))
             attributes = _normalize_cp1252(dec.get("ATTRIBUTES", ""))
 
-            # P7: Split NAME into base tag + SPECIFIER for COMMENT rows if specifier is missing
-            if rec_type == "COMMENT" and not specifier and ("[" in name or "." in name):
-                m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)(.*)$", name)
-                if m:
-                    name = m.group(1)
-                    specifier = m.group(2)
+            # Rockwell CSV uses the FULL operand in SPECIFIER, including the
+            # base tag. Module-defined names may contain colons.
+            if rec_type == "COMMENT":
+                base_name = re.split(r'[.\[]', name, maxsplit=1)[0]
+                if not specifier:
+                    specifier = name
+                elif specifier.startswith(('.', '[')):
+                    specifier = base_name + specifier
+                name = base_name
 
             csv_rows.append([rec_type, scope, name, formatted_desc, datatype, specifier, attributes])
 
@@ -402,6 +447,10 @@ class PLCCommentPipeline:
             "decisions_json": str(decisions_json_path),
             "decisions_processed": len(decisions),
             "skipped_unauthored_drafts": skipped_unauthored_drafts,
+            "csv_rows_written": len(csv_rows),
+            "csv_excluded_decisions": csv_excluded,
+            "acd_comments_applied": False,
+            "import_verification_required": True,
         }
 
         # 4. Emit object-level comment memory alongside the deliverables so the
@@ -420,6 +469,13 @@ class PLCCommentPipeline:
 
         # 3. Direct ACD editing (if requested)
         if edit_acd or target_acd:
+            if any(dec.get('PROPOSED_DESCRIPTION') for dec in decisions):
+                res['updated_acd_error'] = (
+                    'Direct ACD tag/comment writing is not supported. Import the '
+                    'CSV in Studio 5000, save the project, and verify a fresh export. '
+                    'No ACD was written.'
+                )
+                return res
             acd_target = None
             if target_acd:
                 cand = Path(target_acd).resolve()

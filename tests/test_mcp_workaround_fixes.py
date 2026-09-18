@@ -101,10 +101,9 @@ def test_comment_row_name_specifier_split_and_cp1252_safe(tmp_work_dir):
     )
     csv_file = Path(res["csv_delta"])
     content = csv_file.read_text(encoding="cp1252")
-    # Verify split of N101[20].1 into NAME=N101 and SPECIFIER=[20].1
-    # Line format: COMMENT,THAWROOM,N101,"Master Enable -> Active (>= 50degC)",,[20].1,
+    # CSV SPECIFIER is the full operand, unlike L5X's relative Operand attribute.
     assert "COMMENT,THAWROOM,N101," in content
-    assert "[20].1" in content
+    assert ",,N101[20].1," in content
     assert "->" in content
     assert ">=" in content
     assert "degC" in content
