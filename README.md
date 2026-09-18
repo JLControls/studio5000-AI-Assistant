@@ -1024,8 +1024,7 @@ Studio5000_MCP_Server/
 │   │   ├── csv_tag_parser.py          # CSV tag file parsing
 │   │   └── tag_mcp_integration.py     # Tag analysis MCP tools
 │   └── verification/                   # Code validation system
-│       ├── sdk_verifier_clean.py      # Fast validation (production)
-│       └── sdk_verifier.py           # Legacy SDK validation (deprecated)
+│       └── sdk_verifier.py            # Fast validation (production)
 ├── *_vector_cache/                     # Vector database cache directories
 │   ├── instruction_vector_cache/       # Instruction search cache
 │   ├── l5x_vector_cache/              # L5X analysis cache
@@ -1043,7 +1042,7 @@ Studio5000_MCP_Server/
 - **AI Assistant**: `src/ai_assistant/enhanced_main_assistant.py` (production-ready AI assistant)
 - **L5X Generator**: `src/code_generator/l5x_generator.py` (creates importable L5X files)
 - **L5X Analyzer**: `src/l5x_analyzer/l5x_vector_db.py` (semantic search through L5X files)
-- **Fast Validation**: `src/verification/sdk_verifier_clean.py` (production validation system)
+- **Fast Validation**: `src/verification/sdk_verifier.py` (production validation system)
 - **SDK Interface**: `src/sdk_interface/studio5000_sdk.py` (creates real .ACD files)
 - **Vector Databases**: `*_vector_cache/` directories (FAISS-powered semantic search)
 - **Configuration**: Environment variables or command line arguments

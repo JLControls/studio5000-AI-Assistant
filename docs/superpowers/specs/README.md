@@ -74,7 +74,7 @@ Delivered designs are archived under [../completed/](../completed/README.md).
 | **7** | Redirect stray `print()` calls to `sys.stderr` | [SPEC-11](./11-core-bugfixes-and-mcp-reliability.md) |
 | **8** | Unscaled analog alias fallback in Ignition exporter | [SPEC-08](./08-scada-ignition-export-coverage-and-scaling.md) |
 | **9** | Replace naive 3-wire motor logic with latching seal-in branch | [SPEC-11](./11-core-bugfixes-and-mcp-reliability.md) |
-| **10** | Fix `sdk_verifier_clean.py` false `INPUT_ONLY` warnings | [SPEC-05](./05-plc-static-analysis-linter.md), [SPEC-11](./11-core-bugfixes-and-mcp-reliability.md) |
+| **10** | Fix `sdk_verifier.py` false `INPUT_ONLY` warnings | [SPEC-05](./05-plc-static-analysis-linter.md), [SPEC-11](./11-core-bugfixes-and-mcp-reliability.md) |
 | **11** | Unified-diff preview in `smart_insert_logic` | [SPEC-06](./06-safe-modification-staging-diff.md) |
 | **12** | Direct ACD comment writer `patch_comments` | [SPEC-03](./03-direct-acd-comment-writer.md) |
 | **13** | Remove fictitious `PRODUCE`/`CONSUME` instructions | [SPEC-11](./11-core-bugfixes-and-mcp-reliability.md) |

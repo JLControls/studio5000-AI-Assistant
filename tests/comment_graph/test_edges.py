@@ -107,6 +107,14 @@ class TestTimer:
         assert _rel(edges, Relation.READS) == []  # preset/accum are literals
 
 
+class TestControlOperands:
+    def test_ons_control_operand_is_a_destructive_write(self):
+        edges = _edges("ONS(OneShotStorage)")
+        assert [e.dst for e in _rel(edges, Relation.WRITES)] == [
+            operand_entity("OneShotStorage")
+        ]
+
+
 class TestUnsupportedInstruction:
     def test_unknown_instruction_is_unresolved_with_no_directional_edges(self):
         result = _extract("FOOBAR(X, Y)")

@@ -903,7 +903,10 @@ class L5XSDKMCPIntegration:
         summary = {
             'reads': sum(r['role'] == 'READ_SOURCE' for r in references),
             'writes': sum(r['role'] == 'WRITE_DESTINATION' for r in references),
-            'read_write': sum(r['role'] == 'READ_WRITE' for r in references),
+            'read_write': sum(
+                r['role'] in {'READ_WRITE', 'READ_WRITE_CONTROL'}
+                for r in references
+            ),
             'aoi_args': sum(r['role'] == 'AOI_ARG' for r in references),
             'unknown': sum(r['role'] == 'UNKNOWN' for r in references),
             'total': len(references),

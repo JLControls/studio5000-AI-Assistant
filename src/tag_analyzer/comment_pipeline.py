@@ -20,6 +20,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from xml.etree import ElementTree as ET
 
+from l5x_analyzer.rll_parser import find_calls
+from plc_instruction_semantics import is_destructive
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -538,15 +541,23 @@ class PLCCommentPipeline:
     @staticmethod
     def parse_rung_structure(snippet: str) -> Dict[str, Any]:
         """Parse RLL snippet into parallel OR branches or sequential AND conditions."""
-        instr_pattern = re.compile(r"([A-Z0-9_]+)\s*\(([^)]+)\)")
-        output_instrs = ["OTE", "OTL", "OTU", "MOV", "COP", "ADD", "SUB", "MUL", "DIV"]
-        
-        all_matches = instr_pattern.findall(snippet)
+        def call_record(text: str) -> List[Tuple[str, str, List[str]]]:
+            records = []
+            for mnemonic, operands, source in find_calls(text):
+                open_index = source.find("(")
+                records.append((
+                    mnemonic.upper(),
+                    source[open_index + 1:-1] if open_index >= 0 else "",
+                    operands,
+                ))
+            return records
+
+        all_matches = call_record(snippet)
         cond_matches = []
         out_matches = []
-        
-        for instr, op_str in all_matches:
-            if instr in output_instrs:
+
+        for instr, op_str, operands in all_matches:
+            if is_destructive(instr, len(operands)):
                 out_matches.append((instr, op_str))
             else:
                 cond_matches.append((instr, op_str))
@@ -558,7 +569,11 @@ class PLCCommentPipeline:
                 branches_raw = b_content.split(",")
                 branches = []
                 for b in branches_raw:
-                    b_instrs = [m for m in instr_pattern.findall(b) if m[0] not in output_instrs]
+                    b_instrs = [
+                        (instr, op_str)
+                        for instr, op_str, operands in call_record(b)
+                        if not is_destructive(instr, len(operands))
+                    ]
                     if b_instrs:
                         branches.append(b_instrs)
                 if len(branches) > 1:

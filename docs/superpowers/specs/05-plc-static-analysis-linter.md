@@ -2,14 +2,14 @@
 
 **Status:** Backlog Target (Feature #4, Issue #18, BUG-09, Rank #4, #10, #14, #15, #16)  
 **Priority:** P1 / High  
-**Subsystem:** `verification` (`src/verification/plc_linter.py`, `src/verification/sdk_verifier_clean.py`)  
+**Subsystem:** `verification` (`src/verification/plc_linter.py`, `src/verification/sdk_verifier.py`)
 **Audit References:** [§6 BUG-09](file:///home/hello/git/work/studio5000-AI-Assistant/docs/ENGINEERING_AUDIT_2026.md#bug-09-p2-syntax-verifier-flags-standard-timercountermathaoi-output-rungs-as-input_only-errors-if-they-lack-oteotlotu), [§8 Controls Correctness](file:///home/hello/git/work/studio5000-AI-Assistant/docs/ENGINEERING_AUDIT_2026.md#8-industrial-controls--plc-semantic-correctness-findings), [§9 Ladder Parser Gap](file:///home/hello/git/work/studio5000-AI-Assistant/docs/ENGINEERING_AUDIT_2026.md#9-ladder--rll-parser-and-generator-audit), [§12 Static Analysis Matrix](file:///home/hello/git/work/studio5000-AI-Assistant/docs/ENGINEERING_AUDIT_2026.md#12-static-analysis--review-opportunity-assessment)
 
 ---
 
 ## 1. Problem Statement & Background
 
-Static analysis is an essential capability for preventing PLC runtime failures before commissioning physical machinery. The current syntax verifier (`src/verification/sdk_verifier_clean.py`) exhibits several critical deficiencies:
+Static analysis is an essential capability for preventing PLC runtime failures before commissioning physical machinery. The current syntax verifier (`src/verification/sdk_verifier.py`) exhibits several critical deficiencies:
 
 1. **False `INPUT_ONLY` Warnings (BUG-09):** The verifier flags valid rungs containing timers, counters, math, or AOIs (e.g. `XIC(Run) TON(Timer1, 5000, 0);`) as errors because it checks only for `OTE`, `OTL`, or `OTU`.
 2. **Missing Branch Syntax Validation:** Bracket balance `[` vs `]` and branch separators `,` are completely ignored, permitting malformed branch rungs like `[XIC(A) XIC(B) , OTE(C)` to pass verification.

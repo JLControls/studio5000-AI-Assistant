@@ -11,55 +11,7 @@ import sys
 import os
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
-
-# Common Studio 5000 instructions (hardcoded for fast validation)
-COMMON_INSTRUCTIONS = {
-    # Basic Instructions
-    'XIC', 'XIO', 'OTE', 'OTL', 'OTU', 'ONS', 'OSR', 'OSF',
-    
-    # Timer Instructions  
-    'TON', 'TOF', 'RTO',
-    
-    # Counter Instructions
-    'CTU', 'CTD', 'CTC', 
-    
-    # Math Instructions
-    'ADD', 'SUB', 'MUL', 'DIV', 'MOD', 'SQR', 'SQRT',
-    'NEG', 'ABS', 'MIN', 'MAX', 'LIM', 'MUX',
-    
-    # Comparison Instructions
-    'EQU', 'NEQ', 'LES', 'LEQ', 'GRT', 'GEQ', 'MEQ',
-    
-    # Logical Instructions
-    'AND', 'OR', 'XOR', 'NOT', 'BAND', 'BOR', 'BXOR',
-    
-    # Move Instructions
-    'MOV', 'MVM', 'SWPB', 'CLR',
-    
-    # Convert Instructions
-    'TOD', 'FRD', 'DEG', 'RAD',
-    
-    # File/Array Instructions
-    'COP', 'CPS', 'FLL', 'AVE', 'SRT', 'STD',
-    
-    # Program Control
-    'JMP', 'LBL', 'JSR', 'RET', 'SBR', 'FOR', 'BRK',
-    'MCR', 'END', 'TND', 'UID', 'UIE', 'AFI', 'NOP',
-    
-    # System Instructions
-    'GSV', 'SSV', 'IOT', 'MSG', 'PID', 'PIDE',
-    
-    # Advanced Instructions
-    'ALMA', 'ALMD', 'BAND', 'BOR', 'BXOR', 'BTDT',
-    'DEDT', 'DERV', 'HMIBC', 'HPF', 'INTG', 'LPF',
-    'MAAT', 'MAFR', 'MAHD', 'MAHO', 'MAOC', 'MAPC',
-    'MAST', 'MATC', 'MAXC', 'MDAC', 'MDCC', 'MDOC',
-    'MDSF', 'MRHD', 'MRAT', 'MRCC', 'MRCS', 'MRHD',
-    'MRST', 'MSET', 'MTLF', 'MTTP', 'MVMT', 'PATT',
-    'PCMD', 'PRNP', 'RESD', 'RLLK', 'RMPD', 'RMPS',
-    'SCRV', 'SEL', 'SIZE', 'SMAT', 'SMOC', 'STOS',
-    'SWPB', 'TONR', 'TOFR', 'UPDN'
-}
+from plc_instruction_semantics import COMMON_INSTRUCTIONS
 
 @dataclass
 class VerificationError:

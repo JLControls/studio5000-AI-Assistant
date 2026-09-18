@@ -15,7 +15,7 @@ This engineering audit evaluated the repository as an **AI-assisted industrial c
 
 1. **The Platform Has Two Diametrically Opposed Architectural Halves:**
    * **The Rigorous Deterministic Engine (Strongest Half):** The recently authored subsystems—specifically the iterative comment analysis graph (`src/comment_graph/`), deterministic L5X structure walker (`src/l5x_analyzer/l5x_structure.py`), tag fact accessors (`src/l5x_analyzer/l5x_fact_accessor.py`), and Ignition scaling/curation pipeline (`src/ignition_exporter/`)—are mathematically grounded, well-typed, and backed by robust regression suites.
-   * **The Fragile Heuristic/Prototype Engine (Weakest Half):** The natural language ladder logic generator (`src/ai_assistant/code_assistant.py`, `src/ai_assistant/enhanced_ladder_generator.py`), fast syntax verifier (`src/verification/sdk_verifier_clean.py`), PDF "Vision AI" parser (`src/drawings_analyzer/pdf_parser.py`), and vector-based relationship tools (`find_related_tags`, `find_related_components`) rely on brittle regexes, keyword matching, ungrounded vector queries, and unverified heuristics.
+   * **The Fragile Heuristic/Prototype Engine (Weakest Half):** The natural language ladder logic generator (`src/ai_assistant/code_assistant.py`, `src/ai_assistant/enhanced_ladder_generator.py`), fast syntax verifier (`src/verification/sdk_verifier.py`), PDF "Vision AI" parser (`src/drawings_analyzer/pdf_parser.py`), and vector-based relationship tools (`find_related_tags`, `find_related_components`) rely on brittle regexes, keyword matching, ungrounded vector queries, and unverified heuristics.
 2. **What Is Dependable Today (Read-Only Factual Analysis):**
    * Structural inventory of L5X projects (`(program, routine)` deduplication, AOI definitions, and module rack/slot trees).
    * Exact scalar/member tag value extraction from decorated XML data in L5X files.
@@ -113,7 +113,7 @@ graph TD
     subgraph GenerationValidation["Code Generation & Verification"]
         CodeGen["Ladder/ST Generator\n(src/ai_assistant/code_assistant.py)\nKeyword Heuristics & Templates"]
         L5XGen["L5X XML Serializer\n(src/code_generator/l5x_generator.py)\nRoutine & Project L5X"]
-        FastVerifier["Syntax Verifier\n(src/verification/sdk_verifier_clean.py)\nParen & Instruction Set Check"]
+        FastVerifier["Syntax Verifier\n(src/verification/sdk_verifier.py)\nParen & Instruction Set Check"]
     end
 
     subgraph FileFormatSubsystems["File Format Reverse Engineering & Live SDK"]
@@ -259,7 +259,7 @@ The server registers **52 tools** on current HEAD (`Studio5000MCPServer._registe
 | **BUG-06** | **P2** | Confirmed | `code_generator` | `src/code_generator/l5x_generator.py:326, 393` | Unredirected `print()` to `sys.stdout` on file write errors breaks JSON-RPC stdio protocol framing. | Untracked |
 | **BUG-07** | **P2** | Confirmed | `code_generator` | `src/code_generator/l5x_generator.py:356` | `generate_routine_export` hardcodes `<Program Name="MainProgram">`, breaking imports into other programs. | Untracked |
 | **BUG-08** | **P2** | Confirmed | `ai_assistant` | `src/ai_assistant/code_assistant.py:187-202` | Start/stop logic generator generates non-latching logic while labeling it a "3-wire control circuit". | Untracked |
-| **BUG-09** | **P2** | Confirmed | `verification` | `src/verification/sdk_verifier_clean.py:287-293` | Syntax verifier flags standard timer/counter/math/AOI output rungs as `INPUT_ONLY` errors if they lack `OTE`/`OTL`/`OTU`. | Untracked |
+| **BUG-09** | **P2** | Confirmed | `verification` | `src/verification/sdk_verifier.py:237-243` | Syntax verifier flags standard timer/counter/math/AOI output rungs as `INPUT_ONLY` errors if they lack `OTE`/`OTL`/`OTU`. | Untracked |
 | **BUG-10** | **P2** | Confirmed | `ci` | `.github/workflows/` | Complete absence of CI workflow automation. | Untracked |
 
 ---
@@ -344,7 +344,7 @@ A failure that occurs quietly while reporting success is far more hazardous in i
    In `src/ai_assistant/enhanced_ladder_generator.py:77-78`, the motion and communication mapping dictionaries map `'wms_interface'` to `'PRODUCE'` and `'hmi_update'` to `'CONSUME'`.
    *Controls Analysis:* `PRODUCE` and `CONSUME` are not executable ladder instructions in Studio 5000. Produced/Consumed tags are configured as tag connection properties in the Controller Organizer. Emitting them in ladder logic causes import compilation errors.
 3. **Invalid Output Warning on Timer/Counter/Compute Rungs:**
-   In `src/verification/sdk_verifier_clean.py:287-293`, the syntax verifier checks `if 'XIC(' in rung and 'OTE(' not in rung and 'OTL(' not in rung and 'OTU(' not in rung: warnings.append("INPUT_ONLY")`.
+   In `src/verification/sdk_verifier.py:237-243`, the syntax verifier checks `if 'XIC(' in rung and 'OTE(' not in rung and 'OTL(' not in rung and 'OTU(' not in rung: warnings.append("INPUT_ONLY")`.
    *Controls Analysis:* Output instructions in Logix include `TON`, `TOF`, `RTO`, `CTU`, `CTD`, `MOV`, `COP`, `CPS`, `CPT`, `ADD`, `SUB`, `JSR`, and user AOIs. Warning on valid rungs like `XIC(Run) TON(Timer1, 5000, 0);` produces false validation warnings.
 
 ---
@@ -361,7 +361,7 @@ A failure that occurs quietly while reporting success is far more hazardous in i
    ```
    *Audit Finding:* The generator correctly wraps ASCII RLL text inside `<Text><![CDATA[...]]></Text>`. The import issues flagged in Issue #1 and Issue #14 are caused by syntax errors inside the CDATA logic string (such as unescaped characters or unvalidated branch brackets), not by a missing XML element schema.
 2. **Branch Syntax Validation Gap:**
-   In `src/verification/sdk_verifier_clean.py:230-261`, `_validate_ladder_syntax` verifies parenthesis matching `(` vs `)` but completely ignores square brackets `[` and `]` and branch separators `,`. Malformed branch structures like `[XIC(A) XIC(B) , OTE(C)` pass validation silently.
+   In `src/verification/sdk_verifier.py:230-261`, `_validate_ladder_syntax` verifies parenthesis matching `(` vs `)` but completely ignores square brackets `[` and `]` and branch separators `,`. Malformed branch structures like `[XIC(A) XIC(B) , OTE(C)` pass validation silently.
 
 ---
 
@@ -582,7 +582,7 @@ tests/
 ├── root test files (7 tests)      --> AOI logic, code assistant ST, deliverables, write analyzer [GOOD]
 ```
 
-*Coverage Gap:* The heuristic code generators (`src/ai_assistant/enhanced_ladder_generator.py`) and fast syntax verifiers (`src/verification/sdk_verifier_clean.py`) have minimal property-based test coverage.
+*Coverage Gap:* The heuristic code generators (`src/ai_assistant/enhanced_ladder_generator.py`) and fast syntax verifier (`src/verification/sdk_verifier.py`) have minimal property-based test coverage.
 
 ---
 
@@ -758,7 +758,7 @@ sequenceDiagram
 | **7** | Redirect stray `print()` calls to `sys.stderr` in `l5x_generator.py` | `code_generator` | Prevents JSON-RPC stdio protocol corruption | **XS** | Yes | No |
 | **8** | Implement unscaled analog alias fallback in `generate_ignition_tags` | `ignition_exporter` | Prevents silent process instrumentation data loss (#10) | **S** | Yes | No |
 | **9** | Replace naive 3-wire motor logic with latching seal-in branch | `ai_assistant` | Fixes critical industrial controls semantic generation error | **XS** | Yes | No |
-| **10** | Fix `sdk_verifier_clean.py` false `INPUT_ONLY` output warnings | `verification` | Eliminates false validation warnings on timer/math rungs | **XS** | Yes | No |
+| **10** | Fix `sdk_verifier.py` false `INPUT_ONLY` output warnings | `verification` | Eliminates false validation warnings on timer/math rungs | **XS** | Yes | No |
 | **11** | Implement unified-diff preview in `smart_insert_logic` | `l5x_analyzer` | Adds human review gate before file mutation | **S** | Yes | No |
 | **12** | Implement direct ACD comment writer `patch_comments` (#22) | `acd` | Enables lossless comment editing in `.ACD` files | **L** | Yes | Yes (v38) |
 | **13** | Remove fictitious `PRODUCE`/`CONSUME` instructions from generator | `ai_assistant` | Prevents generating invalid ladder logic opcodes | **XS** | Yes | No |

@@ -8,7 +8,7 @@ Reuses existing parsers rather than reinventing them:
   rung's text into instructions (including nested branches).
 * ``convert_acd_to_l5x`` (``src/l5x_analyzer/acd_offline_convert.py`` :41) for the
   ACD path; its ``note``/``validation`` provenance is carried forward.
-* ``COMMON_INSTRUCTIONS`` (``src/verification/sdk_verifier.py`` :16) so the
+* ``COMMON_INSTRUCTIONS`` (``src/plc_instruction_semantics.py``) so the
   ``unresolved_instruction`` warning vocabulary matches the existing verifier.
 """
 
@@ -28,7 +28,7 @@ from ladder_renderer.ladder_to_dot import (
 )
 from l5x_analyzer.l5x_semantic_validation import inventory_l5x
 from l5x_analyzer.acd_offline_convert import convert_acd_to_l5x
-from verification.sdk_verifier import COMMON_INSTRUCTIONS
+from plc_instruction_semantics import COMMON_INSTRUCTIONS
 
 from .model import (
     EntityId,

@@ -10,13 +10,14 @@ def test_write_analyzer_detects_destructives():
           <Tag Name="UnwrittenBit" DataType="BOOL"/>
           <Tag Name="Com_AliasDIn_Start" DataType="BOOL"/>
           <Tag Name="Com_Set_PressureSP" DataType="REAL"/>
+          <Tag Name="CopiedValue" DataType="DINT"/>
         </Tags>
         <Programs>
           <Program Name="MainProg">
             <Routines>
               <Routine Name="MainRoutine">
                 <Rung Number="0">
-                  <Text>XIC(Com_AliasDIn_Start) OTE(WrittenBit);</Text>
+                  <Text>XIC(Com_AliasDIn_Start) OTE(WrittenBit) COP(SourceValue,CopiedValue,1);</Text>
                 </Rung>
               </Routine>
             </Routines>
@@ -31,4 +32,5 @@ def test_write_analyzer_detects_destructives():
     assert write_map.is_written("WrittenBit") is True
     assert write_map.is_written("Com_AliasDIn_Start") is True
     assert write_map.is_written("Com_Set_PressureSP") is True
+    assert write_map.is_written("CopiedValue") is True
     assert write_map.is_written("UnwrittenBit") is False

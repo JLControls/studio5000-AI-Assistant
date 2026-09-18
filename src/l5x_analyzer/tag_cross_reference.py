@@ -16,6 +16,11 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tupl
 
 from .aoi_logic_inspector import extract_ordered_parameters
 from .rll_parser import find_calls
+from plc_instruction_semantics import (
+    OperandRole,
+    get_instruction_operand_role,
+    is_known_instruction,
+)
 
 
 _PLACEHOLDERS = {"NA", "?"}
@@ -206,32 +211,12 @@ def _tag_tokens(text: str) -> Iterator[Tuple[str, int, int]]:
 
 def _role_for(mnemonic: str, operand_index: int, count: int) -> Optional[str]:
     """Return a conservative role for a built-in instruction operand."""
-    name = mnemonic.upper()
-    if name in {"XIC", "XIO", "EQU", "NEQ", "LES", "LEQ", "GRT", "GEQ", "LIM", "MEQ"}:
-        return "READ_SOURCE"
-    if name in {"OTE", "OTL", "OTU", "CLR"}:
-        return "WRITE_DESTINATION"
-    if name in {"ONS", "OSR", "OSF"}:
-        return "READ_WRITE"
-    if name in {"TON", "TOF", "RTO", "CTU", "CTD", "RES"}:
-        return "READ_WRITE" if operand_index == 0 else "READ_SOURCE"
-    if name in {"MOV", "BTD", "CPT", "ADD", "SUB", "MUL", "DIV", "MOD", "NEG", "ABS", "SQR", "SQRT", "TRUNC", "FRD", "TOD", "SWPB", "SCP", "SCPL", "SCL", "FLL", "MVM", "GSV"}:
-        return "WRITE_DESTINATION" if operand_index == count - 1 else "READ_SOURCE"
-    if name in {"COP", "CPS"}:
-        if operand_index == 1:
-            return "WRITE_DESTINATION"
-        return "READ_SOURCE"
-    if name in {"JSR", "SBR", "SSV", "FAL", "FSC"}:
-        return "READ_SOURCE"
-    if name in {"NOP", "JMP", "LBL", "RET", "TND", "AFI", "XIC", "XIO"} and count == 0:
-        return None
-    return None
+    role = get_instruction_operand_role(mnemonic, operand_index, count)
+    return None if role is OperandRole.UNKNOWN else role.value
 
 
 def _known_instruction(mnemonic: str) -> bool:
-    return _role_for(mnemonic, 0, 1) is not None or mnemonic.upper() in {
-        "NOP", "JMP", "LBL", "RET", "TND", "AFI", "SBR"
-    }
+    return is_known_instruction(mnemonic)
 
 
 def _direction_for_usage(usage: str) -> str:
@@ -543,7 +528,13 @@ def find_tag_references(
     summary = {
         "reads": sum(r["role"] == "READ_SOURCE" for r in references),
         "writes": sum(r["role"] == "WRITE_DESTINATION" for r in references),
-        "read_write": sum(r["role"] == "READ_WRITE" for r in references),
+        "read_write": sum(
+            r["role"] in {
+                "READ_WRITE",
+                OperandRole.READ_WRITE_CONTROL.value,
+            }
+            for r in references
+        ),
         "aoi_args": sum(r["role"] == "AOI_ARG" for r in references),
         "unknown": sum(r["role"] == "UNKNOWN" for r in references),
         "total": len(references),

@@ -6,7 +6,7 @@
 
 **Goal:** Implement a conservative static analysis linter (`lint_plc_logic`) and AST syntax verifier for Rockwell Studio 5000 projects (.L5X and .ACD) and raw ladder logic strings, returning deterministic findings with explicit uncertainty.
 
-**Architecture:** Build a dedicated verification subsystem in `src/verification/plc_linter.py` backed by deterministic AST traversal, routine call graph reachability analysis, and tag cross-referencing (`l5x_analyzer/tag_cross_reference.py`). Update `src/verification/sdk_verifier_clean.py` and `src/verification/sdk_verifier.py` with a complete Rockwell instruction taxonomy to fix BUG-09. Expose the static analysis engine via the `lint_plc_logic` MCP tool and update `validate_ladder_logic`.
+**Architecture:** Build a dedicated verification subsystem in `src/verification/plc_linter.py` backed by deterministic AST traversal, routine call graph reachability analysis, and tag cross-referencing (`l5x_analyzer/tag_cross_reference.py`). Update the canonical `src/verification/sdk_verifier.py` with a complete Rockwell instruction taxonomy to fix BUG-09. Expose the static analysis engine via the `lint_plc_logic` MCP tool and update `validate_ladder_logic`.
 
 **Tech Stack:** Python 3.12, XML ElementTree, dataclasses, regex/token parsing, standard library collections/graph utilities, pytest, MCP JSON-RPC protocol.
 
@@ -43,8 +43,7 @@
 - `tests/verification/fixtures/linter_sample_project.L5X` — Synthetic L5X project fixture containing clean logic, duplicate OTEs, unpaired latches, dead routines, and unused tags.
 
 ### Modify:
-- `src/verification/sdk_verifier_clean.py` — Update `_validate_basic_structure` and `_validate_ladder_syntax` to fix BUG-09 and validate branch brackets.
-- `src/verification/sdk_verifier.py` — Mirror fixes from clean verifier to maintain parity.
+- `src/verification/sdk_verifier.py` — Update `_validate_basic_structure` and `_validate_ladder_syntax` to fix BUG-09 and validate branch brackets.
 - `src/verification/__init__.py` — Export `PLCLinter`, `LintFinding`, `LintSeverity`, `LintReport`, and `LintRuleId`.
 - `src/mcp_server/studio5000_mcp_server.py` — Register `lint_plc_logic` MCP tool, add handler method, and update `tools/list` schema.
 
@@ -188,7 +187,6 @@ def validate_branch_syntax(rung_text: str, rung_number: Optional[int] = None) ->
 
 **Files:**
 - Modify: `src/verification/plc_linter.py`
-- Modify: `src/verification/sdk_verifier_clean.py:230-316`
 - Modify: `src/verification/sdk_verifier.py:230-316`
 - Create: `tests/verification/test_sdk_verifier_bug09.py`
 
@@ -225,7 +223,7 @@ INPUT_CONDITIONAL_INSTRUCTIONS: Set[str] = {
   ```python
   # tests/verification/test_sdk_verifier_bug09.py
   import pytest
-  from verification.sdk_verifier_clean import SDKVerifier
+  from verification.sdk_verifier import SDKVerifier
   from verification.plc_linter import validate_rung_output_instruction, LintSeverity
 
   @pytest.mark.asyncio
@@ -261,7 +259,7 @@ INPUT_CONDITIONAL_INSTRUCTIONS: Set[str] = {
   ```
   Expected result: Failures due to `INPUT_ONLY` warning being generated on `TON`, `ADD`, `MOV`, etc.
 
-- [ ] **Step 3: Update `sdk_verifier_clean.py` and `sdk_verifier.py`.**
+- [ ] **Step 3: Update `sdk_verifier.py`.**
   - In `_validate_basic_structure(rung, rung_number)`: Extract all instruction opcodes in the rung. If the rung contains conditional input instructions (`INPUT_CONDITIONAL_INSTRUCTIONS`) and zero output instructions from `VALID_OUTPUT_INSTRUCTIONS` (and no unknown instruction calls that could be AOIs), flag `INPUT_ONLY`.
   - In `_validate_ladder_syntax(rung, rung_number)`: Add bracket balance validation (`rung.count('[') == rung.count(']')`).
   - Implement `validate_rung_output_instruction` in `src/verification/plc_linter.py`.
@@ -274,7 +272,7 @@ INPUT_CONDITIONAL_INSTRUCTIONS: Set[str] = {
 
 - [ ] **Step 5: Commit changes for Task 2.**
   ```bash
-  git add src/verification/plc_linter.py src/verification/sdk_verifier_clean.py src/verification/sdk_verifier.py tests/verification/test_sdk_verifier_bug09.py
+  git add src/verification/plc_linter.py src/verification/sdk_verifier.py tests/verification/test_sdk_verifier_bug09.py
   git commit -m "Verification: fix BUG-09 false-positive INPUT_ONLY and implement Rule 2"
   ```
 

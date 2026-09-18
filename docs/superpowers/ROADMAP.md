@@ -1,6 +1,7 @@
 # Roadmap — unimplemented plans and specs
 
-Status date: 2026-09-18, measured against `main` at the docs-consolidation commit.
+Status date: 2026-09-18, measured against `main` at the docs-consolidation commit
+plus the Phase 1 item 1 implementation in this working tree.
 This file is the single source of truth for *what is left*. The plan and spec
 documents describe *how*; this file says *whether* and *in what order*.
 
@@ -8,9 +9,12 @@ Verdict scale: **Done** (moved to `completed/`), **Mostly done** (>=80%),
 **Partial**, **Not started**, **Deferred** (conflicts with committed behaviour;
 needs a decision before work starts).
 
-Test baseline at the status date: `python -m pytest` = 401 passed, 19 skipped
-(skips are proprietary fixtures and the Windows symlink privilege);
-`studio5000_mcp_server.py --test` passes.
+Test baseline at the status date: `.venv/bin/python -m pytest` = 423 passed,
+3 skipped (the optional Stage 1 parity fixtures are not present);
+`.venv/bin/python src/mcp_server/studio5000_mcp_server.py --test` completes
+successfully, with expected warnings for the empty local instruction index and
+the read-only Hugging Face cache path. The shell `python` is 3.13.5 and is not
+the project validation environment.
 
 ---
 
@@ -22,7 +26,7 @@ Test baseline at the status date: `python -m pytest` = 401 passed, 19 skipped
 | PLAN-02 | ACD `patch_rungs` @HEX@ substitution | Partial | 50 | #34 | Blocks 03, 06 |
 | PLAN-03 | Direct ACD comment writer | **Deferred** | 0 | #22, #6 | Needs golden Type-1 record bytes; code and tests currently assert *unsupported* |
 | PLAN-04 | ACD data-table value extraction | Not started | 0 | #23 | Needs golden Comps.Dat fixture; blocks 08 accuracy |
-| PLAN-05 | PLC static-analysis linter | Not started | 0 | #18 | Needs 01 + shared semantics table |
+| PLAN-05 | PLC static-analysis linter | Not started | 0 | #18 | Needs PLAN-01 close-out; shared semantics table landed |
 | PLAN-06 | Safe modification staging / diff | Not started | 0 | — | Needs 02; supersedes direct write in `smart_insert_logic` |
 | SPEC-07 | Equipment liveness classifier | Not started | 0 | #27 | Needs 01, JSR walker from 05 |
 | PLAN-08 | SCADA Ignition coverage, scaling, report | Partial | 45 | #10, #24, #25 | Task 1+2 done; 3/4 open; better with 04 |
@@ -40,18 +44,18 @@ Ignition naming engine (#29), bug-tracker design (superseded by GitHub Issues).
 
 ## 2. Cross-cutting item that comes first
 
-**One shared instruction-semantics table.** Operand read/write roles are
-currently defined in four places:
+**One shared instruction-semantics table — delivered in this change.** Operand
+read/write roles now come from `src/plc_instruction_semantics.py`, consumed by:
 
-- `src/l5x_analyzer/tag_cross_reference.py` `_role_for`
-- `src/l5x_analyzer/write_analyzer.py` `DESTRUCTIVE_DEST_RE`
-- `src/comment_graph/edges.py` `_DIRECTION`
-- `src/tag_analyzer/comment_pipeline.py` `parse_rung_structure`
+- `src/l5x_analyzer/tag_cross_reference.py`
+- `src/l5x_analyzer/write_analyzer.py`
+- `src/comment_graph/edges.py`
+- `src/tag_analyzer/comment_pipeline.py`
+- `src/verification/sdk_verifier.py` and `src/comment_graph/builder.py`
 
-Plans 01, 05, 07, 08 and 13 all consume this. Consolidating it is the first
-task of Phase 1 and the review gate every later plan already demands. Also
-delete one of the byte-identical `verification/sdk_verifier.py` /
-`sdk_verifier_clean.py` pair while in there.
+Plans 01, 05, 07, 08 and 13 all consume this. The shared table is the review
+gate for later work; it does not close PLAN-01. `sdk_verifier.py` is now the
+single verifier implementation and compatibility import path.
 
 ---
 
@@ -61,10 +65,16 @@ Dependency-ordered. Each phase leaves `main` releasable.
 
 ### Phase 1 — Foundation (small, independent, unblocks everything)
 
-1. **Shared semantics table** (see §2). New module, three call sites switched,
-   existing tests must stay green. Add `is_destructive` and `OperandRole` enum
-   from PLAN-01 while doing it.
-2. **PLAN-11 remainder.** Six small fixes, each with a test in a new
+1. **Shared semantics table — Done (2026-09-18).** `src/plc_instruction_semantics.py`
+   now owns `OperandRole`, read/write/control operand selectors, the known
+   instruction vocabulary, and `is_destructive`. Cross-reference, write
+   detection, comment-graph edges, rung-structure parsing, and verifier
+   vocabulary consume it; `COP` and timer/control writes are covered by tests.
+   The byte-identical `sdk_verifier_clean.py` duplicate was removed and
+   `sdk_verifier.py` remains the compatibility entry point. The remaining
+   PLAN-01 work is API completeness, richer operand coverage, ACD provenance,
+   and synthetic fixture evidence.
+2. **PLAN-11 remainder.** Remaining fixes, each with a test in a new
    `tests/test_core_bugfixes.py`:
    - BUG-04: list available indexed projects in the wrong-project error.
    - BUG-06: `file=sys.stderr` on the five `__main__` print runners; add a
@@ -167,11 +177,11 @@ Dependency-ordered. Each phase leaves `main` releasable.
   `specs/13-...` because it is a proposal with no checkbox tasks.
 - Bug-tracker design archived; GitHub Issues on `JLControls/studio5000-AI-Assistant`
   are the tracker. Note `gh` defaults to the `rivie13` fork here (issue #40).
+- Shared instruction semantics consolidated in `src/plc_instruction_semantics.py`;
+  the byte-identical verifier duplicate was deleted.
 
 ## 5. Known duplication still in the tree
 
-- Four operand-role tables (§2).
-- `sdk_verifier.py` == `sdk_verifier_clean.py`.
 - `SharedCacheManager.is_cache_valid` and `SecureVectorCache.is_cache_valid`
   are two age-only validators.
 - `@HEX@` token regex in `acd/record/sbregion.py`, `acd/record/comments.py`

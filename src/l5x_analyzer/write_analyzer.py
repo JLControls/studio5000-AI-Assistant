@@ -9,11 +9,19 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Dict, Set, List, Optional
 
-# Regex patterns for common destructive/write instructions in Rockwell ladder logic
-DESTRUCTIVE_BIT_RE = re.compile(r'\b(?:OTE|OTL|OTU)\s*\(\s*([A-Za-z0-9_.:\[\]]+)\s*\)', re.IGNORECASE)
-DESTRUCTIVE_DEST_RE = re.compile(r'\b(?:MOV|MVM|CPT|ADD|SUB|MUL|DIV|CLR|FLL|SWPB)\s*\([^,\)]*(?:,[^,\)]*)*,\s*([A-Za-z0-9_.:\[\]]+)\s*\)', re.IGNORECASE)
-BTD_DEST_RE = re.compile(r'\bBTD\s*\([^,\)]+,[^,\)]+,\s*([A-Za-z0-9_.:\[\]]+)\s*,', re.IGNORECASE)
-TIMER_COUNTER_RE = re.compile(r'\b(?:TON|TOF|RTO|CTU|CTD)\s*\(\s*([A-Za-z0-9_.:\[\]]+)\s*,', re.IGNORECASE)
+from .rll_parser import find_calls
+from plc_instruction_semantics import get_operand_indices
+
+
+_TIMER_COUNTER_INSTRUCTIONS = {"TON", "TOF", "RTO", "CTU", "CTD"}
+
+
+def _is_literal_operand(operand: str) -> bool:
+    """Return whether an operand cannot identify a writable tag."""
+    stripped = operand.strip()
+    return stripped.upper() in {"NA", "?"} or bool(
+        re.fullmatch(r"[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?", stripped)
+    )
 
 class TagWriteMap:
     def __init__(self):
@@ -115,37 +123,34 @@ def analyze_l5x_tag_writes(root: ET.Element) -> TagWriteMap:
                 continue
             text = text_el.text.strip()
 
-            # OTE / OTL / OTU
-            for match in DESTRUCTIVE_BIT_RE.findall(text):
-                write_map.record_write(match, location)
+            calls = find_calls(text)
+            for mnemonic, operands, _source in calls:
+                _reads, writes, controls = get_operand_indices(
+                    mnemonic, len(operands)
+                )
+                for operand_index in (*writes, *controls):
+                    if operand_index >= len(operands):
+                        continue
+                    operand = operands[operand_index]
+                    if not _is_literal_operand(operand):
+                        write_map.record_write(operand, location)
 
-            # MOV / CPT / ADD / SUB / MUL / DIV / CLR / FLL / SWPB
-            for match in DESTRUCTIVE_DEST_RE.findall(text):
-                write_map.record_write(match, location)
+                # Timer / Counter instructions implicitly write .ACC, .DN, .TT.
+                if mnemonic.upper() in _TIMER_COUNTER_INSTRUCTIONS and operands:
+                    timer = operands[0]
+                    if not _is_literal_operand(timer):
+                        for member in ("ACC", "DN", "TT"):
+                            write_map.record_write(f"{timer}.{member}", location)
 
-            # BTD
-            for match in BTD_DEST_RE.findall(text):
-                write_map.record_write(match, location)
-
-            # Timer / Counter implicitly writes to .ACC, .DN, .TT
-            for match in TIMER_COUNTER_RE.findall(text):
-                write_map.record_write(f"{match}.ACC", location)
-                write_map.record_write(f"{match}.DN", location)
-                write_map.record_write(f"{match}.TT", location)
-
-            # Check AOI calls for output arguments
-            for aoi_name, output_indices in aoi_outputs.items():
-                if aoi_name in text:
-                    # Match AOI_NAME(arg1, arg2, ...)
-                    pattern = r'\b' + re.escape(aoi_name) + r'\s*\((.*?)\)'
-                    for call_match in re.finditer(pattern, text):
-                        args_str = call_match.group(1)
-                        # Split args by comma (respecting nested brackets)
-                        args = [a.strip() for a in args_str.split(",")]
-                        for out_idx in output_indices:
-                            if out_idx < len(args):
-                                arg_ref = args[out_idx]
-                                if arg_ref and arg_ref.upper() != "NA":
-                                    write_map.record_write(arg_ref, location)
+                # AOI output arguments use the existing parameter-index
+                # contract; find_calls supplies balanced nested operands.
+                for aoi_name, output_indices in aoi_outputs.items():
+                    if mnemonic.upper() != aoi_name.upper():
+                        continue
+                    for out_idx in output_indices:
+                        if out_idx < len(operands):
+                            arg_ref = operands[out_idx]
+                            if arg_ref and not _is_literal_operand(arg_ref):
+                                write_map.record_write(arg_ref, location)
 
     return write_map
