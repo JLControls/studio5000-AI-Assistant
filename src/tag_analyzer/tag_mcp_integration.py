@@ -620,7 +620,7 @@ class TagMCPIntegration:
         """Embed explicit next-step guidance in the analyze result so the model
         follows the canonical pipeline (resolve escalations from logic, then
         render) instead of hand-authoring or skipping. See the FEAT-002 tracking
-        issue (#15) and docs/acd_comment_writer_spec.md."""
+        issue (#15) and docs/superpowers/specs/03-direct-acd-comment-writer.md."""
         requests = res.get("assistance_requests") or []
         n = len(requests)
         auto = len(res.get("decisions") or [])

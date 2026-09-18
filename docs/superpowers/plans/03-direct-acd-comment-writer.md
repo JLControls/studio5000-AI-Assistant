@@ -1,5 +1,10 @@
 # Direct ACD Comment Writer (`patch_comments`) Implementation Plan
 
+> **Status 2026-09-18: DEFERRED.** The tree now documents direct ACD comment writing as
+> unsupported (`comment_pipeline.py`, the `edit_acd` tool descriptions) and
+> `tests/test_direct_acd_deliverables.py::test_direct_acd_editing` asserts that. Executing this
+> plan means reversing those. Decision point is `../ROADMAP.md` Phase 3, item 10.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Status:** Backlog with a binary-safety blocker. The record layout is a hypothesis until it is validated against tracked golden bytes and a real Studio 5000 round trip.

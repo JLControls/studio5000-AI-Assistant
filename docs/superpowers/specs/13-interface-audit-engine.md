@@ -1,6 +1,9 @@
 # Interface Audit Engine — spec
 
-Status: proposed (revised 2026-09-17 after the adversarial audit and the unloader pass)
+Status: proposed (revised 2026-09-17 after the adversarial audit and the unloader pass).
+Relocated from `plans/` on 2026-09-18: this is a proposal without checkbox tasks. Before a
+plan is written, §2 must be rewritten against `src/l5x_analyzer/tag_cross_reference.py` and
+`l5x_fact_accessor.py`, which already cover much of §4.2 and §4.1g. See `../ROADMAP.md` Phase 6.
 Date: 2026-09-17
 Motivating job: audit `PLC_IsolaCaricoSalami1.l5x` (Perry-Stuffing Line 1, Rack Loading / Vemac)
 against the vendor's `LoadingVariablesList.xlsx` MES interface document. A second pass audited

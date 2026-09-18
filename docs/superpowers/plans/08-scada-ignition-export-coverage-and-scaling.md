@@ -29,7 +29,7 @@
 ## Review gates before implementation
 
 - Task 1 is a verification/closure task, not a fresh curation rewrite. Preserve the current raw-alias behavior and add regression coverage for the isolated/no-counterpart case.
-- The dated `2026-08-10-human-ignition-naming-engine.md` is the canonical naming plan. Keep this document as the integration/verification index and avoid creating a second naming engine contract.
+- The naming engine was delivered by `../completed/2026-08-10-human-ignition-naming-engine.md` (merged to main 2026-09-18, `src/ignition_exporter/naming_engine.py`). Task 2 below is retained for reference only; do not re-implement it.
 - I/O coverage must define a physical-channel denominator, not a tag denominator. Track unsupported/unknown module catalogs and address-normalization failures separately from unmonitored channels.
 - Reports need a stable schema/version and consistent baseline field names. Escape arbitrary PLC comments/tag names for both embedded JSON and HTML; no raw string interpolation into scripts or markup.
 

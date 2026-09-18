@@ -14,7 +14,7 @@ Production code lives in `src/`, split by responsibility:
 - `ladder_renderer/`, `verification/` — Render RLL and validate ladder syntax (`_validate_ladder_syntax`); `LadderInstruction.get_primary_tag()`.
 - `acd/` — Vendored patched ACD parser/exporter (Kaitai-based). `api.py` is the entry point (`load_acd`, `save_acd`, `patch_rungs`, `ExportProjectToFile`). Used for offline analysis targeting Studio 5000 v38 L5X semantics.
 - `sdk_interface/` — Live Studio 5000 SDK bindings, **gated off by default**.
-- `comment_graph/` (`src/comment_graph/`) — Iterative PLC comment analysis engine: builds a typed dependency graph (`builder.py`, `edges.py`, `graph_adapter.py`, `facts.py`, `scheduler.py`, `worker.py`, `orchestrator.py`, `deliverables_bridge.py`) and runs a monotonic fact-propagation loop to propose comments. Pure library backing the `analyze_comment_graph` tool. See `docs/superpowers/plans/2026-08-05-iterative-comment-analysis-plan.md`.
+- `comment_graph/` (`src/comment_graph/`) — Iterative PLC comment analysis engine: builds a typed dependency graph (`builder.py`, `edges.py`, `graph_adapter.py`, `facts.py`, `scheduler.py`, `worker.py`, `orchestrator.py`, `deliverables_bridge.py`) and runs a monotonic fact-propagation loop to propose comments. Pure library backing the `analyze_comment_graph` tool. See `docs/superpowers/completed/2026-08-05-iterative-comment-analysis-plan.md`.
 
 Automated tests belong under `tests/` (including ACD regression tests under `tests/acd/`). Design notes belong in `docs/superpowers/`; user-facing workflows are documented in root-level guides.
 
