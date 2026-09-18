@@ -21,14 +21,22 @@ if grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null; then
     # Running under WSL: use the WSL-native venv, reach Windows-only
     # Studio 5000 install through the /mnt/c interop mount.
     ENVIRONMENT="wsl"
-    PYTHON="${REPO_ROOT}/venv/bin/python"
+    if [[ -x "${REPO_ROOT}/.venv/bin/python" ]]; then
+        PYTHON="${REPO_ROOT}/.venv/bin/python"
+    else
+        PYTHON="${REPO_ROOT}/venv/bin/python"
+    fi
     DOC_PATH="/mnt/c/${DOC_SUBPATH}"
     SDK_PATH="/mnt/c/${SDK_SUBPATH}"
 elif [[ "$(uname -s)" =~ MINGW|MSYS|CYGWIN ]]; then
     # Git Bash / MSYS on native Windows: use the Windows venv's
     # Scripts/python.exe and native C:\ paths.
     ENVIRONMENT="windows"
-    PYTHON="${REPO_ROOT}/venv/Scripts/python.exe"
+    if [[ -x "${REPO_ROOT}/.venv/Scripts/python.exe" ]]; then
+        PYTHON="${REPO_ROOT}/.venv/Scripts/python.exe"
+    else
+        PYTHON="${REPO_ROOT}/venv/Scripts/python.exe"
+    fi
     DOC_PATH="C:\\${DOC_SUBPATH//\//\\}"
     SDK_PATH="C:\\${SDK_SUBPATH//\//\\}"
 else
@@ -36,14 +44,18 @@ else
     # unavailable here; leave the paths unset (server tolerates this —
     # doc indexing/SDK features simply won't have anything to find).
     ENVIRONMENT="linux"
-    PYTHON="${REPO_ROOT}/venv/bin/python"
+    if [[ -x "${REPO_ROOT}/.venv/bin/python" ]]; then
+        PYTHON="${REPO_ROOT}/.venv/bin/python"
+    else
+        PYTHON="${REPO_ROOT}/venv/bin/python"
+    fi
     DOC_PATH=""
     SDK_PATH=""
 fi
 
 if [[ ! -x "${PYTHON}" ]]; then
     echo "run_mcp_server.sh: no venv python at ${PYTHON} (environment: ${ENVIRONMENT})." >&2
-    echo "  Create it with: python3 -m venv venv && ./venv/bin/pip install -r requirements.txt" >&2
+    echo "  Create it with: python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt" >&2
     exit 1
 fi
 

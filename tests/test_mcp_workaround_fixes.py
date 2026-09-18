@@ -124,3 +124,20 @@ def test_tools_list_schema_contains_generate_program_comments():
     assert gen_del is not None
     assert "work_packet_path" in gen_del["inputSchema"]["properties"]
     assert "decisions_path" in gen_del["inputSchema"]["properties"]
+
+
+def test_tools_list_schema_contains_clear_vector_cache():
+    server = Studio5000MCPServer(doc_root=".")
+    req = {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}
+    import asyncio
+
+    resp = asyncio.run(handle_mcp_request(server, req))
+    clear_tool = next(
+        tool for tool in resp["result"]["tools"] if tool["name"] == "clear_vector_cache"
+    )
+
+    assert clear_tool["inputSchema"] == {
+        "type": "object",
+        "properties": {},
+        "required": [],
+    }

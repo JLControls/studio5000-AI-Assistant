@@ -40,6 +40,8 @@ except ImportError:
         class MockCacheManager:
             def get_cache_statistics(self):
                 return {'overall': {'total_requests': 0, 'total_hits': 0, 'overall_hit_rate': 0}}
+            def clear_registered_caches(self):
+                return {'deleted_files': 0, 'cache_dirs': []}
             def get_cache_lock(self, name):
                 import threading
                 return threading.Lock()
@@ -263,6 +265,7 @@ class Studio5000Parser:
 
         cache_dir = Path.home() / ".cache" / "studio5000"
         cache_dir.mkdir(parents=True, exist_ok=True)
+        shared_cache_manager.register_cache_dir(cache_dir)
         cache_file = cache_dir / "instruction_index_cache.json"
 
         if not force_rebuild and cache_file.exists():
@@ -973,6 +976,12 @@ class Studio5000MCPServer:
             "get_cache_performance",
             "Get vector database cache performance statistics",
             self.get_cache_performance
+        )
+
+        self.server.add_tool(
+            "clear_vector_cache",
+            "Securely remove registered vector-cache artifacts and legacy cache files",
+            self.clear_vector_cache
         )
 
     async def search_instructions(self, query: str, category: Optional[str] = None) -> List[Dict]:
@@ -1819,6 +1828,17 @@ class Studio5000MCPServer:
                 'error': f"Failed to get cache statistics: {str(e)}"
             }
 
+    async def clear_vector_cache(self) -> Dict[str, Any]:
+        """Clear only cache directories registered by vector integrations."""
+        try:
+            result = shared_cache_manager.clear_registered_caches()
+            return {'success': True, **result}
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f"Failed to clear vector caches: {str(e)}"
+            }
+
 # JSON-RPC 2.0 MCP Protocol Implementation
 async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Optional[Dict]:
     """Handle an MCP request"""
@@ -2278,6 +2298,9 @@ async def handle_mcp_request(server: Studio5000MCPServer, request: Dict) -> Opti
                     'names': {'description': 'A single name (string) or a list of names to sanitize for Ignition'}
                 }
                 required = ['names']
+            elif name == 'clear_vector_cache':
+                properties = {}
+                required = []
 
             tools.append({
                 'name': name,

@@ -16,6 +16,7 @@ import logging
 import time
 
 from .tag_chunk import TagChunk, TagChunkType, DeviceInfo
+from mcp_server.cache_manager import shared_cache_manager
 
 # sentence_transformers import moved to lazy load in initialize_model()
 try:
@@ -103,6 +104,8 @@ class TagVectorDatabase:
     def __init__(self, cache_dir: str = "tag_vector_cache"):
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
+        self.cache_manager = shared_cache_manager
+        self.cache_manager.register_cache_dir(self.cache_dir)
         
         # Initialize sentence transformer for embeddings
         self.model = None
@@ -550,7 +553,8 @@ class TagVectorDatabase:
     def _cache_exists(self) -> bool:
         """Check if cache files exist"""
         return (self.data_cache.exists() and 
-                (not FAISS_AVAILABLE or self.index_cache.exists()))
+                (not FAISS_AVAILABLE or self.index_cache.exists()) and
+                not self.cache_manager.has_legacy_cache(self.cache_dir))
     
     def _cache_is_recent(self, max_age_hours: int = 24) -> bool:
         """Check if cache is recent enough"""
@@ -584,6 +588,7 @@ class TagVectorDatabase:
     def _load_from_cache(self):
         """Load vector database from cache files"""
         try:
+            self.cache_manager.reject_legacy_cache(self.cache_dir)
             # Load tag chunks
             with open(self.data_cache, 'r', encoding='utf-8') as f:
                 self.tag_chunks = [_tag_chunk_from_dict(item) for item in json.load(f)]

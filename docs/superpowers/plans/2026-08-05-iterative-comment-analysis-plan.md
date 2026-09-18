@@ -1,5 +1,7 @@
 # Plan: `analyze_comment_graph` — Iterative PLC Comment Analysis
 
+> **Status: Implemented / hardening.** The `src/comment_graph/` package and MCP wiring are present. Remaining work is convergence/provenance hardening and alignment with the shared instruction-semantics contract; this plan should not recreate the package.
+
 ## Context
 
 Today the PLC comment pipeline splits context extraction from decision generation: `get_tag_reasoning_context` reads a tag and its rungs **once**, `generate_comment_deliverables` serializes caller-supplied decisions, and `manage_comment_memory` records routine hashes with no dependency invalidation. The calling agent (Claude) has to manually re-issue one-shot context queries to propagate a newly-learned fact, and nothing requeues upstream producers.
@@ -18,11 +20,16 @@ This plan adds a server-side MCP tool, **`analyze_comment_graph`**, that owns th
 **Key decisions (from the user):**
 1. **Full spec**, sequenced into the 7 review checkpoints below.
 2. **Deterministic-first worker.** Derive everything possible from evidence without discarding information. On *genuine* ambiguity the worker must **not fabricate** — it emits an `AssistanceRequest` naming the entity, the ambiguity, evidence gathered, and a **suggested model level** (haiku/sonnet/opus). An LLM/agent callback worker is injectable later; the default path uses no LLM.
-3. **Fixtures:** the real, already-gitignored files `tests/acd/ModernTHAWROOM021722.{ACD,L5X}` drive the end-to-end regression (native `.L5X` authoritative; ACD path via the existing converter). Tiny synthetic L5X strings drive fast unit tests.
+3. **Fixtures:** tiny synthetic L5X strings drive fast unit tests. The named real ACD/L5X files are optional, ignored artifacts; when unavailable, the end-to-end test must skip visibly and the result must not be reported as verified.
 
 ## Approach
 
 New pure-library package `src/comment_graph/` (no MCP/asyncio coupling except the executor), wired into the existing hand-rolled JSON-RPC server. Reuse existing parsers/renderers wherever they exist — the graph/fact engine is the only genuinely new logic.
+
+The graph must consume the same operand-role, output-semantics, scope, and
+unresolved-instruction definitions as Plan-01 and Plan-05. If a relation cannot
+be established from known semantics, retain the entity and emit provenance/
+`unresolved_instruction`; never invent a directional edge.
 
 ### Reuse anchors (do not reinvent)
 - **Instruction/operand parsing:** `LadderParser`, `LadderInstruction`, `_split_operands` — `src/ladder_renderer/ladder_to_dot.py` (`INSTRUCTION_TYPES` :123, `parse_rung` :207, `_split_operands` :333, base-tag rule in `get_primary_tag` :87).

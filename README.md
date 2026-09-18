@@ -26,8 +26,13 @@ python -m pip install -r requirements.txt
 # 3. Install SDK (CRITICAL for .ACD files!)
 python -m pip install "C:\Users\Public\Documents\Studio 5000\Logix Designer SDK\python\logix_designer_sdk-*-py3-none-any.whl"
 
-# 4. Test it works
-python src/mcp_server/studio5000_mcp_server.py --test
+# 4. Test it through an MCP client
+# Choose one from the repository root:
+agy -p "Use the studio5000-ai-assistant MCP server to call get_cache_performance. Report the returned success value."
+# or:
+claude --print --mcp-config .agents/.mcp.json --strict-mcp-config "Use the studio5000-ai-assistant MCP server to call get_cache_performance. Report the returned success value."
+# or:
+codex exec "Use the studio5000-ai-assistant MCP server to call get_cache_performance. Report the returned success value."
 ```
 
 The JLControls repository is the canonical clone target for this project, so
@@ -37,7 +42,11 @@ pull changes from the original repository, add it separately as `upstream`:
 ```bash
 git remote add upstream https://github.com/rivie13/studio5000-AI-Assistant.git
 ```
-**That's it!** ✅ Skip to [Claude Desktop setup](#configuration-for-claude-desktop) if tests pass.
+**That's it!** ✅ Skip to [Claude Desktop setup](#configuration-for-claude-desktop) if the client smoke test passes.
+
+The Python `studio5000_mcp_server.py --test` option is an internal server
+diagnostic. It is not the MCP smoke test because it does not exercise a client
+connection, tool discovery, or client-side stdio framing.
 
 ## 📚 **New Team Member Resources**
 
@@ -87,11 +96,11 @@ git remote add upstream https://github.com/rivie13/studio5000-AI-Assistant.git
    python -m pip install "C:\Users\Public\Documents\Studio 5000\Logix Designer SDK\python\logix_designer_sdk-*-py3-none-any.whl"
    ```
 
-4. **Test the Installation**:
+4. **Test the Installation through an MCP client**:
    ```bash
-   python src/mcp_server/studio5000_mcp_server.py --test
+   agy -p "Use the studio5000-ai-assistant MCP server to call get_cache_performance. Report the returned success value."
    ```
-   ✅ Should show: Documentation indexed, SDK available, tests passing
+   ✅ Should return a successful `get_cache_performance` result
 
 5. **Ready to Use!** - The server will auto-detect your Studio 5000 installation paths
 
@@ -234,16 +243,15 @@ Install the official SDK only when you need SDK-backed `.ACD` project creation.
 conversion work; SDK-backed `.ACD` project creation is unavailable.
 
 #### Step 4: Test Your Installation ✅
-1. **Run the test command**:
+1. **Run the MCP client smoke test**:
    ```bash
-   python src/mcp_server/studio5000_mcp_server.py --test
+   agy -p "Use the studio5000-ai-assistant MCP server to call get_cache_performance. Report the returned success value."
    ```
 
 2. **You should see**:
-   - ✅ "Documentation indexed successfully" (500+ instructions found)
-   - ✅ "SDK Available: True" (if you installed the SDK wheel file correctly)
-   - ✅ "SDK Available: False" (OK if you skipped SDK installation - L5X generation still works)
-   - ✅ Sample search results and code generation tests
+   - ✅ The client reports that the MCP tool call succeeded
+   - ✅ The returned `success` value is `true`
+   - ✅ Cache statistics are returned
 
 3. **If SDK Available shows False** but you installed the wheel file:
    - Check the wheel file path was correct
@@ -292,20 +300,15 @@ The server will automatically detect your Studio 5000 installation paths. Skip t
    C:\Users\Public\Documents\Studio 5000\Logix Designer SDK\python
    ```
 
-5. **Test the Server**:
+5. **Test the Server through an MCP client**:
    ```bash
-   # Test with environment variables (recommended)
-   python src/mcp_server/studio5000_mcp_server.py --test
-   
-   # Or test with explicit path
-   python src/mcp_server/studio5000_mcp_server.py --doc-root "C:\Program Files (x86)\Rockwell Software\Studio 5000\Logix Designer\ENU\v36\Bin\Help\ENU\rs5000" --test
+   agy -p "Use the studio5000-ai-assistant MCP server to call get_cache_performance. Report the returned success value."
    ```
 
    **Successful output should show**:
-   - Documentation indexing (hundreds of instructions found)
-   - Sample search results
-   - AI code generation test
-   - SDK availability status
+   - A successful MCP tool call
+   - A `success: true` result
+   - Cache statistics from the running server
 
 ## Configuration for Claude Desktop
 
@@ -788,9 +791,9 @@ python --version
 - **Check Python path in Claude config** - use full path to Python 3.12
 - **Verify working directory** - `"cwd"` should point to project root
 - **Check file permissions** - ensure read access to all project files
-- **Test in isolation**:
+- **Test through the configured client in isolation**:
   ```bash
-  python src/mcp_server/studio5000_mcp_server.py --test
+  claude --print --mcp-config .agents/.mcp.json --strict-mcp-config "Use the studio5000-ai-assistant MCP server to call get_cache_performance. Report the returned success value."
   ```
 
 #### 5. **Environment Variables Not Working**
@@ -848,7 +851,7 @@ The system has evolved beyond SDK validation dependencies. Fast validation provi
 #### 7. **Multiple Python Versions**
 If you have multiple Python versions installed:
 ```bash
-# Use specific Python 3.12 executable
+# Optional internal server diagnostic only; use the MCP client smoke test above
 C:\Users\YourUsername\AppData\Local\Programs\Python\Python312\python.exe src/mcp_server/studio5000_mcp_server.py --test
 
 # Or create virtual environment with Python 3.12
@@ -897,8 +900,8 @@ Verify your setup with these commands:
 # Test 1: Python version
 python --version
 
-# Test 2: Basic server test
-python src/mcp_server/studio5000_mcp_server.py --test
+# Test 2: MCP client smoke test
+agy -p "Use the studio5000-ai-assistant MCP server to call get_cache_performance. Report the returned success value."
 
 # Test 3: Documentation path
 dir "C:\Program Files (x86)\Rockwell Software\Studio 5000\Logix Designer\ENU\v36\Bin\Help\ENU\rs5000\17691.htm"

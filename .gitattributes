@@ -1,0 +1,36 @@
+# Repo stores LF; Windows checkouts get CRLF for text, Linux gets LF.
+* text=auto
+
+# Must stay LF regardless of platform
+*.sh text eol=lf
+*.py text
+*.md text
+*.json text
+*.toml text
+*.yml text
+*.yaml text
+*.txt text
+*.css text
+*.js text
+
+# Windows-native scripts
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Studio 5000 exports: keep bytes as written by Studio (CRLF); never renormalize
+*.L5X -text
+*.l5x -text
+*.L5K -text
+*.l5k -text
+*.CSV -text
+*.csv -text
+
+# Binary
+*.ACD binary
+*.acd binary
+*.pkl binary
+*.faiss binary
+*.pdf binary
+*.png binary
+*.jpg binary

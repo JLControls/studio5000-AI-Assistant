@@ -1,5 +1,7 @@
 # ACD to L5X Fidelity for Studio 5000 v38 Implementation Plan
 
+> **Status: Partial / unverified.** The vendored converter and semantic validation paths exist, but proprietary ACD/native-L5X parity fixtures and Studio 5000 round-trip evidence are not present in the clean repository. Keep every claimed fidelity improvement tied to an available fixture and report conversion loss explicitly.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Produce the highest-fidelity offline L5X available from ACD files and expose semantic losses clearly, with SDK integration disabled.

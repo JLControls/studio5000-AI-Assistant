@@ -26,9 +26,13 @@ Use Windows with **Python 3.12** (tests are validated on 3.12; verify `python` d
 # Install dependencies
 python -m pip install -r requirements.txt
 
-# MCP server smoke test (indexes docs, runs sample queries incl. analyze_comment_graph). ALWAYS run this.
-python src/mcp_server/studio5000_mcp_server.py --test
-python src/mcp_server/studio5000_mcp_server.py --doc-root "<Studio 5000 help path>" --test   # explicit doc root if auto-detect fails
+# MCP client smoke test — run one configured client from the repository root.
+# This validates client startup, stdio framing, tool discovery, and one tool call.
+agy -p "Use the studio5000-ai-assistant MCP server to call get_cache_performance. Report the returned success value."
+claude --print --mcp-config .agents/.mcp.json --strict-mcp-config "Use the studio5000-ai-assistant MCP server to call get_cache_performance. Report the returned success value."
+codex exec "Use the studio5000-ai-assistant MCP server to call get_cache_performance. Report the returned success value."
+
+# The Python --test mode is an internal server diagnostic, not the MCP smoke test.
 
 # Tests — src/ must lead sys.path (handled automatically by tests/conftest.py):
 python -m pytest
@@ -69,7 +73,7 @@ Packages are imported bare (`from l5x_analyzer... import ...`, `from comment_gra
 ## Testing & Verification Guidelines
 
 - Add focused `pytest` tests under `tests/` using `test_*.py` filenames.
-- Always run `python src/mcp_server/studio5000_mcp_server.py --test` after tool or server changes.
+- Always run one configured client smoke test after tool or server changes. The Python `--test` mode may be used separately for internal diagnostics, but does not validate client-mediated MCP startup or tool calls.
 - Validate generated L5X or ACD output in Studio 5000 Logix Designer v36+ when applicable.
 
 ## Commits & Pull Requests

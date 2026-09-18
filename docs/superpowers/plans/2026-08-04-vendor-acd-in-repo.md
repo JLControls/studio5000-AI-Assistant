@@ -1,5 +1,7 @@
 # Vendor Patched ACD Runtime Implementation Plan
 
+> **Status: Completed / archival (2026-08-21).** The patched runtime is vendored under `src/acd`; retain this document for provenance and regression context. New ACD behavior belongs in the active ACD plans and must not reopen the vendoring task without evidence of a missing runtime dependency.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make the MCP’s patched ACD-to-L5X conversion self-contained and validate it against `ModernTHAWROOM021722.ACD`.

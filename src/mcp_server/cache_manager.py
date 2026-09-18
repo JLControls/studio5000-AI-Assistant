@@ -4,14 +4,215 @@ Optimized cache manager for Studio 5000 MCP Server vector databases
 Provides shared caching strategies and optimizations across all vector databases
 """
 
+import json
 import os
+import tempfile
 import time
 import threading
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Tuple
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class CacheSecurityError(RuntimeError):
+    """Raised when a cache contains an unsafe legacy serialization format."""
+
+
+class SecureVectorCache:
+    """Serialize vector-cache data without Python object deserialization.
+
+    The class deliberately imports NumPy and FAISS only inside the methods that
+    need them.  This keeps the MCP server's lightweight startup path usable
+    when optional vector-search dependencies are not installed.
+    """
+
+    LEGACY_SUFFIXES = {".pkl", ".pickle"}
+    SAFE_CACHE_FILENAMES = {
+        "index.faiss",
+        "embeddings.npy",
+        "metadata.json",
+        "instruction_index.faiss",
+        "instruction_embeddings.npy",
+        "instruction_data.json",
+        "instruction_index_cache.json",
+        "pdf_index.faiss",
+        "pdf_embeddings.npy",
+        "pdf_chunks.json",
+        "pdf_metadata.json",
+        "sdk_index.faiss",
+        "sdk_embeddings.npy",
+        "sdk_operations.json",
+        "l5x_index.faiss",
+        "l5x_embeddings.npy",
+        "l5x_chunks.json",
+        "l5x_metadata.json",
+        "tag_index.faiss",
+        "tag_embeddings.npy",
+        "tag_chunks.json",
+        "tag_metadata.json",
+    }
+
+    @staticmethod
+    def _validate_metadata_filename(filename: str) -> None:
+        path = Path(filename)
+        if path.name != filename or path.suffix.lower() != ".json":
+            raise ValueError("metadata_filename must be a single .json filename")
+
+    @classmethod
+    def legacy_files(cls, cache_dir: Path) -> List[Path]:
+        """Return legacy pickle files without opening or deserializing them."""
+        cache_path = Path(cache_dir)
+        if not cache_path.exists() or not cache_path.is_dir():
+            return []
+        return sorted(
+            path for path in cache_path.iterdir()
+            if path.is_file() and path.suffix.lower() in cls.LEGACY_SUFFIXES
+        )
+
+    @classmethod
+    def reject_legacy_cache(cls, cache_dir: Path) -> None:
+        """Reject legacy cache files before any cache content is read."""
+        legacy = cls.legacy_files(cache_dir)
+        if legacy:
+            names = ", ".join(path.name for path in legacy)
+            raise CacheSecurityError(
+                f"Refusing to load legacy pickle cache file(s): {names}"
+            )
+
+    @classmethod
+    def _atomic_write_named(cls, cache_dir: Path, filename: str, writer) -> None:
+        """Atomically write a named cache file without NumPy suffix surprises."""
+        cache_dir = Path(cache_dir)
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        destination = cache_dir / filename
+        temporary_path = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="wb", prefix=f".{filename}.", dir=cache_dir, delete=False
+            ) as temporary_file:
+                temporary_path = Path(temporary_file.name)
+            writer(temporary_path)
+            with temporary_path.open("r+b") as completed_file:
+                os.fsync(completed_file.fileno())
+            temporary_path.replace(destination)
+        finally:
+            if temporary_path is not None:
+                temporary_path.unlink(missing_ok=True)
+
+    @classmethod
+    def save(
+        cls,
+        cache_dir: Path,
+        index,
+        embeddings,
+        metadata: Any,
+        metadata_filename: str = "metadata.json",
+    ) -> None:
+        """Atomically save FAISS, NumPy, and JSON cache artifacts."""
+        cache_dir = Path(cache_dir)
+        if cache_dir.is_symlink():
+            raise ValueError(f"Refusing symlink cache directory: {cache_dir}")
+        cls._validate_metadata_filename(metadata_filename)
+        cache_dir.mkdir(parents=True, exist_ok=True)
+
+        if index is not None:
+            import faiss
+
+            cls._atomic_write_named(
+                cache_dir,
+                "index.faiss",
+                lambda path: faiss.write_index(index, str(path)),
+            )
+        if embeddings is not None:
+            import numpy as np
+
+            def write_embeddings(path):
+                with path.open("wb") as stream:
+                    np.save(stream, embeddings, allow_pickle=False)
+
+            cls._atomic_write_named(
+                cache_dir,
+                "embeddings.npy",
+                write_embeddings,
+            )
+
+        def write_metadata(path):
+            text = json.dumps(metadata, ensure_ascii=False, indent=2)
+            path.write_text(text, encoding="utf-8")
+
+        cls._atomic_write_named(cache_dir, metadata_filename, write_metadata)
+
+    @classmethod
+    def load(
+        cls,
+        cache_dir: Path,
+        metadata_filename: str = "metadata.json",
+        load_index: bool = True,
+        load_embeddings: bool = True,
+    ) -> Tuple[Optional[Any], Optional[Any], Any]:
+        """Load cache artifacts using only native/JSON formats."""
+        cache_dir = Path(cache_dir)
+        if cache_dir.is_symlink():
+            raise ValueError(f"Refusing symlink cache directory: {cache_dir}")
+        cls._validate_metadata_filename(metadata_filename)
+        cls.reject_legacy_cache(cache_dir)
+
+        metadata_path = cache_dir / metadata_filename
+        with metadata_path.open("r", encoding="utf-8") as stream:
+            metadata = json.load(stream)
+
+        index = None
+        if load_index and (cache_dir / "index.faiss").exists():
+            import faiss
+
+            index = faiss.read_index(str(cache_dir / "index.faiss"))
+
+        embeddings = None
+        if load_embeddings and (cache_dir / "embeddings.npy").exists():
+            import numpy as np
+
+            embeddings = np.load(cache_dir / "embeddings.npy", allow_pickle=False)
+
+        return index, embeddings, metadata
+
+    @classmethod
+    def is_cache_valid(
+        cls,
+        cache_dir: Path,
+        metadata_filename: str = "metadata.json",
+        max_age_days: int = 30,
+    ) -> bool:
+        """Check age and format without opening serialized cache content."""
+        try:
+            cache_dir = Path(cache_dir)
+            if cls.legacy_files(cache_dir):
+                return False
+            metadata_path = cache_dir / metadata_filename
+            if not metadata_path.is_file():
+                return False
+            age = time.time() - metadata_path.stat().st_mtime
+            return age < max_age_days * 24 * 3600
+        except (OSError, ValueError):
+            return False
+
+    @classmethod
+    def clear(cls, cache_dir: Path) -> int:
+        """Remove known cache artifacts directly inside one explicit directory."""
+        cache_dir = Path(cache_dir)
+        if cache_dir.is_symlink() or not cache_dir.is_dir():
+            raise ValueError(f"Refusing unsafe cache directory: {cache_dir}")
+
+        deleted = 0
+        for path in cache_dir.iterdir():
+            if path.is_symlink() or not path.is_file():
+                continue
+            if path.name not in cls.SAFE_CACHE_FILENAMES and path.suffix.lower() not in cls.LEGACY_SUFFIXES:
+                continue
+            path.unlink()
+            deleted += 1
+        return deleted
 
 class SharedCacheManager:
     """Optimized cache manager with shared strategies for better performance"""
@@ -19,7 +220,40 @@ class SharedCacheManager:
     def __init__(self):
         self._cache_locks = {}
         self._cache_stats = {}
+        self._registered_cache_dirs = set()
         self._global_lock = threading.Lock()
+
+    def register_cache_dir(self, cache_dir: Path) -> Path:
+        """Register one concrete cache directory for controlled cleanup."""
+        cache_path = Path(cache_dir)
+        if cache_path.is_symlink():
+            raise ValueError(f"Refusing symlink cache directory: {cache_path}")
+        cache_path.mkdir(parents=True, exist_ok=True)
+        resolved = cache_path.resolve()
+        with self._global_lock:
+            self._registered_cache_dirs.add(resolved)
+        return resolved
+
+    @staticmethod
+    def has_legacy_cache(cache_dir: Path) -> bool:
+        return bool(SecureVectorCache.legacy_files(cache_dir))
+
+    @staticmethod
+    def reject_legacy_cache(cache_dir: Path) -> None:
+        SecureVectorCache.reject_legacy_cache(cache_dir)
+
+    def clear_registered_caches(self) -> Dict[str, Any]:
+        """Clear only explicitly registered cache directories."""
+        with self._global_lock:
+            cache_dirs = sorted(self._registered_cache_dirs, key=str)
+
+        cleared = []
+        deleted_files = 0
+        for cache_dir in cache_dirs:
+            deleted = SecureVectorCache.clear(cache_dir)
+            deleted_files += deleted
+            cleared.append({"cache_dir": str(cache_dir), "deleted_files": deleted})
+        return {"deleted_files": deleted_files, "cache_dirs": cleared}
         
     def get_cache_lock(self, cache_name: str) -> threading.Lock:
         """Get or create a lock for a specific cache"""

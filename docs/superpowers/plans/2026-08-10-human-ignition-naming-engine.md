@@ -1,5 +1,7 @@
 # Human-readable Ignition Naming Engine Implementation Plan
 
+> **Status: Canonical naming plan for Issue #29.** Plan-08 indexes this work but must not define a second naming contract. The current exporter already has raw-analog retention; this plan owns human presentation naming, profile identity, and technical-field parity.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add an opt-in deterministic `naming="human"` mode to `generate_ignition_tags` that emits operator-facing Ignition names, descriptions, tooltips, and folders while preserving all technical export fields.
@@ -15,7 +17,7 @@
 - The naming engine is deterministic and uses no LLM, vector DB, or network service.
 - Technical fields remain owned by the MCP exporter: OPC paths, data types, scaling, historian settings, selection, and exclusions must not change in human mode.
 - Invalid naming modes or malformed profiles must fail before creating an output file.
-- Use `F:\git\work\studio5000-AI-Assistant\venv\Scripts\python.exe` for tests.
+- Use the repository-local Python 3.12 environment: `venv/bin/python` in WSL/Linux or `.\\venv\\Scripts\\python.exe` on Windows. Do not depend on an external checkout or machine-specific prototype path.
 - Preserve the pre-existing modification to `tests/test_direct_acd_deliverables.py`; never stage or overwrite it.
 - Generated PLC/SCADA output still requires engineering review and Ignition validation before deployment.
 
@@ -106,7 +108,7 @@ def disambiguate_presentations(items: Sequence[Presentation]) -> list[Presentati
 - [ ] **Step 3: Port the deterministic prototype rules into the pure module.** Move the
   token and phrase dictionaries, member handling, scope stripping, alias recognition,
   alarm/test classification, name fallback, and folder precedence from
-  `F:\Copia\Perry-Utilities\Kemco\PLC\work\gen.py`. Keep the profile immutable after
+  a repository-local profile/corpus or a reviewed rule description. Keep the profile immutable after
   loading. Normalize `Program:<scope>.` before naming, but preserve the original PLC ref
   in `Presentation.plc_tag`.
 

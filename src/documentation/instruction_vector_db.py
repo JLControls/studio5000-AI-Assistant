@@ -17,6 +17,8 @@ import logging
 import faiss
 import time
 
+from mcp_server.cache_manager import shared_cache_manager
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,6 +41,8 @@ class InstructionVectorDatabase:
     def __init__(self, cache_dir: str = "instruction_vector_cache"):
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
+        self.cache_manager = shared_cache_manager
+        self.cache_manager.register_cache_dir(self.cache_dir)
         
         # Initialize sentence transformer for embeddings
         self.model = None
@@ -314,7 +318,8 @@ class InstructionVectorDatabase:
         """Check if cache files exist"""
         return (self.index_cache.exists() and 
                 self.embeddings_cache.exists() and 
-                self.data_cache.exists())
+                self.data_cache.exists() and
+                not self.cache_manager.has_legacy_cache(self.cache_dir))
     
     def _cache_is_recent(self, max_age_days: int = 7) -> bool:
         """Check if cache is recent enough"""
@@ -347,6 +352,7 @@ class InstructionVectorDatabase:
     def _load_from_cache(self):
         """Load vector database from cache files"""
         try:
+            self.cache_manager.reject_legacy_cache(self.cache_dir)
             # Load instruction data
             with open(self.data_cache, 'r', encoding='utf-8') as f:
                 self.instructions_data = json.load(f)
