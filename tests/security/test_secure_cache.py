@@ -98,7 +98,10 @@ def test_clear_rejects_symlink_cache_directory(tmp_path):
     real_dir = tmp_path / "real"
     real_dir.mkdir()
     link = tmp_path / "link"
-    link.symlink_to(real_dir, target_is_directory=True)
+    try:
+        link.symlink_to(real_dir, target_is_directory=True)
+    except OSError as exc:  # Windows without SeCreateSymbolicLinkPrivilege
+        pytest.skip(f"symlinks not creatable here: {exc}")
 
     with pytest.raises(ValueError, match="unsafe cache directory"):
         SecureVectorCache.clear(link)
